@@ -963,7 +963,7 @@ msgstr "Předplatné se bude znovu obnovovat."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Nákup zrušen."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -982,7 +982,7 @@ msgstr "Nákup se nezdařil: %{reason}"
 #: lib/gamend_web/live/store_live/index.ex:261
 #, elixir-autogen, elixir-format
 msgid "Checkout is already open for this item. Finish or cancel that checkout first."
-msgstr "Pokladna pro tuto položku je již otevřena. Nejprve ji dokončete nebo zrušte."
+msgstr "Pokladna pro tuto položku je již otevřena. Nejprve ji dokonči nebo zruš."
 
 #: lib/gamend_web/live/store_live/index.ex:74
 #, elixir-autogen, elixir-format
@@ -1242,7 +1242,7 @@ msgstr "Pavouci"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Zrušeno"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1379,7 +1379,7 @@ msgstr "Výhry"
 #: lib/gamend_web/live/tournaments_live.ex:130
 #, elixir-autogen, elixir-format
 msgid "Left"
-msgstr "Odešli jste"
+msgstr "Odchod"
 
 #: lib/gamend_web/live/tournaments_live.ex:162
 #: lib/gamend_web/live_helpers.ex:312
@@ -1401,13 +1401,13 @@ msgstr "Tento turnaj je plný."
 #: lib/gamend_web/live_helpers.ex:310
 #, elixir-autogen, elixir-format
 msgid "You are already registered."
-msgstr "Již jste zaregistrováni."
+msgstr "Už jsi zaregistrovaný."
 
 #: lib/gamend_web/live/tournaments_live.ex:165
 #: lib/gamend_web/live_helpers.ex:311
 #, elixir-autogen, elixir-format
 msgid "You are not registered."
-msgstr "Nejste zaregistrováni."
+msgstr "Nejsi zaregistrovaný."
 
 #: lib/gamend_web/live/tournaments_live.ex:626
 #, elixir-autogen, elixir-format
@@ -1468,7 +1468,7 @@ msgstr "Otevřít chat"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:521
 #, elixir-autogen, elixir-format
 msgid "Please choose an image first."
-msgstr "Nejprve vyberte obrázek."
+msgstr "Nejprve vyber obrázek."
 
 #: lib/gamend_web/live/user_live/settings/items_tab.ex:40
 #, elixir-autogen, elixir-format
@@ -2368,12 +2368,12 @@ msgstr "Aktivní dnes"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Přidejte seznam změn do souboru CHANGELOG.md a zobrazí se zde."
+msgstr "Přidej seznam změn do souboru CHANGELOG.md a zobrazí se zde."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Přidejte plán vývoje do souboru ROADMAP.md a zobrazí se zde."
+msgstr "Přidej plán vývoje do souboru ROADMAP.md a zobrazí se zde."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2437,7 +2437,7 @@ msgstr "Přehrát video"
 #: lib/gamend_web/components/content_pages.ex:157
 #, elixir-autogen, elixir-format
 msgid "Register a blog directory to display posts here."
-msgstr "Zaregistrujte adresář blogu a příspěvky se zobrazí zde."
+msgstr "Zaregistruj adresář blogu a příspěvky se zobrazí zde."
 
 #: lib/gamend_web/components/content_pages.ex:64
 #: lib/gamend_web/components/content_pages.ex:83
@@ -2462,12 +2462,12 @@ msgstr "Něco se pokazilo"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Tento účet má vlastní způsob přihlášení. Přihlaste se do něj a odpojte poskytovatele tam."
+msgstr "Tento účet má vlastní způsob přihlášení. Přihlas se do něj a odpoj poskytovatele tam."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "Stránka, kterou hledáte, byla přesunuta nebo nikdy neexistovala. Zbytek webu funguje."
+msgstr "Stránka, kterou hledáš, byla přesunuta nebo nikdy neexistovala. Zbytek webu funguje."
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2492,12 +2492,12 @@ msgstr "Kam dál"
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "K této stránce nemáte přístup. Přihlášení může pomoci."
+msgstr "K této stránce nemáš přístup. Přihlášení může pomoci."
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "V krátké době jste odeslali mnoho požadavků. Chvíli počkejte a zkuste to znovu."
+msgstr "V krátké době jsi odeslal mnoho požadavků. Chvíli počkej a zkus to znovu."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -3059,7 +3059,7 @@ msgstr "Offline"
 #: lib/gamend_web/live_helpers.ex:266
 #, elixir-autogen, elixir-format
 msgid "One of you has blocked the other."
-msgstr "Jeden z vás zablokoval druhého."
+msgstr "Jeden z dvojice zablokoval druhého."
 
 #: lib/gamend_web/live_helpers.ex:328
 #, elixir-autogen, elixir-format
@@ -3210,7 +3210,7 @@ msgstr "Požadavek se nepodařilo zpracovat. Vrať se zpět a zkus to znovu."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Přihlášení bylo zrušeno nebo nebylo dokončeno. Zkus to prosím znovu."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
@@ -3253,7 +3253,7 @@ msgstr "Žádost už jsi odeslal."
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
 msgid "You are already friends."
-msgstr "Už jste přátelé."
+msgstr "Tento hráč už je tvůj přítel."
 
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format

@@ -229,7 +229,7 @@ defmodule GamendWeb.AuthSuccessLive do
         gettext("Player not found.")
 
       "authentication_failed" ->
-        gettext("The sign-in was cancelled or did not complete. Please try again.")
+        gettext("The sign-in was canceled or did not complete. Please try again.")
 
       _other ->
         gettext("Please try again.")

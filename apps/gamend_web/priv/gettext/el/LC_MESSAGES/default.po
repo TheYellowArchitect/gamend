@@ -566,7 +566,7 @@ msgstr "Ειδοποιήσεις"
 #: lib/gamend_web/live/chat_live.ex:323
 #, elixir-autogen, elixir-format
 msgid "Select a conversation"
-msgstr "Επιλέξτε συνομιλία"
+msgstr "Διάλεξε συνομιλία"
 
 #: lib/gamend_web/components/content_pages.ex:319
 #: lib/gamend_web/live/leaderboards_live.ex:250
@@ -784,7 +784,7 @@ msgstr "Απέτυχε"
 #: lib/gamend_web/controllers/user_session_controller.ex:132
 #, elixir-autogen, elixir-format
 msgid "Your account is pending activation."
-msgstr "Εκκρεμεί ενεργοποίηση του λογαριασμού σας"
+msgstr "Εκκρεμεί ενεργοποίηση του λογαριασμού σου"
 
 #: lib/gamend_web/live/quests_live.ex:518
 #, elixir-autogen, elixir-format
@@ -879,7 +879,7 @@ msgstr "Δεδομένα"
 #: lib/gamend_web/live/user_live/registration.ex:109
 #, elixir-autogen, elixir-format
 msgid "Too many attempts. Please try again later."
-msgstr "Πολλαπλές προσπάθειες. Προσπαθήστε αργότερα."
+msgstr "Πολλαπλές προσπάθειες. Προσπάθησε αργότερα."
 
 #: lib/gamend_web/live/store_live/index.ex:202
 #, elixir-autogen, elixir-format
@@ -963,7 +963,7 @@ msgstr "Η συνδρομή θα ανανεώνεται ξανά."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Η αγορά ακυρώθηκε."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -982,7 +982,7 @@ msgstr "Η αγορά απέτυχε: %{reason}"
 #: lib/gamend_web/live/store_live/index.ex:261
 #, elixir-autogen, elixir-format
 msgid "Checkout is already open for this item. Finish or cancel that checkout first."
-msgstr "Υπάρχει ήδη ανοιχτή αγορά για αυτό το αντικείμενο. Ολοκληρώστε ή ακυρώστε την πρώτα."
+msgstr "Υπάρχει ήδη ανοιχτή αγορά για αυτό το αντικείμενο. Ολοκλήρωσέ την ή ακύρωσέ την πρώτα."
 
 #: lib/gamend_web/live/store_live/index.ex:74
 #, elixir-autogen, elixir-format
@@ -1242,7 +1242,7 @@ msgstr "Ταμπλό"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Ακυρώθηκε"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1379,7 +1379,7 @@ msgstr "Νίκες"
 #: lib/gamend_web/live/tournaments_live.ex:130
 #, elixir-autogen, elixir-format
 msgid "Left"
-msgstr "Αποχωρήσατε"
+msgstr "Αποχώρησες"
 
 #: lib/gamend_web/live/tournaments_live.ex:162
 #: lib/gamend_web/live_helpers.ex:312
@@ -1401,13 +1401,13 @@ msgstr "Αυτό το τουρνουά είναι πλήρες."
 #: lib/gamend_web/live_helpers.ex:310
 #, elixir-autogen, elixir-format
 msgid "You are already registered."
-msgstr "Έχετε ήδη εγγραφεί."
+msgstr "Έχεις ήδη εγγραφεί."
 
 #: lib/gamend_web/live/tournaments_live.ex:165
 #: lib/gamend_web/live_helpers.ex:311
 #, elixir-autogen, elixir-format
 msgid "You are not registered."
-msgstr "Δεν έχετε εγγραφεί."
+msgstr "Δεν έχεις εγγραφεί."
 
 #: lib/gamend_web/live/tournaments_live.ex:626
 #, elixir-autogen, elixir-format
@@ -1468,7 +1468,7 @@ msgstr "Άνοιγμα συνομιλίας"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:521
 #, elixir-autogen, elixir-format
 msgid "Please choose an image first."
-msgstr "Επιλέξτε πρώτα μια εικόνα."
+msgstr "Διάλεξε πρώτα μια εικόνα."
 
 #: lib/gamend_web/live/user_live/settings/items_tab.ex:40
 #, elixir-autogen, elixir-format
@@ -1664,22 +1664,22 @@ msgstr "Έτοιμο για παραλαβή"
 #: lib/gamend_web/live/quests_live.ex:987
 #, elixir-autogen, elixir-format
 msgid "View quest chain"
-msgstr "Δείτε την αλυσίδα αποστολών"
+msgstr "Δες την αλυσίδα αποστολών"
 
 #: lib/gamend_web/live_helpers.ex:206
 #, elixir-autogen, elixir-format
 msgid "Captcha check failed. Please try again."
-msgstr "Ο έλεγχος captcha απέτυχε. Προσπαθήστε ξανά."
+msgstr "Ο έλεγχος captcha απέτυχε. Προσπάθησε ξανά."
 
 #: lib/gamend_web/live_helpers.ex:209
 #, elixir-autogen, elixir-format
 msgid "Could not reach the captcha service. Please try again."
-msgstr "Δεν ήταν δυνατή η σύνδεση με την υπηρεσία captcha. Προσπαθήστε ξανά."
+msgstr "Δεν ήταν δυνατή η σύνδεση με την υπηρεσία captcha. Προσπάθησε ξανά."
 
 #: lib/gamend_web/live_helpers.ex:202
 #, elixir-autogen, elixir-format
 msgid "Please complete the captcha."
-msgstr "Παρακαλώ συμπληρώστε το captcha."
+msgstr "Συμπλήρωσε το captcha."
 
 #: lib/gamend_web/live/admin_live/chat_reports.ex:354
 #, elixir-autogen, elixir-format
@@ -2352,7 +2352,7 @@ msgstr "Προειδοποίηση από την ουρά αναφορών"
 #: lib/gamend_web/live/quests_live.ex:995
 #, elixir-autogen, elixir-format
 msgid "View every quest in this group"
-msgstr "Δείτε όλες τις αποστολές αυτής της ομάδας"
+msgstr "Δες όλες τις αποστολές αυτής της ομάδας"
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:488
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:343
@@ -2368,12 +2368,12 @@ msgstr "Ενεργοί σήμερα"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Προσθέστε ένα αρχείο αλλαγών στο CHANGELOG.md για να εμφανιστεί εδώ."
+msgstr "Πρόσθεσε ένα αρχείο αλλαγών στο CHANGELOG.md για να εμφανιστεί εδώ."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Προσθέστε ένα σχέδιο ανάπτυξης στο ROADMAP.md για να εμφανιστεί εδώ."
+msgstr "Πρόσθεσε ένα σχέδιο ανάπτυξης στο ROADMAP.md για να εμφανιστεί εδώ."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2437,7 +2437,7 @@ msgstr "Αναπαραγωγή βίντεο"
 #: lib/gamend_web/components/content_pages.ex:157
 #, elixir-autogen, elixir-format
 msgid "Register a blog directory to display posts here."
-msgstr "Καταχωρίστε έναν φάκελο ιστολογίου για να εμφανίζονται εδώ αναρτήσεις."
+msgstr "Καταχώρισε έναν φάκελο ιστολογίου για να εμφανίζονται εδώ αναρτήσεις."
 
 #: lib/gamend_web/components/content_pages.ex:64
 #: lib/gamend_web/components/content_pages.ex:83
@@ -2462,12 +2462,12 @@ msgstr "Κάτι πήγε στραβά"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Αυτός ο λογαριασμός έχει δική του μέθοδο σύνδεσης. Συνδεθείτε σε αυτόν και αποσυνδέστε εκεί τον πάροχο."
+msgstr "Αυτός ο λογαριασμός έχει δική του μέθοδο σύνδεσης. Συνδέσου σε αυτόν και αποσύνδεσε εκεί τον πάροχο."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "Η σελίδα που αναζητούσατε έχει μετακινηθεί ή δεν υπήρξε ποτέ. Ο υπόλοιπος ιστότοπος λειτουργεί κανονικά."
+msgstr "Η σελίδα που αναζητούσες έχει μετακινηθεί ή δεν υπήρξε ποτέ. Ο υπόλοιπος ιστότοπος λειτουργεί κανονικά."
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2487,17 +2487,17 @@ msgstr "Ενεργές σιγάσεις φορτωμένες στη μνήμη �
 #: lib/gamend_web/controllers/error_html/error_page.html.heex:52
 #, elixir-autogen, elixir-format
 msgid "Where to go next"
-msgstr "Πού να πάτε μετά"
+msgstr "Πού να πας μετά"
 
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "Δεν έχετε πρόσβαση σε αυτή τη σελίδα. Η σύνδεση μπορεί να βοηθήσει."
+msgstr "Δεν έχεις πρόσβαση σε αυτή τη σελίδα. Η σύνδεση μπορεί να βοηθήσει."
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "Κάνατε πολλά αιτήματα σε σύντομο χρόνο. Περιμένετε λίγο και δοκιμάστε ξανά."
+msgstr "Έκανες πολλά αιτήματα σε σύντομο χρόνο. Περίμενε λίγο και δοκίμασε ξανά."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -2523,7 +2523,7 @@ msgstr "Εγγραφή με %{provider}"
 #: lib/gamend_web/live/user_live/login.ex:115
 #, elixir-autogen, elixir-format
 msgid "Forgot password?"
-msgstr "Ξεχάσατε το συνθηματικό;"
+msgstr "Ξέχασες το συνθηματικό;"
 
 #: lib/gamend_web/live/user_live/login.ex:101
 #, elixir-autogen, elixir-format
@@ -2533,7 +2533,7 @@ msgstr "Να με θυμάσαι"
 #: lib/gamend_web/live/user_live/login.ex:119
 #, elixir-autogen, elixir-format
 msgid "Send yourself a magic link to log in, then set a new password on your Account page."
-msgstr "Στείλτε στον εαυτό σας έναν μαγικό σύνδεσμο για να συνδεθείτε και μετά ορίστε νέο συνθηματικό στη σελίδα «Λογαριασμός»."
+msgstr "Στείλε στον εαυτό σου έναν μαγικό σύνδεσμο για να συνδεθείς και μετά όρισε νέο συνθηματικό στη σελίδα «Λογαριασμός»."
 
 #: lib/gamend_web/live/admin_live/index.ex:960
 #, elixir-autogen, elixir-format
@@ -2629,7 +2629,7 @@ msgstr "Απαιτείται συνθηματικό."
 #: lib/gamend_web/live/user_live/registration.ex:179
 #, elixir-autogen, elixir-format
 msgid "Account created. Check your email for a link to confirm it."
-msgstr "Ο λογαριασμός δημιουργήθηκε. Ελέγξτε το email σας για τον σύνδεσμο επιβεβαίωσης."
+msgstr "Ο λογαριασμός δημιουργήθηκε. Έλεγξε το email σου για τον σύνδεσμο επιβεβαίωσης."
 
 #: lib/gamend_web/live_helpers.ex:283
 #, elixir-autogen, elixir-format
@@ -2666,7 +2666,7 @@ msgstr[1] "Διεργασίες καναλιών εκτελούνται σε %{c
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:300
 #, elixir-autogen, elixir-format
 msgid "Check your new email address for a link to confirm the change."
-msgstr "Ελέγξτε τη νέα διεύθυνση email σας για τον σύνδεσμο επιβεβαίωσης της αλλαγής."
+msgstr "Έλεγξε τη νέα διεύθυνση email σου για τον σύνδεσμο επιβεβαίωσης της αλλαγής."
 
 #: lib/gamend_web/live/store_live/index.ex:364
 #, elixir-autogen, elixir-format
@@ -2781,7 +2781,7 @@ msgstr "Οριστική διαγραφή του άλλου λογαριασμο
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:610
 #, elixir-autogen, elixir-format
 msgid "Delete your account permanently? This cannot be undone."
-msgstr "Οριστική διαγραφή του λογαριασμού σας; Αυτό δεν αναιρείται."
+msgstr "Οριστική διαγραφή του λογαριασμού σου; Αυτό δεν αναιρείται."
 
 #: lib/gamend_web/live/admin_live/kv.ex:368
 #, elixir-autogen, elixir-format
@@ -2933,7 +2933,7 @@ msgstr "Παιχνίδι"
 #: lib/gamend_web/live/user_live/login.ex:179
 #, elixir-autogen, elixir-format
 msgid "If that email has an account, we sent it a login link. Check your inbox."
-msgstr "Αν υπάρχει λογαριασμός με αυτό το email, στείλαμε σε αυτό έναν σύνδεσμο σύνδεσης. Ελέγξτε τα εισερχόμενά σας."
+msgstr "Αν υπάρχει λογαριασμός με αυτό το email, στείλαμε σε αυτό έναν σύνδεσμο σύνδεσης. Έλεγξε τα εισερχόμενά σου."
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:163
 #, elixir-autogen, elixir-format
@@ -2995,7 +2995,7 @@ msgstr "Νέοι παίκτες"
 #: lib/gamend_web/live/admin_live/chat_filter.ex:396
 #, elixir-autogen, elixir-format
 msgid "No bundled lists are available. Drop one at apps/gamend_core/priv/chat_filter/<lang>.txt."
-msgstr "Δεν υπάρχουν διαθέσιμες ενσωματωμένες λίστες. Τοποθετήστε μία στο apps/gamend_core/priv/chat_filter/<lang>.txt."
+msgstr "Δεν υπάρχουν διαθέσιμες ενσωματωμένες λίστες. Τοποθέτησε μία στο apps/gamend_core/priv/chat_filter/<lang>.txt."
 
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:212
 #, elixir-autogen, elixir-format
@@ -3053,7 +3053,7 @@ msgstr "Ο παίκτης δεν βρέθηκε."
 #: lib/gamend_web/live/auth_success_live.ex:235
 #, elixir-autogen, elixir-format
 msgid "Please try again."
-msgstr "Προσπαθήστε ξανά."
+msgstr "Προσπάθησε ξανά."
 
 #: lib/gamend_web/live/leaderboards_live.ex:288
 #, elixir-autogen, elixir-format
@@ -3149,7 +3149,7 @@ msgstr "Αυτό το μήνυμα δεν επιτρέπεται."
 #: lib/gamend_web/controllers/error_html.ex:136
 #, elixir-autogen, elixir-format
 msgid "That was too large to send. Try a smaller file."
-msgstr "Ήταν πολύ μεγάλο για αποστολή. Δοκιμάστε ένα μικρότερο αρχείο."
+msgstr "Ήταν πολύ μεγάλο για αποστολή. Δοκίμασε ένα μικρότερο αρχείο."
 
 #: lib/gamend_web/live_helpers.ex:295
 #, elixir-autogen, elixir-format
@@ -3159,12 +3159,12 @@ msgstr "Η πρόσκληση δεν ισχύει πλέον."
 #: lib/gamend_web/controllers/error_html.ex:142
 #, elixir-autogen, elixir-format
 msgid "The request could not be handled. Go back and try again."
-msgstr "Δεν ήταν δυνατή η επεξεργασία του αιτήματος. Επιστρέψτε και προσπαθήστε ξανά."
+msgstr "Δεν ήταν δυνατή η επεξεργασία του αιτήματος. Γύρνα πίσω και προσπάθησε ξανά."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
-msgstr "Η σύνδεση ακυρώθηκε ή δεν ολοκληρώθηκε. Προσπαθήστε ξανά."
+msgid "The sign-in was canceled or did not complete. Please try again."
+msgstr "Η σύνδεση ακυρώθηκε ή δεν ολοκληρώθηκε. Προσπάθησε ξανά."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
 #: lib/gamend_web/live/auth_success_live.ex:223
@@ -3186,7 +3186,7 @@ msgstr "Προς"
 #: lib/gamend_web/live_helpers.ex:273
 #, elixir-autogen, elixir-format
 msgid "Too many pending requests. Wait for some to be answered."
-msgstr "Πάρα πολλά εκκρεμή αιτήματα. Περιμένετε να απαντηθούν κάποια."
+msgstr "Πάρα πολλά εκκρεμή αιτήματα. Περίμενε να απαντηθούν κάποια."
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:483
 #, elixir-autogen, elixir-format
@@ -3201,89 +3201,89 @@ msgstr "Λάθος συνθηματικό."
 #: lib/gamend_web/live_helpers.ex:268
 #, elixir-autogen, elixir-format
 msgid "You already sent a request."
-msgstr "Έχετε ήδη στείλει αίτημα."
+msgstr "Έχεις ήδη στείλει αίτημα."
 
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
 msgid "You are already friends."
-msgstr "Είστε ήδη φίλοι."
+msgstr "Αυτός ο παίκτης είναι ήδη φίλος σου."
 
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format
 msgid "You are already in a lobby."
-msgstr "Είστε ήδη σε αίθουσα αναμονής."
+msgstr "Είσαι ήδη σε αίθουσα αναμονής."
 
 #: lib/gamend_web/live_helpers.ex:302
 #, elixir-autogen, elixir-format
 msgid "You are already in a party."
-msgstr "Είστε ήδη σε παρέα."
+msgstr "Είσαι ήδη σε πλήρωμα."
 
 #: lib/gamend_web/live_helpers.ex:306
 #, elixir-autogen, elixir-format
 msgid "You are muted."
-msgstr "Είστε σε σίγαση."
+msgstr "Είσαι σε σίγαση."
 
 #: lib/gamend_web/live_helpers.ex:281
 #, elixir-autogen, elixir-format
 msgid "You are not a member of this group."
-msgstr "Δεν είστε μέλος αυτής της ομάδας."
+msgstr "Δεν είσαι μέλος αυτής της ομάδας."
 
 #: lib/gamend_web/live_helpers.ex:303
 #, elixir-autogen, elixir-format
 msgid "You are not in a party."
-msgstr "Δεν είστε σε παρέα."
+msgstr "Δεν είσαι σε πλήρωμα."
 
 #: lib/gamend_web/live_helpers.ex:297
 #, elixir-autogen, elixir-format
 msgid "You are not in this lobby."
-msgstr "Δεν είστε σε αυτή την αίθουσα αναμονής."
+msgstr "Δεν είσαι σε αυτή την αίθουσα αναμονής."
 
 #: lib/gamend_web/live_helpers.ex:307
 #, elixir-autogen, elixir-format
 msgid "You are sending messages too fast."
-msgstr "Στέλνετε μηνύματα πολύ γρήγορα."
+msgstr "Στέλνεις μηνύματα πολύ γρήγορα."
 
 #: lib/gamend_web/live_helpers.ex:276
 #, elixir-autogen, elixir-format
 msgid "You can only invite friends or players who share a group with you."
-msgstr "Μπορείτε να προσκαλέσετε μόνο φίλους ή παίκτες που είναι σε κοινή ομάδα μαζί σας."
+msgstr "Μπορείς να προσκαλέσεις μόνο φίλους ή παίκτες που είναι σε κοινή ομάδα μαζί σου."
 
 #: lib/gamend_web/live_helpers.ex:309
 #, elixir-autogen, elixir-format
 msgid "You can only message friends."
-msgstr "Μπορείτε να στέλνετε μηνύματα μόνο σε φίλους."
+msgstr "Μπορείς να στέλνεις μηνύματα μόνο σε φίλους."
 
 #: lib/gamend_web/live_helpers.ex:264
 #, elixir-autogen, elixir-format
 msgid "You cannot do that to yourself."
-msgstr "Δεν μπορείτε να το κάνετε αυτό στον εαυτό σας."
+msgstr "Δεν μπορείς να το κάνεις αυτό στον εαυτό σου."
 
 #: lib/gamend_web/live/quests_live.ex:647
 #, elixir-autogen, elixir-format
 msgid "You have %{count} quest ready to claim!"
 msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "Έχετε %{count} αποστολή προς παραλαβή!"
-msgstr[1] "Έχετε %{count} αποστολές προς παραλαβή!"
+msgstr[0] "Έχεις %{count} αποστολή προς παραλαβή!"
+msgstr[1] "Έχεις %{count} αποστολές προς παραλαβή!"
 
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."
-msgstr "Έχετε δημιουργήσει πάρα πολλές ομάδες."
+msgstr "Έχεις δημιουργήσει πάρα πολλές ομάδες."
 
 #: lib/gamend_web/live/auth_success_live.ex:226
 #, elixir-autogen, elixir-format
 msgid "Your account is waiting for an administrator to activate it."
-msgstr "Ο λογαριασμός σας περιμένει ενεργοποίηση από διαχειριστή."
+msgstr "Ο λογαριασμός σου περιμένει ενεργοποίηση από διαχειριστή."
 
 #: lib/gamend_web/live_helpers.ex:269
 #, elixir-autogen, elixir-format
 msgid "Your friend list is full."
-msgstr "Η λίστα φίλων σας είναι γεμάτη."
+msgstr "Η λίστα φίλων σου είναι γεμάτη."
 
 #: lib/gamend_web/live/store_live/index.ex:236
 #, elixir-autogen, elixir-format
 msgid "Your payment is still being processed. Refresh this page in a moment."
-msgstr "Η πληρωμή σας βρίσκεται ακόμη σε επεξεργασία. Ανανεώστε τη σελίδα σε λίγο."
+msgstr "Η πληρωμή σου βρίσκεται ακόμη σε επεξεργασία. Ανανέωσε τη σελίδα σε λίγο."
 
 #: lib/gamend_web/live/admin_live/matchmaking.ex:181
 #, elixir-autogen, elixir-format
@@ -3300,12 +3300,12 @@ msgstr[1] "τελευταίες %{count} εκτελέσεις"
 #: lib/gamend_web/controllers/user_session_controller.ex:77
 #, elixir-autogen, elixir-format
 msgid "Confirm your email first with the link we sent you, or log in with an emailed link."
-msgstr "Επιβεβαιώστε πρώτα το email σας με τον σύνδεσμο που σας στείλαμε ή συνδεθείτε με έναν σύνδεσμο μέσω email."
+msgstr "Επιβεβαίωσε πρώτα το email σου με τον σύνδεσμο που σου στείλαμε ή συνδέσου με έναν σύνδεσμο μέσω email."
 
 #: lib/gamend_web/live/user_live/confirmation.ex:38
 #, elixir-autogen, elixir-format
 msgid "Confirming with this link removes the password this account was registered with, so set a new one in your account settings afterwards."
-msgstr "Η επιβεβαίωση με αυτόν τον σύνδεσμο αφαιρεί το συνθηματικό με το οποίο καταχωρίστηκε ο λογαριασμός, οπότε ορίστε ένα νέο στις ρυθμίσεις του λογαριασμού σας μετά."
+msgstr "Η επιβεβαίωση με αυτόν τον σύνδεσμο αφαιρεί το συνθηματικό με το οποίο καταχωρίστηκε ο λογαριασμός, οπότε όρισε ένα νέο στις ρυθμίσεις του λογαριασμού σου μετά."
 
 #: lib/gamend_web/components/content_pages.ex:409
 #, elixir-autogen, elixir-format
@@ -3492,7 +3492,7 @@ msgstr "Διαδρομή πλοήγησης"
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:46
 #, elixir-autogen, elixir-format
 msgid "Copy it now. It will not be shown again."
-msgstr "Αντιγράψτε το τώρα. Δεν θα εμφανιστεί ξανά."
+msgstr "Αντίγραψέ το τώρα. Δεν θα εμφανιστεί ξανά."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:80
 #, elixir-autogen, elixir-format
@@ -3503,8 +3503,8 @@ msgstr "Δημιουργία token"
 #, elixir-autogen, elixir-format
 msgid "Delete your account? It will be deleted in %{count} day, and signing in before then keeps it."
 msgid_plural "Delete your account? It will be deleted in %{count} days, and signing in before then keeps it."
-msgstr[0] "Διαγραφή του λογαριασμού σας; Θα διαγραφεί σε %{count} ημέρα και, αν συνδεθείτε πριν από τότε, θα διατηρηθεί."
-msgstr[1] "Διαγραφή του λογαριασμού σας; Θα διαγραφεί σε %{count} ημέρες και, αν συνδεθείτε πριν από τότε, θα διατηρηθεί."
+msgstr[0] "Διαγραφή του λογαριασμού σου; Θα διαγραφεί σε %{count} ημέρα και, αν συνδεθείς πριν από τότε, θα διατηρηθεί."
+msgstr[1] "Διαγραφή του λογαριασμού σου; Θα διαγραφεί σε %{count} ημέρες και, αν συνδεθείς πριν από τότε, θα διατηρηθεί."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:52
 #, elixir-autogen, elixir-format
@@ -3519,7 +3519,7 @@ msgstr "Επεξεργασία αυτής της σελίδας"
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:33
 #, elixir-autogen, elixir-format
 msgid "For scripts and CI: send one as a Bearer token to any API route that takes an access token. A password or email change revokes them all."
-msgstr "Για σενάρια και CI: στείλτε ένα ως Bearer token σε οποιαδήποτε διαδρομή API δέχεται token πρόσβασης. Μια αλλαγή συνθηματικού ή email τα ανακαλεί όλα."
+msgstr "Για σενάρια και CI: στείλε ένα ως Bearer token σε οποιαδήποτε διαδρομή API δέχεται token πρόσβασης. Μια αλλαγή συνθηματικού ή email τα ανακαλεί όλα."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:225
 #, elixir-autogen, elixir-format
@@ -3581,8 +3581,8 @@ msgstr "Το token ανακλήθηκε."
 #, elixir-autogen, elixir-format
 msgid "Too many failed attempts. Try again in %{count} minute, or sign in with an emailed link."
 msgid_plural "Too many failed attempts. Try again in %{count} minutes, or sign in with an emailed link."
-msgstr[0] "Πάρα πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε %{count} λεπτό ή συνδεθείτε με σύνδεσμο μέσω email."
-msgstr[1] "Πάρα πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε %{count} λεπτά ή συνδεθείτε με σύνδεσμο μέσω email."
+msgstr[0] "Πάρα πολλές αποτυχημένες προσπάθειες. Δοκίμασε ξανά σε %{count} λεπτό ή συνδέσου με σύνδεσμο μέσω email."
+msgstr[1] "Πάρα πολλές αποτυχημένες προσπάθειες. Δοκίμασε ξανά σε %{count} λεπτά ή συνδέσου με σύνδεσμο μέσω email."
 
 #: lib/gamend_web/controllers/page_controller.ex:50
 #: lib/gamend_web/controllers/page_html/ui.html.heex:8
@@ -3593,19 +3593,19 @@ msgstr "Στοιχεία διεπαφής"
 #: lib/gamend_web/user_auth.ex:84
 #, elixir-autogen, elixir-format
 msgid "Welcome back. Your account will not be deleted."
-msgstr "Καλώς ήρθατε ξανά. Ο λογαριασμός σας δεν θα διαγραφεί."
+msgstr "Καλώς ήρθες ξανά. Ο λογαριασμός σου δεν θα διαγραφεί."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:169
 #, elixir-autogen, elixir-format
 msgid "You have reached the token limit. Revoke one first."
-msgstr "Φτάσατε το όριο token. Ανακαλέστε πρώτα ένα."
+msgstr "Έφτασες το όριο token. Ανακάλεσε πρώτα ένα."
 
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:453
 #, elixir-autogen, elixir-format
 msgid "Your account will be deleted in %{count} day. Sign in before then to keep it."
 msgid_plural "Your account will be deleted in %{count} days. Sign in before then to keep it."
-msgstr[0] "Ο λογαριασμός σας θα διαγραφεί σε %{count} ημέρα. Συνδεθείτε πριν από τότε για να τον διατηρήσετε."
-msgstr[1] "Ο λογαριασμός σας θα διαγραφεί σε %{count} ημέρες. Συνδεθείτε πριν από τότε για να τον διατηρήσετε."
+msgstr[0] "Ο λογαριασμός σου θα διαγραφεί σε %{count} ημέρα. Συνδέσου πριν από τότε για να τον διατηρήσεις."
+msgstr[1] "Ο λογαριασμός σου θα διαγραφεί σε %{count} ημέρες. Συνδέσου πριν από τότε για να τον διατηρήσεις."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:67
 #, elixir-autogen, elixir-format

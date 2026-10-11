@@ -201,8 +201,8 @@ defmodule GamendWeb.NotificationsLive do
   end
 
   # A notification still arrives when its page is switched off on the site
-  # (the game sends chat, group and cup traffic regardless), so its button
-  # goes.
+  # (the game sends chat, friend, group and cup traffic regardless), so its
+  # button goes.
   defp page_open?(path) do
     cond do
       under?(path, "/chat") ->
@@ -214,6 +214,12 @@ defmodule GamendWeb.NotificationsLive do
       under?(path, "/tournaments") ->
         GamendWeb.Features.enabled?(:web_tournaments) and
           GamendWeb.Features.enabled?(:list_tournaments)
+
+      path == ~p"/users/settings?#{[tab: "friends"]}" ->
+        GamendWeb.Features.enabled?(:web_friends)
+
+      under?(path, "/play") ->
+        GamendWeb.Features.enabled?(:play)
 
       true ->
         true

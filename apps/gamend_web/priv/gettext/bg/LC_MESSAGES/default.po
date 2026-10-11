@@ -963,7 +963,7 @@ msgstr "Абонаментът отново ще се подновява."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Покупката е отказана."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -982,7 +982,7 @@ msgstr "Покупката се провали: %{reason}"
 #: lib/gamend_web/live/store_live/index.ex:261
 #, elixir-autogen, elixir-format
 msgid "Checkout is already open for this item. Finish or cancel that checkout first."
-msgstr "Вече има отворена поръчка за този артикул. Първо я завършете или откажете."
+msgstr "Вече има отворена поръчка за този артикул. Първо я завърши или откажи."
 
 #: lib/gamend_web/live/store_live/index.ex:74
 #, elixir-autogen, elixir-format
@@ -1242,7 +1242,7 @@ msgstr "Схеми"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Отменен"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1379,7 +1379,7 @@ msgstr "Победи"
 #: lib/gamend_web/live/tournaments_live.ex:130
 #, elixir-autogen, elixir-format
 msgid "Left"
-msgstr "Напуснахте"
+msgstr "Напусна"
 
 #: lib/gamend_web/live/tournaments_live.ex:162
 #: lib/gamend_web/live_helpers.ex:312
@@ -1401,13 +1401,13 @@ msgstr "Този турнир е пълен."
 #: lib/gamend_web/live_helpers.ex:310
 #, elixir-autogen, elixir-format
 msgid "You are already registered."
-msgstr "Вече сте регистрирани."
+msgstr "Вече си регистриран."
 
 #: lib/gamend_web/live/tournaments_live.ex:165
 #: lib/gamend_web/live_helpers.ex:311
 #, elixir-autogen, elixir-format
 msgid "You are not registered."
-msgstr "Не сте регистрирани."
+msgstr "Не си регистриран."
 
 #: lib/gamend_web/live/tournaments_live.ex:626
 #, elixir-autogen, elixir-format
@@ -1468,7 +1468,7 @@ msgstr "Отвори чата"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:521
 #, elixir-autogen, elixir-format
 msgid "Please choose an image first."
-msgstr "Първо изберете изображение."
+msgstr "Първо избери изображение."
 
 #: lib/gamend_web/live/user_live/settings/items_tab.ex:40
 #, elixir-autogen, elixir-format
@@ -2264,7 +2264,7 @@ msgstr "Gamend не включва собствен списък с думи; en
 #: lib/gamend_web/live/admin_live/chat_filter.ex:404
 #, elixir-autogen, elixir-format
 msgid "The Chat guide lists public sources and how to install one."
-msgstr "Ръководството за чат посочва публични източници и как да инсталирате списък."
+msgstr "Ръководството за чат посочва публични източници и как да инсталираш списък."
 
 #: lib/gamend_web/live/admin_live/chat_reports.ex:602
 #: lib/gamend_web/live/admin_live/chat_reports.ex:621
@@ -2368,12 +2368,12 @@ msgstr "Активни днес"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Добавете дневник на промените в CHANGELOG.md, за да се показва тук."
+msgstr "Добави дневник на промените в CHANGELOG.md, за да се показва тук."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Добавете пътна карта в ROADMAP.md, за да се показва тук."
+msgstr "Добави пътна карта в ROADMAP.md, за да се показва тук."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2437,7 +2437,7 @@ msgstr "Възпроизвеждане на видеото"
 #: lib/gamend_web/components/content_pages.ex:157
 #, elixir-autogen, elixir-format
 msgid "Register a blog directory to display posts here."
-msgstr "Регистрирайте папка за блог, за да се показват публикации тук."
+msgstr "Регистрирай папка за блог, за да се показват публикации тук."
 
 #: lib/gamend_web/components/content_pages.ex:64
 #: lib/gamend_web/components/content_pages.ex:83
@@ -2462,7 +2462,7 @@ msgstr "Нещо се обърка"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Този акаунт има собствен начин за вход. Влезте в него и прекратете връзката с доставчика там."
+msgstr "Този акаунт има собствен начин за вход. Влез в него и прекрати връзката с доставчика там."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
@@ -2492,12 +2492,12 @@ msgstr "Къде да продължите"
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "Нямате достъп до тази страница. Влизането може да помогне."
+msgstr "Нямаш достъп до тази страница. Влизането може да помогне."
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "Направихте много заявки за кратко време. Изчакайте малко и опитайте отново."
+msgstr "Направи много заявки за кратко време. Изчакай малко и опитай отново."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -3017,7 +3017,7 @@ msgstr "Офлайн"
 #: lib/gamend_web/live_helpers.ex:266
 #, elixir-autogen, elixir-format
 msgid "One of you has blocked the other."
-msgstr "Единият от вас е блокирал другия."
+msgstr "Единият от двамата е блокирал другия."
 
 #: lib/gamend_web/live_helpers.ex:328
 #, elixir-autogen, elixir-format
@@ -3163,7 +3163,7 @@ msgstr "Заявката не можа да бъде обработена. Въ�
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Входът беше отменен или не завърши. Опитай отново."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
@@ -3206,7 +3206,7 @@ msgstr "Вече изпрати заявка."
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
 msgid "You are already friends."
-msgstr "Вече сте приятели."
+msgstr "Този играч вече ти е приятел."
 
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format

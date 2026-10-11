@@ -963,7 +963,7 @@ msgstr "Abonelik yeniden yenilenecek."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Satın alma iptal edildi."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -982,7 +982,7 @@ msgstr "Satın alma başarısız: %{reason}"
 #: lib/gamend_web/live/store_live/index.ex:261
 #, elixir-autogen, elixir-format
 msgid "Checkout is already open for this item. Finish or cancel that checkout first."
-msgstr "Bu ürün için zaten açık bir satın alma işlemi var. Önce onu tamamlayın veya iptal edin."
+msgstr "Bu ürün için zaten açık bir satın alma işlemi var. Önce onu tamamla ya da iptal et."
 
 #: lib/gamend_web/live/store_live/index.ex:74
 #, elixir-autogen, elixir-format
@@ -1242,7 +1242,7 @@ msgstr "Fikstürler"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "İptal edildi"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1401,13 +1401,13 @@ msgstr "Bu turnuva dolu."
 #: lib/gamend_web/live_helpers.ex:310
 #, elixir-autogen, elixir-format
 msgid "You are already registered."
-msgstr "Zaten kayıtlısınız."
+msgstr "Zaten kayıtlısın."
 
 #: lib/gamend_web/live/tournaments_live.ex:165
 #: lib/gamend_web/live_helpers.ex:311
 #, elixir-autogen, elixir-format
 msgid "You are not registered."
-msgstr "Kayıtlı değilsiniz."
+msgstr "Kayıtlı değilsin."
 
 #: lib/gamend_web/live/tournaments_live.ex:626
 #, elixir-autogen, elixir-format
@@ -1468,7 +1468,7 @@ msgstr "Sohbeti aç"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:521
 #, elixir-autogen, elixir-format
 msgid "Please choose an image first."
-msgstr "Lütfen önce bir görsel seçin."
+msgstr "Önce bir görsel seç."
 
 #: lib/gamend_web/live/user_live/settings/items_tab.ex:40
 #, elixir-autogen, elixir-format
@@ -2368,12 +2368,12 @@ msgstr "Bugün aktif"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Burada göstermek için CHANGELOG.md dosyasına bir değişiklik günlüğü ekleyin."
+msgstr "Burada göstermek için CHANGELOG.md dosyasına bir değişiklik günlüğü ekle."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Burada göstermek için ROADMAP.md dosyasına bir yol haritası ekleyin."
+msgstr "Burada göstermek için ROADMAP.md dosyasına bir yol haritası ekle."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2462,12 +2462,12 @@ msgstr "Bir şeyler ters gitti"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Bu hesabın kendi giriş yöntemi var. O hesaba giriş yapın ve sağlayıcının bağlantısını orada kaldırın."
+msgstr "Bu hesabın kendi giriş yöntemi var. O hesaba giriş yap ve sağlayıcının bağlantısını orada kaldır."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "Aradığınız sayfa taşınmış ya da hiç var olmamış. Sitenin geri kalanı sorunsuz çalışıyor."
+msgstr "Aradığın sayfa taşınmış ya da hiç var olmamış. Sitenin geri kalanı sorunsuz çalışıyor."
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2497,7 +2497,7 @@ msgstr "Bu sayfaya erişiminiz yok. Giriş yapmak yardımcı olabilir."
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "Kısa sürede çok fazla istek gönderdiniz. Lütfen biraz bekleyip tekrar deneyin."
+msgstr "Kısa sürede çok fazla istek gönderdin. Biraz bekleyip tekrar dene."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -3163,7 +3163,7 @@ msgstr "İstek işlenemedi. Geri dönüp tekrar dene."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Giriş iptal edildi veya tamamlanmadı. Lütfen tekrar dene."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
@@ -3206,7 +3206,7 @@ msgstr "Zaten bir istek gönderdin."
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
 msgid "You are already friends."
-msgstr "Zaten arkadaşsınız."
+msgstr "Bu oyuncu zaten arkadaşın."
 
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format

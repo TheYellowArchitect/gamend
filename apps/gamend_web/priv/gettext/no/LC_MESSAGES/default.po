@@ -963,7 +963,7 @@ msgstr "Abonnementet fornyes igjen."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Kjøpet ble avbrutt."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "Turneringstrær"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Avbrutt"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3163,7 +3163,7 @@ msgstr "Forespørselen kunne ikke behandles. Gå tilbake og prøv igjen."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Innloggingen ble avbrutt eller ble ikke fullført. Prøv igjen."
 
 #: lib/gamend_web/live/auth_success_live.ex:141

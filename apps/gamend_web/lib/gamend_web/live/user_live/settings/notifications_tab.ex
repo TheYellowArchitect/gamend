@@ -16,7 +16,18 @@ defmodule GamendWeb.UserLive.Settings.NotificationsTab do
   alias Gamend.Notifications.Preferences
   alias GamendWeb.NotificationEmail
 
-  def assign_defaults(socket), do: assign(socket, :notify_groups, Preferences.groups())
+  def assign_defaults(socket), do: assign(socket, :notify_groups, shown_groups())
+
+  # A group whose every notification is about a feature the site has switched
+  # off (`GamendWeb.Features`) has nothing to choose on the website: its row
+  # goes. The game still sends that traffic, and the stored choice is kept.
+  defp shown_groups, do: Enum.filter(Preferences.groups(), &shown?/1)
+
+  defp shown?(%{key: "social"}),
+    do: GamendWeb.Features.enabled?(:web_friends) or GamendWeb.Features.enabled?(:web_groups)
+
+  defp shown?(%{key: "chat"}), do: GamendWeb.Features.enabled?(:web_chat)
+  defp shown?(_group), do: true
 
   attr :settings_tab, :string, required: true
   attr :user, :map, required: true

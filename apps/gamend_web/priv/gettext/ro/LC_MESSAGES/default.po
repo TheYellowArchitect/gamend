@@ -566,7 +566,7 @@ msgstr "Notificări"
 #: lib/gamend_web/live/chat_live.ex:323
 #, elixir-autogen, elixir-format
 msgid "Select a conversation"
-msgstr "Selectați o conversație"
+msgstr "Alege o conversație"
 
 #: lib/gamend_web/components/content_pages.ex:319
 #: lib/gamend_web/live/leaderboards_live.ex:250
@@ -784,7 +784,7 @@ msgstr "A eșuat"
 #: lib/gamend_web/controllers/user_session_controller.ex:132
 #, elixir-autogen, elixir-format
 msgid "Your account is pending activation."
-msgstr "Contul dumneavoastră așteaptă să fie activat."
+msgstr "Contul tău așteaptă să fie activat."
 
 #: lib/gamend_web/live/quests_live.ex:518
 #, elixir-autogen, elixir-format
@@ -963,7 +963,7 @@ msgstr "Abonamentul se reînnoiește din nou."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Achiziția a fost anulată."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -982,7 +982,7 @@ msgstr "Achiziția a eșuat: %{reason}"
 #: lib/gamend_web/live/store_live/index.ex:261
 #, elixir-autogen, elixir-format
 msgid "Checkout is already open for this item. Finish or cancel that checkout first."
-msgstr "Există deja o comandă deschisă pentru acest articol. Finalizați-o sau anulați-o mai întâi."
+msgstr "Există deja o comandă deschisă pentru acest articol. Finalizeaz-o sau anuleaz-o mai întâi."
 
 #: lib/gamend_web/live/store_live/index.ex:74
 #, elixir-autogen, elixir-format
@@ -1242,7 +1242,7 @@ msgstr "Tablouri"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Anulat"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1468,7 +1468,7 @@ msgstr "Deschide chatul"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:521
 #, elixir-autogen, elixir-format
 msgid "Please choose an image first."
-msgstr "Alegeți mai întâi o imagine."
+msgstr "Alege mai întâi o imagine."
 
 #: lib/gamend_web/live/user_live/settings/items_tab.ex:40
 #, elixir-autogen, elixir-format
@@ -2368,12 +2368,12 @@ msgstr "Activi astăzi"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Adăugați un jurnal de modificări în CHANGELOG.md pentru a-l afișa aici."
+msgstr "Adaugă un jurnal de modificări în CHANGELOG.md ca să-l afișezi aici."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Adăugați o foaie de parcurs în ROADMAP.md pentru a o afișa aici."
+msgstr "Adaugă o foaie de parcurs în ROADMAP.md ca s-o afișezi aici."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2437,7 +2437,7 @@ msgstr "Redă videoclipul"
 #: lib/gamend_web/components/content_pages.ex:157
 #, elixir-autogen, elixir-format
 msgid "Register a blog directory to display posts here."
-msgstr "Înregistrați un director de blog pentru a afișa articole aici."
+msgstr "Înregistrează un director de blog ca să afișezi articole aici."
 
 #: lib/gamend_web/components/content_pages.ex:64
 #: lib/gamend_web/components/content_pages.ex:83
@@ -2462,12 +2462,12 @@ msgstr "Ceva nu a mers bine"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Acel cont are propria metodă de autentificare. Conectați-vă la el și dezasociați furnizorul de acolo."
+msgstr "Acel cont are propria metodă de autentificare. Conectează-te la el și dezasociază furnizorul de acolo."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "Pagina pe care o căutați a fost mutată sau nu a existat niciodată. Restul site-ului funcționează."
+msgstr "Pagina pe care o cauți a fost mutată sau nu a existat niciodată. Restul site-ului funcționează."
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2487,17 +2487,17 @@ msgstr "Amuțiri active încărcate în memoria acestui nod. Aplicarea citește 
 #: lib/gamend_web/controllers/error_html/error_page.html.heex:52
 #, elixir-autogen, elixir-format
 msgid "Where to go next"
-msgstr "Unde mergeți mai departe"
+msgstr "Unde mergi mai departe"
 
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "Nu aveți acces la această pagină. Autentificarea ar putea ajuta."
+msgstr "Nu ai acces la această pagină. Autentificarea ar putea ajuta."
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "Ați făcut multe solicitări într-un timp scurt. Așteptați puțin și încercați din nou."
+msgstr "Ai făcut multe solicitări într-un timp scurt. Așteaptă puțin și încearcă din nou."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -2777,9 +2777,9 @@ msgstr[2] "Ștergi %{count} de sesiuni selectate?"
 #, elixir-autogen, elixir-format
 msgid "Delete %{count} selected user?"
 msgid_plural "Delete %{count} selected users?"
-msgstr[0] "Ștergi %{count} utilizator selectat?"
-msgstr[1] "Ștergi %{count} utilizatori selectați?"
-msgstr[2] "Ștergi %{count} de utilizatori selectați?"
+msgstr[0] "Ștergi %{count} utilizator ales?"
+msgstr[1] "Ștergi %{count} utilizatori aleși?"
+msgstr[2] "Ștergi %{count} de utilizatori aleși?"
 
 #: lib/gamend_web/live/notifications_live.ex:30
 #, elixir-autogen, elixir-format
@@ -3210,7 +3210,7 @@ msgstr "Cererea nu a putut fi procesată. Întoarce-te și încearcă din nou."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Conectarea a fost anulată sau nu s-a finalizat. Încearcă din nou."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
@@ -3253,7 +3253,7 @@ msgstr "Ai trimis deja o cerere."
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
 msgid "You are already friends."
-msgstr "Sunteți deja prieteni."
+msgstr "Ești deja prieten cu acest jucător."
 
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format

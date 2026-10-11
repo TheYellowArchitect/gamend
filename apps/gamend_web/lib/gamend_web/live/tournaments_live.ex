@@ -985,6 +985,6 @@ defmodule GamendWeb.TournamentsLive do
   defp state_label("registration"), do: gettext("Registration open")
   defp state_label("running"), do: gettext("Running")
   defp state_label("finished"), do: gettext("Finished")
-  defp state_label("cancelled"), do: gettext("Cancelled")
+  defp state_label("cancelled"), do: gettext("Canceled")
   defp state_label(other), do: other
 end

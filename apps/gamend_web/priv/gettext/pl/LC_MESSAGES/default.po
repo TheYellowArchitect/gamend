@@ -963,7 +963,7 @@ msgstr "Subskrypcja znów będzie się odnawiać."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Zakup anulowany."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "Drabinki"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Anulowany"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3210,7 +3210,7 @@ msgstr "Nie udało się obsłużyć żądania. Wróć i spróbuj ponownie."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Logowanie zostało anulowane lub nie zostało ukończone. Spróbuj ponownie."
 
 #: lib/gamend_web/live/auth_success_live.ex:141

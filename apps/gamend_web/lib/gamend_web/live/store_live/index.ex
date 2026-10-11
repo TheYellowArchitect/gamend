@@ -89,7 +89,7 @@ defmodule GamendWeb.StoreLive.Index do
         <%= if @live_action == :cancel do %>
           <div class="alert alert-warning">
             <div>
-              <div class="font-semibold">{gettext("Checkout cancelled.")}</div>
+              <div class="font-semibold">{gettext("Checkout canceled.")}</div>
               <div class="text-sm">{gettext("No purchase was fulfilled.")}</div>
             </div>
           </div>

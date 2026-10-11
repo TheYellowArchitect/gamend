@@ -963,7 +963,7 @@ msgstr "A subscrição volta a ser renovada."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Compra cancelada."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "Chaves"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Cancelado"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -2368,12 +2368,12 @@ msgstr "Ativos hoje"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Adicione um registo de alterações em CHANGELOG.md para o mostrar aqui."
+msgstr "Adiciona um registo de alterações em CHANGELOG.md para o mostrar aqui."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Adicione um roteiro em ROADMAP.md para o mostrar aqui."
+msgstr "Adiciona um roteiro em ROADMAP.md para o mostrar aqui."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2462,7 +2462,7 @@ msgstr "Algo correu mal"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Essa conta tem o seu próprio método de início de sessão. Inicie sessão nela e desassocie lá o fornecedor."
+msgstr "Essa conta tem o seu próprio método de início de sessão. Inicia sessão nela e desassocia lá o fornecedor."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
@@ -3017,7 +3017,7 @@ msgstr "Offline"
 #: lib/gamend_web/live_helpers.ex:266
 #, elixir-autogen, elixir-format
 msgid "One of you has blocked the other."
-msgstr "Um de vocês bloqueou o outro."
+msgstr "Um dos dois bloqueou o outro."
 
 #: lib/gamend_web/live_helpers.ex:328
 #, elixir-autogen, elixir-format
@@ -3163,7 +3163,7 @@ msgstr "Não foi possível processar o pedido. Volta atrás e tenta novamente."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "O início de sessão foi cancelado ou não foi concluído. Tenta novamente."
 
 #: lib/gamend_web/live/auth_success_live.ex:141

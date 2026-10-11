@@ -963,7 +963,7 @@ msgstr "การสมัครสมาชิกจะต่ออายุอ
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "ยกเลิกการชำระเงินแล้ว"
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "สายการแข่งขัน"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "ยกเลิกแล้ว"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3116,7 +3116,7 @@ msgstr "ไม่สามารถดำเนินการตามคำข
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "การเข้าสู่ระบบถูกยกเลิกหรือไม่สำเร็จ โปรดลองอีกครั้ง"
 
 #: lib/gamend_web/live/auth_success_live.ex:141

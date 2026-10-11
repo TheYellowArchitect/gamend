@@ -184,7 +184,7 @@ defmodule GamendWeb.AdminLive.Matchmaking do
           <div class="flex flex-wrap gap-4 text-sm">
             <span>{gettext("Passed")}: <b>{Map.get(@ready_stats, "passed", 0)}</b></span>
             <span>{gettext("Failed")}: <b>{Map.get(@ready_stats, "failed", 0)}</b></span>
-            <span>{gettext("Cancelled")}: <b>{Map.get(@ready_stats, "cancelled", 0)}</b></span>
+            <span>{gettext("Canceled")}: <b>{Map.get(@ready_stats, "cancelled", 0)}</b></span>
             <span>{gettext("Pending")}: <b>{Map.get(@ready_stats, "pending", 0)}</b></span>
           </div>
 

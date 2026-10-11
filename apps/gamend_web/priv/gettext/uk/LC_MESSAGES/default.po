@@ -492,7 +492,7 @@ msgstr "Переглянути"
 #: lib/gamend_web/live/user_live/settings/groups_tab.ex:309
 #, elixir-autogen, elixir-format
 msgid "You"
-msgstr "Ви"
+msgstr "Ти"
 
 #: lib/gamend_web/live/groups_live.ex:425
 #: lib/gamend_web/live/leaderboards_live.ex:302
@@ -566,7 +566,7 @@ msgstr "Сповіщення"
 #: lib/gamend_web/live/chat_live.ex:323
 #, elixir-autogen, elixir-format
 msgid "Select a conversation"
-msgstr "Виберіть розмову"
+msgstr "Вибери розмову"
 
 #: lib/gamend_web/components/content_pages.ex:319
 #: lib/gamend_web/live/leaderboards_live.ex:250
@@ -784,7 +784,7 @@ msgstr "Помилка"
 #: lib/gamend_web/controllers/user_session_controller.ex:132
 #, elixir-autogen, elixir-format
 msgid "Your account is pending activation."
-msgstr "Ваш обліковий запис очікує активації."
+msgstr "Твій обліковий запис очікує активації."
 
 #: lib/gamend_web/live/quests_live.ex:518
 #, elixir-autogen, elixir-format
@@ -879,7 +879,7 @@ msgstr "Дані"
 #: lib/gamend_web/live/user_live/registration.ex:109
 #, elixir-autogen, elixir-format
 msgid "Too many attempts. Please try again later."
-msgstr "Забагато спроб. Спробуйте пізніше."
+msgstr "Забагато спроб. Спробуй пізніше."
 
 #: lib/gamend_web/live/store_live/index.ex:202
 #, elixir-autogen, elixir-format
@@ -919,7 +919,7 @@ msgstr "Повернути гроші"
 #: lib/gamend_web/live/user_live/settings/payments_tab.ex:115
 #, elixir-autogen, elixir-format
 msgid "Refund %{product}? It ends now and the payment goes back to you."
-msgstr "Повернути гроші за %{product}? Доступ закінчиться зараз, а платіж повернеться вам."
+msgstr "Повернути гроші за %{product}? Доступ закінчиться зараз, а платіж повернеться тобі."
 
 #: lib/gamend_web/live/user_live/settings/payments_tab.ex:105
 #, elixir-autogen, elixir-format
@@ -963,7 +963,7 @@ msgstr "Підписка знову продовжуватиметься."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Покупку скасовано."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -982,7 +982,7 @@ msgstr "Покупка не вдалася: %{reason}"
 #: lib/gamend_web/live/store_live/index.ex:261
 #, elixir-autogen, elixir-format
 msgid "Checkout is already open for this item. Finish or cancel that checkout first."
-msgstr "Оформлення покупки цього товару вже розпочато. Спочатку завершіть або скасуйте його."
+msgstr "Оформлення покупки цього товару вже розпочато. Спочатку заверши або скасуй його."
 
 #: lib/gamend_web/live/store_live/index.ex:74
 #, elixir-autogen, elixir-format
@@ -997,7 +997,7 @@ msgstr "Підтвердити та запам'ятати мене"
 #: lib/gamend_web/live/store_live/index.ex:95
 #, elixir-autogen, elixir-format
 msgid "Create products and provider SKUs in Admin -> Payments."
-msgstr "Створіть продукти та SKU провайдерів в Admin -> Payments."
+msgstr "Створи продукти та SKU провайдерів в Admin -> Payments."
 
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:247
 #, elixir-autogen, elixir-format
@@ -1211,7 +1211,7 @@ msgstr "Ім'я користувача"
 #: lib/gamend_web/live/store_live/index.ex:258
 #, elixir-autogen, elixir-format
 msgid "You already own this item."
-msgstr "Ви вже володієте цим товаром."
+msgstr "Цей товар уже твій."
 
 #: lib/gamend_web/live/user_live/login.ex:59
 #, elixir-autogen, elixir-format
@@ -1242,7 +1242,7 @@ msgstr "Сітки"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Скасовано"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1379,7 +1379,7 @@ msgstr "Перемоги"
 #: lib/gamend_web/live/tournaments_live.ex:130
 #, elixir-autogen, elixir-format
 msgid "Left"
-msgstr "Ви вийшли"
+msgstr "Вихід виконано"
 
 #: lib/gamend_web/live/tournaments_live.ex:162
 #: lib/gamend_web/live_helpers.ex:312
@@ -1401,13 +1401,13 @@ msgstr "Цей турнір заповнений."
 #: lib/gamend_web/live_helpers.ex:310
 #, elixir-autogen, elixir-format
 msgid "You are already registered."
-msgstr "Ви вже зареєстровані."
+msgstr "Реєстрацію вже пройдено."
 
 #: lib/gamend_web/live/tournaments_live.ex:165
 #: lib/gamend_web/live_helpers.ex:311
 #, elixir-autogen, elixir-format
 msgid "You are not registered."
-msgstr "Ви не зареєстровані."
+msgstr "Реєстрації немає."
 
 #: lib/gamend_web/live/tournaments_live.ex:626
 #, elixir-autogen, elixir-format
@@ -1468,7 +1468,7 @@ msgstr "Відкрити чат"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:521
 #, elixir-autogen, elixir-format
 msgid "Please choose an image first."
-msgstr "Спочатку виберіть зображення."
+msgstr "Спочатку вибери зображення."
 
 #: lib/gamend_web/live/user_live/settings/items_tab.ex:40
 #, elixir-autogen, elixir-format
@@ -1669,17 +1669,17 @@ msgstr "Переглянути ланцюжок завдань"
 #: lib/gamend_web/live_helpers.ex:206
 #, elixir-autogen, elixir-format
 msgid "Captcha check failed. Please try again."
-msgstr "Перевірку капчі не пройдено. Спробуйте ще раз."
+msgstr "Перевірку капчі не пройдено. Спробуй ще раз."
 
 #: lib/gamend_web/live_helpers.ex:209
 #, elixir-autogen, elixir-format
 msgid "Could not reach the captcha service. Please try again."
-msgstr "Не вдалося з'єднатися із сервісом капчі. Спробуйте ще раз."
+msgstr "Не вдалося з'єднатися із сервісом капчі. Спробуй ще раз."
 
 #: lib/gamend_web/live_helpers.ex:202
 #, elixir-autogen, elixir-format
 msgid "Please complete the captcha."
-msgstr "Будь ласка, пройдіть капчу."
+msgstr "Пройди капчу."
 
 #: lib/gamend_web/live/admin_live/chat_reports.ex:354
 #, elixir-autogen, elixir-format
@@ -1854,7 +1854,7 @@ msgstr "Кожен збіг замінюється на ***, і повідомл
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:100
 #, elixir-autogen, elixir-format
 msgid "Enter the player id to mute."
-msgstr "Вкажіть id гравця для мута."
+msgstr "Вкажи id гравця для мута."
 
 #: lib/gamend_web/live/admin_live/chat_reports.ex:341
 #, elixir-autogen, elixir-format
@@ -1880,7 +1880,7 @@ msgstr "Позначено словами"
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:385
 #, elixir-autogen, elixir-format
 msgid "Global mutes leave this empty"
-msgstr "Для глобальних мутів залиште порожнім"
+msgstr "Для глобальних мутів залиш порожнім"
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:383
 #, elixir-autogen, elixir-format
@@ -1910,7 +1910,7 @@ msgstr "Мова"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:47
 #, elixir-autogen, elixir-format
 msgid "Link an email or a sign-in provider to set a custom avatar."
-msgstr "Прив'яжіть ел. пошту або провайдера входу, щоб задати власний аватар."
+msgstr "Прив'яжи ел. пошту або провайдера входу, щоб задати власний аватар."
 
 #: lib/gamend_web/live/stats_live.ex:107
 #, elixir-autogen, elixir-format
@@ -2182,7 +2182,7 @@ msgstr "Усього"
 #: lib/gamend_web/live/admin_live/chat_filter.ex:422
 #, elixir-autogen, elixir-format
 msgid "Type a message to test…"
-msgstr "Введіть повідомлення для перевірки…"
+msgstr "Введи повідомлення для перевірки…"
 
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:505
 #, elixir-autogen, elixir-format
@@ -2368,12 +2368,12 @@ msgstr "Активні сьогодні"
 #: lib/gamend_web/components/content_pages.ex:66
 #, elixir-autogen, elixir-format
 msgid "Add a changelog file at CHANGELOG.md to display it here."
-msgstr "Додайте список змін у CHANGELOG.md, щоб він відображався тут."
+msgstr "Додай список змін у CHANGELOG.md, щоб він відображався тут."
 
 #: lib/gamend_web/components/content_pages.ex:89
 #, elixir-autogen, elixir-format
 msgid "Add a roadmap file at ROADMAP.md to display it here."
-msgstr "Додайте дорожню карту в ROADMAP.md, щоб вона відображалася тут."
+msgstr "Додай дорожню карту в ROADMAP.md, щоб вона відображалася тут."
 
 #: lib/gamend_web/components/content_pages.ex:164
 #: lib/gamend_web/live/blog_live.ex:23
@@ -2437,7 +2437,7 @@ msgstr "Відтворити відео"
 #: lib/gamend_web/components/content_pages.ex:157
 #, elixir-autogen, elixir-format
 msgid "Register a blog directory to display posts here."
-msgstr "Зареєструйте теку блогу, щоб тут відображалися дописи."
+msgstr "Зареєструй теку блогу, щоб тут відображалися дописи."
 
 #: lib/gamend_web/components/content_pages.ex:64
 #: lib/gamend_web/components/content_pages.ex:83
@@ -2462,12 +2462,12 @@ msgstr "Щось пішло не так"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:580
 #, elixir-autogen, elixir-format
 msgid "That account has its own sign-in method. Sign in to it and unlink the provider there."
-msgstr "Цей обліковий запис має власний спосіб входу. Увійдіть у нього та від’єднайте провайдера там."
+msgstr "Цей обліковий запис має власний спосіб входу. Увійди в нього та від’єднай провайдера там."
 
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "Сторінку, яку ви шукали, переміщено або її ніколи не існувало. Решта сайту працює."
+msgstr "Потрібну сторінку переміщено або її ніколи не існувало. Решта сайту працює."
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2492,12 +2492,12 @@ msgstr "Куди перейти далі"
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "У вас немає доступу до цієї сторінки. Можливо, допоможе вхід."
+msgstr "У тебе немає доступу до цієї сторінки. Можливо, допоможе вхід."
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "Ви надіслали багато запитів за короткий час. Зачекайте трохи й спробуйте ще раз."
+msgstr "Забагато запитів за короткий час. Зачекай трохи й спробуй ще раз."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -2533,7 +2533,7 @@ msgstr "Запам'ятати мене"
 #: lib/gamend_web/live/user_live/login.ex:119
 #, elixir-autogen, elixir-format
 msgid "Send yourself a magic link to log in, then set a new password on your Account page."
-msgstr "Надішліть собі магічне посилання, щоб увійти, а потім встановіть новий пароль на сторінці «Обліковий запис»."
+msgstr "Надішли собі магічне посилання, щоб увійти, а потім встанови новий пароль на сторінці «Обліковий запис»."
 
 #: lib/gamend_web/live/admin_live/index.ex:960
 #, elixir-autogen, elixir-format
@@ -2641,7 +2641,7 @@ msgstr "Потрібен пароль."
 #: lib/gamend_web/live/user_live/registration.ex:179
 #, elixir-autogen, elixir-format
 msgid "Account created. Check your email for a link to confirm it."
-msgstr "Обліковий запис створено. Перевірте пошту: там посилання для підтвердження."
+msgstr "Обліковий запис створено. Перевір пошту: там посилання для підтвердження."
 
 #: lib/gamend_web/live_helpers.ex:283
 #, elixir-autogen, elixir-format
@@ -2679,7 +2679,7 @@ msgstr[2] "Процеси каналів, що працюють на %{count} з
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:300
 #, elixir-autogen, elixir-format
 msgid "Check your new email address for a link to confirm the change."
-msgstr "Перевірте нову адресу ел. пошти: там посилання для підтвердження зміни."
+msgstr "Перевір нову адресу ел. пошти: там посилання для підтвердження зміни."
 
 #: lib/gamend_web/live/store_live/index.ex:364
 #, elixir-autogen, elixir-format
@@ -2692,7 +2692,7 @@ msgstr[2] "Закриється через %{count} днів"
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:177
 #, elixir-autogen, elixir-format
 msgid "Confirm password"
-msgstr "Підтвердьте пароль"
+msgstr "Підтверди пароль"
 
 #: lib/gamend_web/live_helpers.ex:329
 #, elixir-autogen, elixir-format
@@ -2804,7 +2804,7 @@ msgstr "Видалити інший обліковий запис назавжд
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:610
 #, elixir-autogen, elixir-format
 msgid "Delete your account permanently? This cannot be undone."
-msgstr "Видалити ваш обліковий запис назавжди? Це неможливо скасувати."
+msgstr "Видалити твій обліковий запис назавжди? Це неможливо скасувати."
 
 #: lib/gamend_web/live/admin_live/kv.ex:368
 #, elixir-autogen, elixir-format
@@ -2974,7 +2974,7 @@ msgstr "Гра"
 #: lib/gamend_web/live/user_live/login.ex:179
 #, elixir-autogen, elixir-format
 msgid "If that email has an account, we sent it a login link. Check your inbox."
-msgstr "Якщо з цією адресою пов'язаний обліковий запис, ми надіслали на неї посилання для входу. Перевірте пошту."
+msgstr "Якщо з цією адресою пов'язаний обліковий запис, ми надіслали на неї посилання для входу. Перевір пошту."
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:163
 #, elixir-autogen, elixir-format
@@ -3012,7 +3012,7 @@ msgstr "Прив'язано"
 #: lib/gamend_web/live_helpers.ex:285
 #, elixir-autogen, elixir-format
 msgid "Make someone else an admin first."
-msgstr "Спочатку призначте адміном когось іншого."
+msgstr "Спочатку признач адміном когось іншого."
 
 #: lib/gamend_web/live/groups_live.ex:460
 #: lib/gamend_web/live/user_live/settings/groups_tab.ex:116
@@ -3037,7 +3037,7 @@ msgstr "Нові гравці"
 #: lib/gamend_web/live/admin_live/chat_filter.ex:396
 #, elixir-autogen, elixir-format
 msgid "No bundled lists are available. Drop one at apps/gamend_core/priv/chat_filter/<lang>.txt."
-msgstr "Немає доступних вбудованих списків. Покладіть файл у apps/gamend_core/priv/chat_filter/<lang>.txt."
+msgstr "Немає доступних вбудованих списків. Поклади файл у apps/gamend_core/priv/chat_filter/<lang>.txt."
 
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:212
 #, elixir-autogen, elixir-format
@@ -3059,7 +3059,7 @@ msgstr "Не в мережі"
 #: lib/gamend_web/live_helpers.ex:266
 #, elixir-autogen, elixir-format
 msgid "One of you has blocked the other."
-msgstr "Один із вас заблокував іншого."
+msgstr "Один із двох заблокував іншого."
 
 #: lib/gamend_web/live_helpers.ex:328
 #, elixir-autogen, elixir-format
@@ -3095,7 +3095,7 @@ msgstr "Гравця не знайдено."
 #: lib/gamend_web/live/auth_success_live.ex:235
 #, elixir-autogen, elixir-format
 msgid "Please try again."
-msgstr "Спробуйте ще раз."
+msgstr "Спробуй ще раз."
 
 #: lib/gamend_web/live/leaderboards_live.ex:288
 #, elixir-autogen, elixir-format
@@ -3196,7 +3196,7 @@ msgstr "Це повідомлення заборонене."
 #: lib/gamend_web/controllers/error_html.ex:136
 #, elixir-autogen, elixir-format
 msgid "That was too large to send. Try a smaller file."
-msgstr "Завеликий розмір. Спробуйте менший файл."
+msgstr "Завеликий розмір. Спробуй менший файл."
 
 #: lib/gamend_web/live_helpers.ex:295
 #, elixir-autogen, elixir-format
@@ -3206,12 +3206,12 @@ msgstr "Запрошення більше не дійсне."
 #: lib/gamend_web/controllers/error_html.ex:142
 #, elixir-autogen, elixir-format
 msgid "The request could not be handled. Go back and try again."
-msgstr "Не вдалося обробити запит. Поверніться назад і спробуйте знову."
+msgstr "Не вдалося обробити запит. Повернися назад і спробуй знову."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
-msgstr "Вхід скасовано або не завершено. Спробуйте ще раз."
+msgid "The sign-in was canceled or did not complete. Please try again."
+msgstr "Вхід скасовано або не завершено. Спробуй ще раз."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
 #: lib/gamend_web/live/auth_success_live.ex:223
@@ -3233,7 +3233,7 @@ msgstr "Кому"
 #: lib/gamend_web/live_helpers.ex:273
 #, elixir-autogen, elixir-format
 msgid "Too many pending requests. Wait for some to be answered."
-msgstr "Забагато запитів в очікуванні. Дочекайтеся відповіді на деякі з них."
+msgstr "Забагато запитів в очікуванні. Дочекайся відповіді на деякі з них."
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:483
 #, elixir-autogen, elixir-format
@@ -3248,52 +3248,52 @@ msgstr "Неправильний пароль."
 #: lib/gamend_web/live_helpers.ex:268
 #, elixir-autogen, elixir-format
 msgid "You already sent a request."
-msgstr "Ви вже надіслали запит."
+msgstr "Запит уже надіслано."
 
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
 msgid "You are already friends."
-msgstr "Ви вже друзі."
+msgstr "Цей гравець уже в тебе в друзях."
 
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format
 msgid "You are already in a lobby."
-msgstr "Ви вже в лобі."
+msgstr "Ти вже в лобі."
 
 #: lib/gamend_web/live_helpers.ex:302
 #, elixir-autogen, elixir-format
 msgid "You are already in a party."
-msgstr "Ви вже в паті."
+msgstr "Ти вже в команді."
 
 #: lib/gamend_web/live_helpers.ex:306
 #, elixir-autogen, elixir-format
 msgid "You are muted."
-msgstr "У вас мут."
+msgstr "У тебе мут."
 
 #: lib/gamend_web/live_helpers.ex:281
 #, elixir-autogen, elixir-format
 msgid "You are not a member of this group."
-msgstr "Ви не учасник цієї групи."
+msgstr "Ти не учасник цієї групи."
 
 #: lib/gamend_web/live_helpers.ex:303
 #, elixir-autogen, elixir-format
 msgid "You are not in a party."
-msgstr "Ви не в паті."
+msgstr "Ти не в команді."
 
 #: lib/gamend_web/live_helpers.ex:297
 #, elixir-autogen, elixir-format
 msgid "You are not in this lobby."
-msgstr "Ви не в цьому лобі."
+msgstr "Ти не в цьому лобі."
 
 #: lib/gamend_web/live_helpers.ex:307
 #, elixir-autogen, elixir-format
 msgid "You are sending messages too fast."
-msgstr "Ви надсилаєте повідомлення надто швидко."
+msgstr "Ти надсилаєш повідомлення надто швидко."
 
 #: lib/gamend_web/live_helpers.ex:276
 #, elixir-autogen, elixir-format
 msgid "You can only invite friends or players who share a group with you."
-msgstr "Запрошувати можна лише друзів або гравців із ваших груп."
+msgstr "Запрошувати можна лише друзів або гравців із твоїх груп."
 
 #: lib/gamend_web/live_helpers.ex:309
 #, elixir-autogen, elixir-format
@@ -3309,29 +3309,29 @@ msgstr "З собою так не можна."
 #, elixir-autogen, elixir-format
 msgid "You have %{count} quest ready to claim!"
 msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "У вас %{count} завдання готове до отримання!"
-msgstr[1] "У вас %{count} завдання готові до отримання!"
-msgstr[2] "У вас %{count} завдань готові до отримання!"
+msgstr[0] "У тебе %{count} завдання готове до отримання!"
+msgstr[1] "У тебе %{count} завдання готові до отримання!"
+msgstr[2] "У тебе %{count} завдань готові до отримання!"
 
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."
-msgstr "Ви створили забагато груп."
+msgstr "Створено забагато груп."
 
 #: lib/gamend_web/live/auth_success_live.ex:226
 #, elixir-autogen, elixir-format
 msgid "Your account is waiting for an administrator to activate it."
-msgstr "Ваш обліковий запис очікує активації адміністратором."
+msgstr "Твій обліковий запис очікує активації адміністратором."
 
 #: lib/gamend_web/live_helpers.ex:269
 #, elixir-autogen, elixir-format
 msgid "Your friend list is full."
-msgstr "Ваш список друзів заповнений."
+msgstr "Твій список друзів заповнений."
 
 #: lib/gamend_web/live/store_live/index.ex:236
 #, elixir-autogen, elixir-format
 msgid "Your payment is still being processed. Refresh this page in a moment."
-msgstr "Платіж ще обробляється. Оновіть сторінку за хвилину."
+msgstr "Платіж ще обробляється. Онови сторінку за хвилину."
 
 #: lib/gamend_web/live/admin_live/matchmaking.ex:181
 #, elixir-autogen, elixir-format
@@ -3349,12 +3349,12 @@ msgstr[2] "останні %{count} запусків"
 #: lib/gamend_web/controllers/user_session_controller.ex:77
 #, elixir-autogen, elixir-format
 msgid "Confirm your email first with the link we sent you, or log in with an emailed link."
-msgstr "Спершу підтвердьте адресу за посиланням, яке ми надіслали, або увійдіть за посиланням з листа."
+msgstr "Спершу підтверди адресу за посиланням, яке ми надіслали, або увійди за посиланням з листа."
 
 #: lib/gamend_web/live/user_live/confirmation.ex:38
 #, elixir-autogen, elixir-format
 msgid "Confirming with this link removes the password this account was registered with, so set a new one in your account settings afterwards."
-msgstr "Підтвердження за цим посиланням видаляє пароль, з яким зареєстровано обліковий запис, тож потім задайте новий у налаштуваннях облікового запису."
+msgstr "Підтвердження за цим посиланням видаляє пароль, з яким зареєстровано обліковий запис, тож потім задай новий у налаштуваннях облікового запису."
 
 #: lib/gamend_web/components/content_pages.ex:409
 #, elixir-autogen, elixir-format
@@ -3410,7 +3410,7 @@ msgstr "Готово. Поштою ми надсилатимемо лише по
 #: lib/gamend_web/live/user_live/registration.ex:47
 #, elixir-autogen, elixir-format
 msgid "Email me: %{group}"
-msgstr "Надішліть мені лист: %{group}"
+msgstr "Надсилати листи: %{group}"
 
 #: lib/gamend_web/controllers/notification_unsubscribe_controller.ex:25
 #: lib/gamend_web/controllers/notification_unsubscribe_controller.ex:40
@@ -3542,7 +3542,7 @@ msgstr "Навігаційний ланцюжок"
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:46
 #, elixir-autogen, elixir-format
 msgid "Copy it now. It will not be shown again."
-msgstr "Скопіюйте його зараз. Його більше не буде показано."
+msgstr "Скопіюй його зараз. Його більше не буде показано."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:80
 #, elixir-autogen, elixir-format
@@ -3553,9 +3553,9 @@ msgstr "Створити токен"
 #, elixir-autogen, elixir-format
 msgid "Delete your account? It will be deleted in %{count} day, and signing in before then keeps it."
 msgid_plural "Delete your account? It will be deleted in %{count} days, and signing in before then keeps it."
-msgstr[0] "Видалити ваш обліковий запис? Його буде видалено через %{count} день; якщо до того часу ви ввійдете, він збережеться."
-msgstr[1] "Видалити ваш обліковий запис? Його буде видалено через %{count} дні; якщо до того часу ви ввійдете, він збережеться."
-msgstr[2] "Видалити ваш обліковий запис? Його буде видалено через %{count} днів; якщо до того часу ви ввійдете, він збережеться."
+msgstr[0] "Видалити твій обліковий запис? Його буде видалено через %{count} день; якщо до того часу ти ввійдеш, він збережеться."
+msgstr[1] "Видалити твій обліковий запис? Його буде видалено через %{count} дні; якщо до того часу ти ввійдеш, він збережеться."
+msgstr[2] "Видалити твій обліковий запис? Його буде видалено через %{count} днів; якщо до того часу ти ввійдеш, він збережеться."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:52
 #, elixir-autogen, elixir-format
@@ -3570,7 +3570,7 @@ msgstr "Редагувати цю сторінку"
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:33
 #, elixir-autogen, elixir-format
 msgid "For scripts and CI: send one as a Bearer token to any API route that takes an access token. A password or email change revokes them all."
-msgstr "Для скриптів і CI: надсилайте токен як Bearer-токен до будь-якого маршруту API, що приймає токен доступу. Зміна пароля чи ел. пошти відкликає їх усі."
+msgstr "Для скриптів і CI: надсилай токен як Bearer-токен до будь-якого маршруту API, що приймає токен доступу. Зміна пароля чи ел. пошти відкликає їх усі."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:225
 #, elixir-autogen, elixir-format
@@ -3633,9 +3633,9 @@ msgstr "Токен відкликано."
 #, elixir-autogen, elixir-format
 msgid "Too many failed attempts. Try again in %{count} minute, or sign in with an emailed link."
 msgid_plural "Too many failed attempts. Try again in %{count} minutes, or sign in with an emailed link."
-msgstr[0] "Забагато невдалих спроб. Спробуйте знову через %{count} хвилину або увійдіть за посиланням з листа."
-msgstr[1] "Забагато невдалих спроб. Спробуйте знову через %{count} хвилини або увійдіть за посиланням з листа."
-msgstr[2] "Забагато невдалих спроб. Спробуйте знову через %{count} хвилин або увійдіть за посиланням з листа."
+msgstr[0] "Забагато невдалих спроб. Спробуй знову через %{count} хвилину або увійди за посиланням з листа."
+msgstr[1] "Забагато невдалих спроб. Спробуй знову через %{count} хвилини або увійди за посиланням з листа."
+msgstr[2] "Забагато невдалих спроб. Спробуй знову через %{count} хвилин або увійди за посиланням з листа."
 
 #: lib/gamend_web/controllers/page_controller.ex:50
 #: lib/gamend_web/controllers/page_html/ui.html.heex:8
@@ -3646,20 +3646,20 @@ msgstr "Елементи інтерфейсу"
 #: lib/gamend_web/user_auth.ex:84
 #, elixir-autogen, elixir-format
 msgid "Welcome back. Your account will not be deleted."
-msgstr "З поверненням. Ваш обліковий запис не буде видалено."
+msgstr "З поверненням. Твій обліковий запис не буде видалено."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:169
 #, elixir-autogen, elixir-format
 msgid "You have reached the token limit. Revoke one first."
-msgstr "Ви досягли ліміту токенів. Спершу відкличте один."
+msgstr "Досягнуто ліміту токенів. Спершу відклич один."
 
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:453
 #, elixir-autogen, elixir-format
 msgid "Your account will be deleted in %{count} day. Sign in before then to keep it."
 msgid_plural "Your account will be deleted in %{count} days. Sign in before then to keep it."
-msgstr[0] "Ваш обліковий запис буде видалено через %{count} день. Увійдіть до того часу, щоб зберегти його."
-msgstr[1] "Ваш обліковий запис буде видалено через %{count} дні. Увійдіть до того часу, щоб зберегти його."
-msgstr[2] "Ваш обліковий запис буде видалено через %{count} днів. Увійдіть до того часу, щоб зберегти його."
+msgstr[0] "Твій обліковий запис буде видалено через %{count} день. Увійди до того часу, щоб зберегти його."
+msgstr[1] "Твій обліковий запис буде видалено через %{count} дні. Увійди до того часу, щоб зберегти його."
+msgstr[2] "Твій обліковий запис буде видалено через %{count} днів. Увійди до того часу, щоб зберегти його."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:67
 #, elixir-autogen, elixir-format

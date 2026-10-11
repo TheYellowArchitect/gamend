@@ -110,7 +110,7 @@ msgid "C++ SDK"
 msgstr "C++ SDK"
 
 msgid "The **backend for your multiplayer game**: accounts, lobbies, chat, leaderboards and everything players expect around the game itself. It also ships the web UI around it, a ready-made player website (store, leaderboards, tournaments, quests, groups, chat) and a full admin panel. Server-side scripting runs your own logic where players cannot reach it. You run it on your own server; there is no hosted service."
-msgstr "**Бэкенд для вашей многопользовательской игры**: аккаунты, лобби, чат, таблицы лидеров и всё, что игроки ожидают вокруг самой игры. В комплекте также веб-интерфейс: готовый сайт для игроков (магазин, таблицы лидеров, турниры, задания, группы, чат) и полноценная панель администратора. Серверные скрипты выполняют вашу собственную логику там, куда игрокам не добраться. Вы запускаете его на своём сервере; хостинг-сервиса нет."
+msgstr "**Бэкенд для твоей многопользовательской игры**: аккаунты, лобби, чат, таблицы лидеров и всё, что игроки ожидают вокруг самой игры. В комплекте также веб-интерфейс: готовый сайт для игроков (магазин, таблицы лидеров, турниры, задания, группы, чат) и полноценная панель администратора. Серверные скрипты выполняют твою собственную логику там, куда игрокам не добраться. Ты запускаешь его на своём сервере; хостинг-сервиса нет."
 
 msgid "What is Gamend?"
 msgstr "Что такое Gamend?"
@@ -173,7 +173,7 @@ msgid "Runtime introspection listing every hook with its implementing plugins"
 msgstr "Интроспекция во время выполнения: список всех хуков с реализующими их плагинами"
 
 msgid "Write server hooks in **Elixir, GDScript or Gleam** for scoring, rewards, matchmaking rules and validation, where players cannot reach them. Durable background jobs and cron scheduling built in."
-msgstr "Пишите серверные хуки на **Elixir, GDScript или Gleam** для подсчёта очков, наград, правил подбора игроков и валидации там, куда игрокам не добраться. Встроенные надёжные фоновые задачи и планирование по cron."
+msgstr "Пиши серверные хуки на **Elixir, GDScript или Gleam** для подсчёта очков, наград, правил подбора игроков и валидации там, куда игрокам не добраться. Встроенные надёжные фоновые задачи и планирование по cron."
 
 msgid "Server Scripting & Scheduling"
 msgstr "Серверные скрипты и расписание"
@@ -194,7 +194,7 @@ msgid "The built-in store page with priced products"
 msgstr "Встроенная страница магазина с товарами и ценами"
 
 msgid "Server-side payments with Stripe, Google Play, App Store, and Steam providers. Validate receipts, process signed webhooks, grant entitlements, revoke refunds, and inspect everything in admin."
-msgstr "Платежи на стороне сервера через Stripe, Google Play, App Store и Steam. Проверяйте чеки, обрабатывайте подписанные вебхуки, выдавайте права, отзывайте возвраты и всё это просматривайте в админке."
+msgstr "Платежи на стороне сервера через Stripe, Google Play, App Store и Steam. Проверяй чеки, обрабатывай подписанные вебхуки, выдавай права, отзывай возвраты и всё это просматривай в админке."
 
 msgid "Payments & Store Integrations"
 msgstr "Платежи и интеграции с магазинами"

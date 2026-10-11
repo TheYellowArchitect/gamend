@@ -1,11 +1,13 @@
 # October 2026
 
+- [fixed] **TLS 1.2 clients can connect again.** The HTTPS listener used Plug's `:strong` cipher suite, which has meant TLS 1.3 only since Plug 1.19; a 1.2-only client (Stripe's sandbox webhook sender, Java 8 crawlers, old Android) failed the handshake with nothing logged. It is now `:compatible`: TLS 1.3 and 1.2, ECDHE AEAD suites only.
 - [added] **Stripe payments, end to end.** Buyers refund within 14 days, resume a cancelled renewal and upgrade to a longer plan; checkouts can start with a free period; an hourly sweep catches lost webhooks; `mix gamend.stripe.setup` configures the account; payments are counted and logged. Disputes, refunds and failed renewals now end access properly, and a player opens one checkout at a time. **Hosts:** set the Stripe webhook to API version `2025-11-17.clover` (or run the setup task).
 - [added] **Reports.** Players report problems from `/report` or the API, admins work the queue at `/admin/reports`, and a host can add its own report kinds.
 - [added] **Per-account preferences.** Notification choices per group and channel, with email and one-click unsubscribe; time zone, language and theme follow the account.
 - [added] **Guest accounts on the website**, kept when the visitor registers or signs in.
 - [added] **Leaderboards hold several rankings per board and can be hidden.**
-- [added] **Website feature switches**: the store, chat, groups, tournaments and the payments catalog and checkout API can be turned off on the site while the game keeps them.
+- [added] **Website feature switches**: the store, chat, groups, friends, tournaments, the game itself (`play`) and the payments catalog and checkout API can be turned off on the site while the game client keeps them. A theme page, a link or a guide (`feature:` in its front matter, through the new `visible:` content hook) marked with a switched-off flag goes with it.
+- [changed] **Translations say "you" informally**, in every language that has the choice (French `tu`, German `du`, Russian `ты`), and the English is American (`Canceled`). Tests hold both.
 - [added] **Smaller additions**: crawler statistics in Admin → Geo, FAQ sections on presentation pages, rate-limit-exempt IPs, KV pruning by prefix, slow query logging, and `Accounts.update_user_metadata/2`.
 - [breaking] **Registering takes no password**: the emailed code confirms the address and sets it. A crashing game hook answers 500 without details.
 - [changed] **Faster pages.** Links between pages reuse the open connection, settings and quests read less, and repeated per-user reads are cached.

@@ -963,7 +963,7 @@ msgstr "구독이 다시 갱신됩니다."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "결제가 취소되었습니다."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "대진표"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "취소됨"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3116,7 +3116,7 @@ msgstr "요청을 처리할 수 없습니다. 돌아가서 다시 시도하세�
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "로그인이 취소되었거나 완료되지 않았습니다. 다시 시도하세요."
 
 #: lib/gamend_web/live/auth_success_live.ex:141

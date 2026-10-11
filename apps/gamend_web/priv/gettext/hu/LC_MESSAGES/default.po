@@ -963,7 +963,7 @@ msgstr "Az előfizetés ismét megújul."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Vásárlás megszakítva."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1243,7 +1243,7 @@ msgstr "Ágrajzok"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Törölve"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3164,7 +3164,7 @@ msgstr "A kérést nem sikerült feldolgozni. Menj vissza, és próbáld újra."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "A bejelentkezés megszakadt vagy nem fejeződött be. Próbáld újra."
 
 #: lib/gamend_web/live/auth_success_live.ex:141

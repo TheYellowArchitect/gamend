@@ -110,7 +110,7 @@ msgid "C++ SDK"
 msgstr "SDK C++"
 
 msgid "The **backend for your multiplayer game**: accounts, lobbies, chat, leaderboards and everything players expect around the game itself. It also ships the web UI around it, a ready-made player website (store, leaderboards, tournaments, quests, groups, chat) and a full admin panel. Server-side scripting runs your own logic where players cannot reach it. You run it on your own server; there is no hosted service."
-msgstr "Le **backend de votre jeu multijoueur** : comptes, salons, chat, classements et tout ce que les joueurs attendent autour du jeu lui-même. Il fournit aussi l'interface web qui va avec : un site prêt à l'emploi pour les joueurs (boutique, classements, tournois, quêtes, groupes, chat) et un panneau d'administration complet. Les scripts côté serveur exécutent votre propre logique hors de portée des joueurs. Vous l'hébergez sur votre propre serveur ; il n'existe pas de service hébergé."
+msgstr "Le **backend de ton jeu multijoueur** : comptes, salons, chat, classements et tout ce que les joueurs attendent autour du jeu lui-même. Il fournit aussi l'interface web qui va avec : un site prêt à l'emploi pour les joueurs (boutique, classements, tournois, quêtes, groupes, chat) et un panneau d'administration complet. Les scripts côté serveur exécutent ta propre logique hors de portée des joueurs. Tu l'héberges sur ton propre serveur ; il n'existe pas de service hébergé."
 
 msgid "What is Gamend?"
 msgstr "Qu'est-ce que Gamend ?"
@@ -173,7 +173,7 @@ msgid "Runtime introspection listing every hook with its implementing plugins"
 msgstr "Introspection à l'exécution listant chaque hook avec les plugins qui l'implémentent"
 
 msgid "Write server hooks in **Elixir, GDScript or Gleam** for scoring, rewards, matchmaking rules and validation, where players cannot reach them. Durable background jobs and cron scheduling built in."
-msgstr "Écrivez des hooks serveur en **Elixir, GDScript ou Gleam** pour le calcul des scores, les récompenses, les règles de matchmaking et la validation, hors de portée des joueurs. Tâches d'arrière-plan durables et planification cron intégrées."
+msgstr "Écris des hooks serveur en **Elixir, GDScript ou Gleam** pour le calcul des scores, les récompenses, les règles de matchmaking et la validation, hors de portée des joueurs. Tâches d'arrière-plan durables et planification cron intégrées."
 
 msgid "Server Scripting & Scheduling"
 msgstr "Scripts serveur et planification"
@@ -194,7 +194,7 @@ msgid "The built-in store page with priced products"
 msgstr "La page boutique intégrée avec ses produits et leurs prix"
 
 msgid "Server-side payments with Stripe, Google Play, App Store, and Steam providers. Validate receipts, process signed webhooks, grant entitlements, revoke refunds, and inspect everything in admin."
-msgstr "Paiements côté serveur avec Stripe, Google Play, App Store et Steam. Validez les reçus, traitez les webhooks signés, accordez des droits, révoquez les remboursements et inspectez le tout dans l'administration."
+msgstr "Paiements côté serveur avec Stripe, Google Play, App Store et Steam. Valide les reçus, traite les webhooks signés, accorde des droits, révoque les remboursements et inspecte le tout dans l'administration."
 
 msgid "Payments & Store Integrations"
 msgstr "Paiements et intégrations de boutique"

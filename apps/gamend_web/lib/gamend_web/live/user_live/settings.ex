@@ -29,7 +29,7 @@ defmodule GamendWeb.UserLive.Settings do
 
   # Tabs a feature flag can close. A closed tab is not drawn, not opened from
   # `?tab=` and refuses its events, so it reads as absent rather than broken.
-  @feature_tabs %{"groups" => :web_groups}
+  @feature_tabs %{"groups" => :web_groups, "friends" => :web_friends}
 
   @account_events ~w(validate_email update_email validate_display_name update_display_name
                      validate_username update_username validate_avatar save_avatar cancel_avatar
@@ -211,8 +211,11 @@ defmodule GamendWeb.UserLive.Settings do
   def handle_event(event, params, socket) when event in @notifications_events,
     do: NotificationsTab.handle_event(event, params, socket)
 
-  def handle_event(event, params, socket) when event in @friends_events,
-    do: FriendsTab.handle_event(event, params, socket)
+  def handle_event(event, params, socket) when event in @friends_events do
+    if tab_enabled?("friends"),
+      do: FriendsTab.handle_event(event, params, socket),
+      else: {:noreply, socket}
+  end
 
   def handle_event(event, params, socket) when event in @payments_events,
     do: PaymentsTab.handle_event(event, params, socket)

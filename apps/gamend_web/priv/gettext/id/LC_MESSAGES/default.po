@@ -963,7 +963,7 @@ msgstr "Langganan akan diperpanjang lagi."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Pembelian dibatalkan."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "Bagan"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Dibatalkan"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -1401,13 +1401,13 @@ msgstr "Turnamen ini sudah penuh."
 #: lib/gamend_web/live_helpers.ex:310
 #, elixir-autogen, elixir-format
 msgid "You are already registered."
-msgstr "Anda sudah terdaftar."
+msgstr "Kamu sudah terdaftar."
 
 #: lib/gamend_web/live/tournaments_live.ex:165
 #: lib/gamend_web/live_helpers.ex:311
 #, elixir-autogen, elixir-format
 msgid "You are not registered."
-msgstr "Anda belum terdaftar."
+msgstr "Kamu belum terdaftar."
 
 #: lib/gamend_web/live/tournaments_live.ex:626
 #, elixir-autogen, elixir-format
@@ -2467,7 +2467,7 @@ msgstr "Akun itu memiliki metode masuknya sendiri. Masuk ke akun itu dan putuska
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "Halaman yang Anda cari telah dipindahkan atau tidak pernah ada. Bagian lain situs berjalan normal."
+msgstr "Halaman yang kamu cari telah dipindahkan atau tidak pernah ada. Bagian lain situs berjalan normal."
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2492,12 +2492,12 @@ msgstr "Ke mana selanjutnya"
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "Anda tidak memiliki akses ke halaman ini. Masuk mungkin membantu."
+msgstr "Kamu tidak memiliki akses ke halaman ini. Masuk mungkin membantu."
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "Anda membuat banyak permintaan dalam waktu singkat. Harap tunggu sebentar lalu coba lagi."
+msgstr "Kamu membuat banyak permintaan dalam waktu singkat. Tunggu sebentar lalu coba lagi."
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -2617,7 +2617,7 @@ msgstr "Kata sandi wajib diisi."
 #: lib/gamend_web/live/user_live/registration.ex:179
 #, elixir-autogen, elixir-format
 msgid "Account created. Check your email for a link to confirm it."
-msgstr "Akun dibuat. Periksa email Anda untuk tautan konfirmasinya."
+msgstr "Akun dibuat. Periksa emailmu untuk tautan konfirmasinya."
 
 #: lib/gamend_web/live_helpers.ex:283
 #, elixir-autogen, elixir-format
@@ -2653,7 +2653,7 @@ msgstr[0] "Proses kanal berjalan pada %{count} koneksi WebSocket."
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:300
 #, elixir-autogen, elixir-format
 msgid "Check your new email address for a link to confirm the change."
-msgstr "Periksa alamat email baru Anda untuk tautan konfirmasi perubahan."
+msgstr "Periksa alamat email barumu untuk tautan konfirmasi perubahan."
 
 #: lib/gamend_web/live/store_live/index.ex:364
 #, elixir-autogen, elixir-format
@@ -2758,7 +2758,7 @@ msgstr "Hapus akun lain secara permanen? Tindakan ini tidak dapat dibatalkan."
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:610
 #, elixir-autogen, elixir-format
 msgid "Delete your account permanently? This cannot be undone."
-msgstr "Hapus akun Anda secara permanen? Tindakan ini tidak dapat dibatalkan."
+msgstr "Hapus akunmu secara permanen? Tindakan ini tidak dapat dibatalkan."
 
 #: lib/gamend_web/live/admin_live/kv.ex:368
 #, elixir-autogen, elixir-format
@@ -2892,7 +2892,7 @@ msgstr "Game"
 #: lib/gamend_web/live/user_live/login.ex:179
 #, elixir-autogen, elixir-format
 msgid "If that email has an account, we sent it a login link. Check your inbox."
-msgstr "Jika email tersebut memiliki akun, kami telah mengirimkan tautan masuk ke sana. Periksa kotak masuk Anda."
+msgstr "Jika email tersebut memiliki akun, kami telah mengirimkan tautan masuk ke sana. Periksa kotak masukmu."
 
 #: lib/gamend_web/live/admin_live/chat_filter.ex:163
 #, elixir-autogen, elixir-format
@@ -3116,7 +3116,7 @@ msgstr "Permintaan tidak dapat diproses. Kembali dan coba lagi."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Proses masuk dibatalkan atau tidak selesai. Coba lagi."
 
 #: lib/gamend_web/live/auth_success_live.ex:141
@@ -3154,7 +3154,7 @@ msgstr "Kata sandi salah."
 #: lib/gamend_web/live_helpers.ex:268
 #, elixir-autogen, elixir-format
 msgid "You already sent a request."
-msgstr "Anda sudah mengirim permintaan."
+msgstr "Kamu sudah mengirim permintaan."
 
 #: lib/gamend_web/live_helpers.ex:267
 #, elixir-autogen, elixir-format
@@ -3164,52 +3164,52 @@ msgstr "Kalian sudah berteman."
 #: lib/gamend_web/live_helpers.ex:296
 #, elixir-autogen, elixir-format
 msgid "You are already in a lobby."
-msgstr "Anda sudah berada di lobi."
+msgstr "Kamu sudah berada di lobi."
 
 #: lib/gamend_web/live_helpers.ex:302
 #, elixir-autogen, elixir-format
 msgid "You are already in a party."
-msgstr "Anda sudah berada di party."
+msgstr "Kamu sudah berada di kru."
 
 #: lib/gamend_web/live_helpers.ex:306
 #, elixir-autogen, elixir-format
 msgid "You are muted."
-msgstr "Anda sedang dibisukan."
+msgstr "Kamu sedang dibisukan."
 
 #: lib/gamend_web/live_helpers.ex:281
 #, elixir-autogen, elixir-format
 msgid "You are not a member of this group."
-msgstr "Anda bukan anggota grup ini."
+msgstr "Kamu bukan anggota grup ini."
 
 #: lib/gamend_web/live_helpers.ex:303
 #, elixir-autogen, elixir-format
 msgid "You are not in a party."
-msgstr "Anda tidak berada di party."
+msgstr "Kamu tidak berada di kru."
 
 #: lib/gamend_web/live_helpers.ex:297
 #, elixir-autogen, elixir-format
 msgid "You are not in this lobby."
-msgstr "Anda tidak berada di lobi ini."
+msgstr "Kamu tidak berada di lobi ini."
 
 #: lib/gamend_web/live_helpers.ex:307
 #, elixir-autogen, elixir-format
 msgid "You are sending messages too fast."
-msgstr "Anda mengirim pesan terlalu cepat."
+msgstr "Kamu mengirim pesan terlalu cepat."
 
 #: lib/gamend_web/live_helpers.ex:276
 #, elixir-autogen, elixir-format
 msgid "You can only invite friends or players who share a group with you."
-msgstr "Anda hanya dapat mengundang teman atau pemain yang satu grup dengan Anda."
+msgstr "Kamu hanya dapat mengundang teman atau pemain yang satu grup denganmu."
 
 #: lib/gamend_web/live_helpers.ex:309
 #, elixir-autogen, elixir-format
 msgid "You can only message friends."
-msgstr "Anda hanya dapat mengirim pesan ke teman."
+msgstr "Kamu hanya dapat mengirim pesan ke teman."
 
 #: lib/gamend_web/live_helpers.ex:264
 #, elixir-autogen, elixir-format
 msgid "You cannot do that to yourself."
-msgstr "Anda tidak dapat melakukan itu pada diri sendiri."
+msgstr "Kamu tidak dapat melakukan itu pada diri sendiri."
 
 #: lib/gamend_web/live/quests_live.ex:647
 #, elixir-autogen, elixir-format
@@ -3220,22 +3220,22 @@ msgstr[0] "Ada %{count} misi siap diklaim!"
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."
-msgstr "Anda telah membuat terlalu banyak grup."
+msgstr "Kamu telah membuat terlalu banyak grup."
 
 #: lib/gamend_web/live/auth_success_live.ex:226
 #, elixir-autogen, elixir-format
 msgid "Your account is waiting for an administrator to activate it."
-msgstr "Akun Anda sedang menunggu diaktifkan oleh administrator."
+msgstr "Akunmu sedang menunggu diaktifkan oleh administrator."
 
 #: lib/gamend_web/live_helpers.ex:269
 #, elixir-autogen, elixir-format
 msgid "Your friend list is full."
-msgstr "Daftar teman Anda sudah penuh."
+msgstr "Daftar temanmu sudah penuh."
 
 #: lib/gamend_web/live/store_live/index.ex:236
 #, elixir-autogen, elixir-format
 msgid "Your payment is still being processed. Refresh this page in a moment."
-msgstr "Pembayaran Anda masih diproses. Muat ulang halaman ini sebentar lagi."
+msgstr "Pembayaranmu masih diproses. Muat ulang halaman ini sebentar lagi."
 
 #: lib/gamend_web/live/admin_live/matchmaking.ex:181
 #, elixir-autogen, elixir-format
@@ -3251,12 +3251,12 @@ msgstr[0] "%{count} putaran terbaru"
 #: lib/gamend_web/controllers/user_session_controller.ex:77
 #, elixir-autogen, elixir-format
 msgid "Confirm your email first with the link we sent you, or log in with an emailed link."
-msgstr "Konfirmasikan email Anda terlebih dahulu dengan tautan yang kami kirim, atau masuk dengan tautan melalui email."
+msgstr "Konfirmasikan emailmu terlebih dahulu dengan tautan yang kami kirim, atau masuk dengan tautan melalui email."
 
 #: lib/gamend_web/live/user_live/confirmation.ex:38
 #, elixir-autogen, elixir-format
 msgid "Confirming with this link removes the password this account was registered with, so set a new one in your account settings afterwards."
-msgstr "Mengonfirmasi dengan tautan ini akan menghapus kata sandi yang dipakai saat akun ini didaftarkan, jadi setel yang baru di pengaturan akun Anda setelahnya."
+msgstr "Mengonfirmasi dengan tautan ini akan menghapus kata sandi yang dipakai saat akun ini didaftarkan, jadi setel yang baru di pengaturan akunmu setelahnya."
 
 #: lib/gamend_web/components/content_pages.ex:409
 #, elixir-autogen, elixir-format
@@ -3453,7 +3453,7 @@ msgstr "Buat token"
 #, elixir-autogen, elixir-format
 msgid "Delete your account? It will be deleted in %{count} day, and signing in before then keeps it."
 msgid_plural "Delete your account? It will be deleted in %{count} days, and signing in before then keeps it."
-msgstr[0] "Hapus akun Anda? Akun akan dihapus dalam %{count} hari, dan masuk sebelum itu akan mempertahankannya."
+msgstr[0] "Hapus akunmu? Akun akan dihapus dalam %{count} hari, dan masuk sebelum itu akan mempertahankannya."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:52
 #, elixir-autogen, elixir-format
@@ -3540,18 +3540,18 @@ msgstr "Elemen UI"
 #: lib/gamend_web/user_auth.ex:84
 #, elixir-autogen, elixir-format
 msgid "Welcome back. Your account will not be deleted."
-msgstr "Selamat datang kembali. Akun Anda tidak akan dihapus."
+msgstr "Selamat datang kembali. Akunmu tidak akan dihapus."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:169
 #, elixir-autogen, elixir-format
 msgid "You have reached the token limit. Revoke one first."
-msgstr "Anda telah mencapai batas token. Cabut salah satu terlebih dahulu."
+msgstr "Kamu telah mencapai batas token. Cabut salah satu terlebih dahulu."
 
 #: lib/gamend_web/live/user_live/settings/account_tab.ex:453
 #, elixir-autogen, elixir-format
 msgid "Your account will be deleted in %{count} day. Sign in before then to keep it."
 msgid_plural "Your account will be deleted in %{count} days. Sign in before then to keep it."
-msgstr[0] "Akun Anda akan dihapus dalam %{count} hari. Masuk sebelum itu untuk mempertahankannya."
+msgstr[0] "Akunmu akan dihapus dalam %{count} hari. Masuk sebelum itu untuk mempertahankannya."
 
 #: lib/gamend_web/live/user_live/settings/api_tokens_tab.ex:67
 #, elixir-autogen, elixir-format

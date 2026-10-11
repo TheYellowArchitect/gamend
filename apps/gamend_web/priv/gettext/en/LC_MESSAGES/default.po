@@ -963,7 +963,7 @@ msgstr "Subscription renews again."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Checkout cancelled."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1244,7 +1244,7 @@ msgstr "Brackets"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Cancelled"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3165,7 +3165,7 @@ msgstr ""
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr ""
 
 #: lib/gamend_web/live/auth_success_live.ex:141

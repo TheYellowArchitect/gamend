@@ -674,7 +674,14 @@ defmodule GamendWeb.HostRuntime do
       https_opts = [
         ip: {0, 0, 0, 0, 0, 0, 0, 0},
         port: setting.(GamendWeb.Tls, :port),
-        cipher_suite: :strong,
+        # `:compatible`, not `:strong`: since Plug 1.19 `:strong` is TLS 1.3
+        # ONLY (`versions: [:"tlsv1.3"]`), and a 1.2-only client dies at the
+        # handshake with a `protocol_version` alert that nothing here logs
+        # (`log_level: :error` below). Stripe's sandbox webhook sender was one
+        # (every delivery failed, 2026-10-07; its live sender does 1.3), and
+        # Java 8 crawlers and old Android are others. `:compatible` is TLS 1.3
+        # plus 1.2 with ECDHE AEAD suites only — nothing older, nothing weaker.
+        cipher_suite: :compatible,
         certfile: setting.(GamendWeb.Tls, :certfile),
         keyfile: setting.(GamendWeb.Tls, :keyfile),
         http_options: @bandit_http_options,

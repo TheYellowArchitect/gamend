@@ -963,7 +963,7 @@ msgstr "Abonnement wordt weer verlengd."
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "Afrekenen geannuleerd."
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "Schema's"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "Geannuleerd"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -3163,7 +3163,7 @@ msgstr "Het verzoek kon niet worden verwerkt. Ga terug en probeer het opnieuw."
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "Het inloggen is geannuleerd of niet voltooid. Probeer het opnieuw."
 
 #: lib/gamend_web/live/auth_success_live.ex:141

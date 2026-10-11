@@ -8,8 +8,8 @@ defmodule GamendWeb.Features do
   want third parties browsing or scraping its data turns off what it does not
   need.
 
-  `web_groups`, `web_chat`, `web_tournaments` and `web_store` are
-  website-only: they close a page and every link to it (`drop_disabled/1`)
+  `web_groups`, `web_friends`, `web_chat`, `web_tournaments` and `web_store`
+  are website-only: they close a page and every link to it (`drop_disabled/1`)
   and leave the API to the game client, so a host can park a feature on the
   site without breaking the game.
 
@@ -60,6 +60,12 @@ defmodule GamendWeb.Features do
       "Chat on the website: the /chat page, its link in the account menu, the Open links on chat notifications, and every link marked `\"feature\": \"web_chat\"`. The chat API and the game client are untouched."
   )
 
+  setting(:web_friends, :boolean,
+    default: true,
+    doc:
+      "Friends on the website: the Friends tab in account settings, the View link on friend-request notifications, and the \"Friends and groups\" row on the Notifications tab (shown while `web_friends` or `web_groups` is on). The friends API and the game client are untouched."
+  )
+
   setting(:web_tournaments, :boolean,
     default: true,
     doc:
@@ -101,7 +107,8 @@ defmodule GamendWeb.Features do
 
   setting(:play, :boolean,
     default: true,
-    doc: "The /play page, which hands a signed-in player a token for the game client."
+    doc:
+      "The /play page, which hands a signed-in player a token for the game client. Off, it also closes every theme page and link marked `\"feature\": \"play\"` and every guide whose front matter says `feature: play` (a collection registered with `visible: {GamendWeb.Features, :doc_visible?}`): a host whose game is not out yet hides it from the site in one switch. The game client's API is untouched."
   )
 
   setting(:list_matchmaking, :boolean,
@@ -133,7 +140,9 @@ defmodule GamendWeb.Features do
   end
 
   @doc """
-  Drops every map whose `"feature"` names a switched-off flag, at any depth.
+  Drops every map whose `"feature"` names a switched-off flag, at any depth:
+  a list item, or a map's value (a whole theme page under `"pages"`, which
+  then answers 404).
 
   Theme config (navigation, footer, page buttons) is host-authored, so a link
   to a page a flag closes carries `"feature": "web_groups"` and disappears with
@@ -145,7 +154,10 @@ defmodule GamendWeb.Features do
   end
 
   def drop_disabled(map) when is_map(map) and not is_struct(map) do
-    Map.new(map, fn {key, value} -> {key, drop_disabled(value)} end)
+    for {key, value} <- map,
+        not disabled_entry?(value),
+        into: %{},
+        do: {key, drop_disabled(value)}
   end
 
   def drop_disabled(other), do: other
@@ -162,6 +174,17 @@ defmodule GamendWeb.Features do
   end
 
   defp disabled_entry?(_item), do: false
+
+  @doc """
+  Whether a guide is shown: false when its front matter names a switched-off
+  flag (`feature: play`). The `:visible` hook of a `Gamend.Content`
+  collection, so a page about a feature the site has closed goes with it.
+  """
+  @spec doc_visible?(map()) :: boolean()
+  def doc_visible?(%{meta: %{"feature" => name}}) when is_binary(name),
+    do: not disabled_entry?(%{"feature" => name})
+
+  def doc_visible?(_doc), do: true
 
   @doc """
   Top-level `user.metadata` keys the public user endpoints may return.

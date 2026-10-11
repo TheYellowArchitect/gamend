@@ -758,7 +758,8 @@ defmodule GamendWeb.HostLayouts do
       %{
         "label" => translate("Play"),
         "href" => "/play",
-        "icon" => "hero-play-solid"
+        "icon" => "hero-play-solid",
+        "feature" => "play"
       },
       %{
         "label" => translate("Social"),

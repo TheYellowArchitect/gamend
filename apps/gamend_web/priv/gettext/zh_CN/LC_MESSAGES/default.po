@@ -963,7 +963,7 @@ msgstr "订阅将重新续订。"
 
 #: lib/gamend_web/live/store_live/index.ex:85
 #, elixir-autogen, elixir-format
-msgid "Checkout cancelled."
+msgid "Checkout canceled."
 msgstr "结账已取消。"
 
 #: lib/gamend_web/live/store_live/index.ex:256
@@ -1242,7 +1242,7 @@ msgstr "对阵表"
 #: lib/gamend_web/live/tournaments_live.ex:977
 #: lib/gamend_web/live_helpers.ex:338
 #, elixir-autogen, elixir-format
-msgid "Cancelled"
+msgid "Canceled"
 msgstr "已取消"
 
 #: lib/gamend_web/live/tournaments_live.ex:936
@@ -2467,7 +2467,7 @@ msgstr "该账号有自己的登录方式。请登录该账号，并在那里解
 #: lib/gamend_web/controllers/error_html.ex:120
 #, elixir-autogen, elixir-format
 msgid "The page you were looking for has moved or never existed. The rest of the site is fine."
-msgstr "您要找的页面已被移动或从未存在。网站的其他部分正常运行。"
+msgstr "你要找的页面已被移动或从未存在。网站的其他部分正常运行。"
 
 #: lib/gamend_web/controllers/error_html.ex:116
 #, elixir-autogen, elixir-format
@@ -2492,12 +2492,12 @@ msgstr "接下来去哪里"
 #: lib/gamend_web/controllers/error_html.ex:126
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this page. Signing in may help."
-msgstr "您无权访问此页面。登录后或许可以访问。"
+msgstr "你无权访问此页面。登录后或许可以访问。"
 
 #: lib/gamend_web/controllers/error_html.ex:130
 #, elixir-autogen, elixir-format
 msgid "You have made a lot of requests in a short time. Please wait a moment and try again."
-msgstr "您在短时间内发出了大量请求。请稍候再试。"
+msgstr "你在短时间内发出了大量请求。请稍候再试。"
 
 #: lib/gamend_web/live/stats_live.ex:97
 #, elixir-autogen, elixir-format
@@ -3116,7 +3116,7 @@ msgstr "无法处理该请求。请返回后重试。"
 
 #: lib/gamend_web/live/auth_success_live.ex:232
 #, elixir-autogen, elixir-format
-msgid "The sign-in was cancelled or did not complete. Please try again."
+msgid "The sign-in was canceled or did not complete. Please try again."
 msgstr "登录已取消或未完成。请重试。"
 
 #: lib/gamend_web/live/auth_success_live.ex:141

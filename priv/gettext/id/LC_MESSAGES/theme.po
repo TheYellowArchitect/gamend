@@ -110,7 +110,7 @@ msgid "C++ SDK"
 msgstr "C++ SDK"
 
 msgid "The **backend for your multiplayer game**: accounts, lobbies, chat, leaderboards and everything players expect around the game itself. It also ships the web UI around it, a ready-made player website (store, leaderboards, tournaments, quests, groups, chat) and a full admin panel. Server-side scripting runs your own logic where players cannot reach it. You run it on your own server; there is no hosted service."
-msgstr "**Backend untuk game multipemain Anda**: akun, lobi, obrolan, papan peringkat, dan semua hal yang diharapkan pemain di sekitar game itu sendiri. Gamend juga menyertakan antarmuka web di sekelilingnya: situs web pemain siap pakai (toko, papan peringkat, turnamen, misi, grup, obrolan) dan panel admin lengkap. Skrip sisi server menjalankan logika Anda sendiri di tempat yang tidak bisa dijangkau pemain. Anda menjalankannya di server Anda sendiri; tidak ada layanan yang di-hosting."
+msgstr "**Backend untuk game multipemainmu**: akun, lobi, obrolan, papan peringkat, dan semua hal yang diharapkan pemain di sekitar game itu sendiri. Gamend juga menyertakan antarmuka web di sekelilingnya: situs web pemain siap pakai (toko, papan peringkat, turnamen, misi, grup, obrolan) dan panel admin lengkap. Skrip sisi server menjalankan logikamu sendiri di tempat yang tidak bisa dijangkau pemain. Kamu menjalankannya di servermu sendiri; tidak ada layanan yang di-hosting."
 
 msgid "What is Gamend?"
 msgstr "Apa itu Gamend?"
