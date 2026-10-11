@@ -347,6 +347,13 @@ Supported options:
   * `:asset_root` - `:self` or `:dirname` when serving assets
   * `:post_render` - `{module, function}` applied to a guide's or a blog
     post's rendered HTML
+  * `:visible` - `{module, function}` called as `function(guide)` for each
+    guide of a collection; one it answers `false` for is left out of every
+    listing and lookup (index, tree, previous/next, `get_doc/2`), so its
+    URL is a 404. Run on every call, outside the cache, so a switch that
+    changes at runtime takes effect at once. A category left with no guide
+    goes too. `GamendWeb.Features.doc_visible?/1` hides a guide whose front
+    matter names a switched-off feature (`feature: play`)
   * `:nesting` - `:flat` (the default: one folder level, slugs are file
     names) or `:tree` (any depth, slugs are paths; see `Gamend.Content.Tree`)
   * `:base_path` - the route prefix guides are served under, such as
