@@ -51,8 +51,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
         <div class="card bg-base-200 shadow">
           <div class="card-body">
             <h2 class="card-title text-lg">
-              Traffic by Bucket Type
-              <span class="text-xs font-normal text-muted">(live)</span>
+              Traffic by Bucket Type <span class="text-xs font-normal text-muted">(live)</span>
             </h2>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
               <%= for {type, label, badge_class} <- bucket_types() do %>
@@ -298,8 +297,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
           <div class="card bg-base-200 shadow">
             <div class="card-body">
               <h2 class="card-title text-lg">
-                Ban History
-                <span class="text-xs font-normal text-muted">(in-memory, last 100)</span>
+                Ban History <span class="text-xs font-normal text-muted">(in-memory, last 100)</span>
               </h2>
 
               <div class="overflow-x-auto max-h-80 overflow-y-auto">

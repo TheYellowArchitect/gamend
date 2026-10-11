@@ -32,6 +32,10 @@ defmodule Gamend.Retention do
   - `GAMEND_RETENTION_TOURNAMENTS_DAYS` / `GAMEND_RETENTION_LEDGER_DAYS` — finished
     tournaments and the wallet/inventory ledgers. Both default to `0`: they
     are history an operator may be required to keep.
+  - `GAMEND_RETENTION_ANALYTICS_EVENTS_DAYS` — `analytics_events` rows (one per
+    thing a player did, behind the per-feature DAU and the Grafana product
+    dashboards) older than N days. Defaults to 365; the daily counters summed
+    from them are never pruned.
   - `GAMEND_RETENTION_ACTIVITY_DAYS` — `user_activity_days` rows (one per user per
     UTC day seen, behind DAU and D1/D7/D30) older than N days. Defaults to
     `0`; the table grows by at most one row per active user per day, and a
@@ -381,6 +385,9 @@ defmodule Gamend.Retention do
       ledger_entries: &prune_ledgers/0,
       activity_days: fn ->
         prune_older_than(Gamend.Analytics.ActivityDay, config(:activity_days))
+      end,
+      analytics_events: fn ->
+        prune_older_than(Gamend.Analytics.Event, config(:analytics_events_days))
       end,
       quest_periods: &Gamend.Quests.prune_old_periods/0,
       quest_reward_recoveries: &Gamend.Quests.recover_pending_rewards/0,
@@ -1236,6 +1243,13 @@ defmodule Gamend.Retention do
     doc:
       "Delete per-user daily activity rows (DAU / D1-D7-D30 source) older than N days. " <>
         "0 keeps forever. Below 60 the admin retention cohorts go blank."
+  )
+
+  setting(:analytics_events_days, :integer,
+    default: 365,
+    doc:
+      "Delete analytics event rows (per-feature DAU, Grafana product dashboards) older " <>
+        "than N days. 0 keeps forever. The daily counters summed from them are kept whatever this says."
   )
 
   setting(:interval_hours, :integer,

@@ -201,6 +201,10 @@ defmodule GamendWeb.HostSupervision do
         # Coalesces is_online transitions into one write per window, so a
         # connect storm of distinct players is not one transaction each.
         Gamend.Accounts.PresenceWriter,
+        # Gathers analytics counters and events and lands them in batches
+        # (`Gamend.Analytics.track/3`), so a page view is never a database
+        # write on the request's connection.
+        Gamend.Analytics.Buffer,
         # Periodically mark stale online users as offline (safety net for crashes)
         Gamend.Accounts.StalePresenceSweeper,
         # Prune old chat messages / notifications / payment events (RETENTION_* env vars)

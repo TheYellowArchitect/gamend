@@ -149,6 +149,11 @@ config :gamend_core, Gamend.Accounts.StalePresenceSweeper, enabled: false
 # can never outlive the sandbox owner.
 config :gamend_core, Gamend.Accounts.PresenceWriter, flush_ms: 0
 
+# Analytics counters and events are written through synchronously too, for the
+# same reasons: a test reads a counter the moment a page wrote it, and nothing
+# buffered can outlive the sandbox owner.
+config :gamend_core, Gamend.Analytics.Buffer, flush_ms: 0
+
 # Jobs run inline on demand in tests (no queues/plugins/cron); assert with
 # Oban.Testing helpers and drain explicitly. Keeps the Cron tick from firing
 # against the Sandbox.

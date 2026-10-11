@@ -120,12 +120,17 @@ defmodule Gamend.GDScript.API do
       "dau" => [0, 1],
       "economy_flow" => [0, 1, 2],
       "economy_totals" => [0, 1, 2],
+      "families" => [0, 1, 2, 3],
+      "feature_summary" => [0, 1],
+      "flush" => [0],
       "mau" => [0, 1],
       "new_users" => [2],
       "payers_since" => [1],
+      "recent_events" => [0, 1],
       "record_activity" => [1, 2],
       "snapshot" => [0],
       "summary" => [0, 1],
+      "track" => [1, 2, 3],
       "wau" => [0, 1]
     },
     "Cache" => %{

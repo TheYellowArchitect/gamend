@@ -78,6 +78,11 @@ config :gamend_core, Gamend.Accounts.StalePresenceSweeper, enabled: false
 # can never outlive the sandbox owner.
 config :gamend_core, Gamend.Accounts.PresenceWriter, flush_ms: 0
 
+# Analytics counters and events are written through synchronously too, for the
+# same reasons: a test reads a counter the moment a page wrote it, and nothing
+# buffered can outlive the sandbox owner.
+config :gamend_core, Gamend.Analytics.Buffer, flush_ms: 0
+
 # The other periodic workers, for the same reason: neither owns a sandbox
 # connection, and on SQLite they collide with the test's open write transaction
 # ("database is locked"). Tests drive tick/0 and sweep/0 directly.

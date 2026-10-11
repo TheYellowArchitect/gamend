@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-332 settings across 31 groups.
+334 settings across 31 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -384,12 +384,13 @@ Live values, and where each one came from, are on the
 | `GAMEND_FEATURES_LIST_USERS` | boolean | `true` | GET /api/v1/users and /users/:id. |
 | `GAMEND_FEATURES_MAILBOX_PREVIEW` | boolean | `false` | Serve the in-browser mailbox at /dev/mailbox outside dev. Every sent email is readable there. |
 | `GAMEND_FEATURES_OPENAPI` | boolean | `true` | OpenAPI spec + Swagger UI. A complete map of your API — consider off in production. |
-| `GAMEND_FEATURES_PLAY` | boolean | `true` | The /play page, which hands a signed-in player a token for the game client. |
+| `GAMEND_FEATURES_PLAY` | boolean | `true` | The /play page, which hands a signed-in player a token for the game client. Off, it also closes every theme page and link marked `"feature": "play"` and every guide whose front matter says `feature: play` (a collection registered with `visible: {GamendWeb.Features, :doc_visible?}`): a host whose game is not out yet hides it from the site in one switch. The game client's API is untouched. |
 | `GAMEND_FEATURES_PUBLIC_STATS` | boolean | `true` | The unauthenticated stats endpoints: GET /api/v1/stats, /api/v1/users/stats, /api/v1/lobbies/stats, /api/v1/parties/stats, /api/v1/quests/stats, /api/v1/signaling/stats and /api/v1/matchmaking/stats, plus the /stats page. Aggregate counts only, never per-row data — but they do reveal how busy the server is. |
 | `GAMEND_FEATURES_PUBLIC_USER_METADATA_KEYS` | list | - | Top-level `user.metadata` keys GET /api/v1/users and /users/:id may return. Empty means none. Those endpoints are unauthenticated, so anything named here is world-readable and findable by name prefix — never list a key holding position, routing or contact data. |
 | `GAMEND_FEATURES_STRIPE_CHECKOUT_API` | boolean | `true` | POST /api/v1/payments/checkout/stripe: a signed-in client opens a Stripe Checkout for any active Stripe row it names. Off for a host that sells only through its own page (which calls `Gamend.Payments.create_stripe_checkout/3` itself and picks the row), so a client cannot pick a row the page would not offer. Webhooks, the store page (`web_store`) and the other providers are untouched. |
 | `GAMEND_FEATURES_USER_IMAGE_UPLOADS` | boolean | `true` | Player-supplied images: avatars (POST /api/v1/me/avatar*) and group icons (POST /api/v1/groups/:id/icon*). Objects land in public storage and are served without authentication, so on a service children can reach this is an unscreened image surface — turn it off unless the game actually uses it and you have a way to screen what arrives. |
 | `GAMEND_FEATURES_WEB_CHAT` | boolean | `true` | Chat on the website: the /chat page, its link in the account menu, the Open links on chat notifications, and every link marked `"feature": "web_chat"`. The chat API and the game client are untouched. |
+| `GAMEND_FEATURES_WEB_FRIENDS` | boolean | `true` | Friends on the website: the Friends tab in account settings, the View link on friend-request notifications, and the "Friends and groups" row on the Notifications tab (shown while `web_friends` or `web_groups` is on). The friends API and the game client are untouched. |
 | `GAMEND_FEATURES_WEB_GROUPS` | boolean | `true` | Groups on the website: the /groups pages, the Groups tab in account settings, and every nav, footer or page link marked `"feature": "web_groups"`. The groups API and the game client are untouched — `list_groups` gates the public listing. |
 | `GAMEND_FEATURES_WEB_STORE` | boolean | `true` | The store on the website: the /store pages (every active product, any provider row), the Open Store button in account settings, and every link marked `"feature": "web_store"`. Off for a host that sells through its own page instead. The payments API and the game client are untouched. |
 | `GAMEND_FEATURES_WEB_TOURNAMENTS` | boolean | `true` | Tournaments on the website: the /tournaments pages and every nav, footer or page link marked `"feature": "web_tournaments"`. The tournaments API and the game client are untouched — `list_tournaments` gates the public listing. |
@@ -467,6 +468,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_RETENTION_ABANDONED_LOBBY_MINUTES` | integer | `15` | Delete lobbies nobody has been seen in for N minutes, and release the seat of a player offline that long in a lobby still in use. 0 disables both. |
 | `GAMEND_RETENTION_ABANDONED_PARTY_MINUTES` | integer | `15` | Disband parties nobody has been seen in for N minutes. 0 disables. |
 | `GAMEND_RETENTION_ACTIVITY_DAYS` | integer | `0` | Delete per-user daily activity rows (DAU / D1-D7-D30 source) older than N days. 0 keeps forever. Below 60 the admin retention cohorts go blank. |
+| `GAMEND_RETENTION_ANALYTICS_EVENTS_DAYS` | integer | `365` | Delete analytics event rows (per-feature DAU, Grafana product dashboards) older than N days. 0 keeps forever. The daily counters summed from them are kept whatever this says. |
 | `GAMEND_RETENTION_ANONYMOUS_USERS_DAYS` | integer | `90` | Delete device-only accounts inactive for N days. 0 keeps forever. These accounts cost one unauthenticated request to create, so they are the tier that actually needs a sweep. |
 | `GAMEND_RETENTION_BATCH_SIZE` | integer | `500` | Rows deleted per statement. Lower it if a sweep stalls gameplay writes on SQLite, where each statement holds the write lock. |
 | `GAMEND_RETENTION_CHAT_MESSAGES_DAYS` | integer | `0` | Delete chat messages older than N days. 0 keeps forever. |
