@@ -33,6 +33,10 @@ env vars `GAMEND_RETENTION_*`); `0` or unset keeps data forever:
 - `GAMEND_RETENTION_TOURNAMENTS_DAYS` / `GAMEND_RETENTION_LEDGER_DAYS` — finished
   tournaments and the wallet/inventory ledgers. Both default to `0`: they
   are history an operator may be required to keep.
+- `GAMEND_RETENTION_ANALYTICS_EVENTS_DAYS` — `analytics_events` rows (one per
+  thing a player did, behind the per-feature DAU and the Grafana product
+  dashboards) older than N days. Defaults to 365; the daily counters summed
+  from them are never pruned.
 - `GAMEND_RETENTION_ACTIVITY_DAYS` — `user_activity_days` rows (one per user per
   UTC day seen, behind DAU and D1/D7/D30) older than N days. Defaults to
   `0`; the table grows by at most one row per active user per day, and a

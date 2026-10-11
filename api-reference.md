@@ -1,4 +1,4 @@
-# gamend_core v1.1.1313 - API Reference
+# gamend_core v1.1.1314 - API Reference
 
 ## Modules
 
@@ -9,10 +9,19 @@ and business logic.
 - [Gamend.Analytics.ActivityDay](Gamend.Analytics.ActivityDay.md): A user was seen on a UTC day. One row per `(user_id, day)`; written once by
 `Gamend.Analytics.record_activity/2`, never updated.
 
+- [Gamend.Analytics.Buffer](Gamend.Analytics.Buffer.md): Gathers `Gamend.Analytics` writes in ETS and lands them in batches: one
+upsert per `(key, day)` counter and one `insert_all` for the events, every
+`flush_ms`. A page view at twenty requests a second is otherwise a
+database write per request, on the request's own connection.
 - [Gamend.Analytics.DailyCount](Gamend.Analytics.DailyCount.md): A named counter for one UTC day. Keys are free-form dotted strings owned by
 the game (`"level.finished"`, `"level.started.lang:ja"`); the engine only
 stores and sums them. Written by `Gamend.Analytics.count/3`.
 
+- [Gamend.Analytics.Event](Gamend.Analytics.Event.md): One thing a player did, with who and when: `name` (`"web.game.finished"`),
+`dims` (its fields — language, game, score — as a map with string keys),
+`user_id` (nil for a visitor, nulled when the account is deleted) and
+`inserted_at`, the moment it happened. Written by `Gamend.Analytics.track/3`
+through `Gamend.Analytics.Buffer`, in batches, never one row at a time.
 - [Gamend.ApiConventions](Gamend.ApiConventions.md): Mechanical checks for the conventions in `docs/specs/api-conventions.md`.
 - [Gamend.Broadcast](Gamend.Broadcast.md): PubSub broadcasts that must never take the caller down with them.
 - [Gamend.Captcha](Gamend.Captcha.md): Human verification for the unauthenticated browser forms, via

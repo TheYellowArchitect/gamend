@@ -18,6 +18,14 @@ The one place aggregate numbers come from. Four families:
 * **Daily counters** — `count/3` + `counts/2`: named per-day counters for
   events that have no table of their own (a level finished, a start blocked
   by empty hearts). The game picks the keys; the engine sums them.
+  `families/3` reads them back grouped: a base key with its dimensions.
+* **Events** — `track/3`: one call that counts (the name, and the name per
+  dimension) AND keeps the row — who, when, every field — in
+  `analytics_events`. The counters answer "how many" forever; the rows
+  answer what a sum cannot: how many distinct people did a thing
+  (`feature_summary/1`: DAU / WAU / MAU, first-timers and D1 / D7 / D30
+  per feature), in what order, with what else. Writes are gathered by
+  `Gamend.Analytics.Buffer` and landed in batches.
 
 Days are UTC, like every other period boundary on the server. "D7" means
 *seen on the 7th day after the registration day*, not "seen at any point in
@@ -49,13 +57,15 @@ Distinct users seen on any day in `from..to` (inclusive, UTC dates).
 @spec count(String.t(), pos_integer(), DateTime.t()) :: :ok
 ```
 
-Adds `n` to the counter `key` for the UTC day of `now`. One atomic
-upsert-increment; safe to call from hot paths that already write (a level
-end, a purchase), not from paths that otherwise only read.
+Adds `n` to the counter `key` for the UTC day of `now`. Gathered by
+`Gamend.Analytics.Buffer` and written as one upsert per `(key, day)` at the
+next flush (within `flush_ms`, 10 s); written through at once where the
+buffer is off (tests) or not running. Cheap enough for any path.
 
 Keys are dotted, game-owned strings up to 128 chars;
 put a dimension after a colon (`"level.started.lang:ja"`) so `counts/2`
-can pull a whole family by prefix. Never raises; a bad key is dropped.
+can pull a whole family by prefix and `families/3` can group it. Never
+raises; a bad key is dropped with a warning.
 
 # `count_totals`
 
@@ -123,6 +133,43 @@ value of negative deltas). Options: `:currency` to filter.
 `economy_flow/2` collapsed over the window: one row per `{currency,
 reason}` with `granted`, `spent`, `net`, sorted by absolute net.
 
+# `families`
+
+```elixir
+@spec families(String.t(), pos_integer(), Date.t()) :: [map()]
+```
+
+The counters of the last `days` days grouped by family, largest first:
+`[%{key, total, by_day, dims}]`, where `key` is the bare counter
+(`"web.game.finished"`), `by_day` its `%{Date => n}`, and `dims` every
+dimension written under it — `%{"lang" => [{"ro", 120}, {"es", 80}]}` from
+the keys `web.game.finished.lang:ro` and `…lang:es` — each list largest
+first. `prefix` as in `counts/3` (`"web.*"`, or one key).
+
+# `feature_summary`
+
+```elixir
+@spec feature_summary(Date.t()) :: [map()]
+```
+
+Every event name of the last 60 days as a feature,
+with what `summary/1` says of the whole site: `[%{name, dau, wau, mau,
+stickiness, events_7d, new_7d, new_30d, d1, d7, d30}]`, largest MAU first.
+
+Active = at least one event of that name that day, signed-in users only
+(a visitor has no id to count once). "New" = first event of the name in
+the window (a player back after 60 quiet days reads as
+new). D1 / D7 / D30 are pooled over the first-day cohorts old enough to
+have reached the horizon, as `summary/1` pools sign-up cohorts.
+
+# `flush`
+
+```elixir
+@spec flush() :: {non_neg_integer(), non_neg_integer()}
+```
+
+Writes everything `Gamend.Analytics.Buffer` has gathered, now, in the caller's process.
+
 # `mau`
 
 ```elixir
@@ -146,6 +193,14 @@ Accounts created on any UTC day in `from..to` (inclusive).
 ```
 
 Distinct users with a completed purchase since `from` (UTC date, inclusive).
+
+# `recent_events`
+
+```elixir
+@spec recent_events(pos_integer()) :: [Gamend.Analytics.Event.t()]
+```
+
+The last `limit` events, newest first.
 
 # `record_activity`
 
@@ -193,6 +248,35 @@ new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
 of the last 60 days that is old enough to have reached
 the horizon, and payer conversion (distinct users with a completed purchase
 in the last 30 days ÷ MAU).
+
+# `track`
+
+```elixir
+@spec track(String.t(), map(), keyword()) :: :ok
+```
+
+Records that something happened: `name` is counted for the day (`count/3`),
+once more per DIMENSION (`name.lang:ro`), and the whole event —
+`dims`, `user_id`, the moment — is kept as a row in `analytics_events`.
+One call, so a counter and its event can never disagree.
+
+`name` is dotted `[a-z0-9_]`, up to 64 chars (`"web.game.finished"`).
+`dims` is a map of the event's fields, atom or string keys of `[a-z0-9_]`:
+
+  * a string, atom or boolean value is a **dimension**: a closed set the
+    caller owns (a language code, a game, `practice | daily`), counted as
+    its own key, so keep free text out of it;
+  * an integer or float is a **measure** (a score, seconds): kept in the
+    row, never counted;
+  * `nil` is dropped.
+
+Options: `user_id:` (nil for a visitor; nulled when the account is
+deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
+name or field is dropped with a warning, the rest is kept.
+
+    Analytics.track("web.game.finished",
+      %{game: "hangman", lang: "ro", mode: :daily, score: 7, total: 10},
+      user_id: user_id)
 
 # `wau`
 

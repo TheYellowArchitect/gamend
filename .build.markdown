@@ -29,7 +29,9 @@ Gamend.Accounts.UsernameGenerator.md
 Gamend.Accounts.md
 Gamend.AfterCommit.md
 Gamend.Analytics.ActivityDay.md
+Gamend.Analytics.Buffer.md
 Gamend.Analytics.DailyCount.md
+Gamend.Analytics.Event.md
 Gamend.Analytics.md
 Gamend.ApiConventions.md
 Gamend.Apple.md
