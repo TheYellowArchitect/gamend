@@ -722,7 +722,7 @@ defmodule Gamend.Payments do
   def provider_adapter_statuses() do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Payments.provider_adapter_statuses/0 is a stub - only available at runtime on Gamend"

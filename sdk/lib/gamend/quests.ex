@@ -450,7 +450,7 @@ defmodule Gamend.Quests do
   def funnel(_quest_key) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        0
+        %{}
 
       _ ->
         raise "Gamend.Quests.funnel/1 is a stub - only available at runtime on Gamend"
@@ -597,7 +597,7 @@ defmodule Gamend.Quests do
   def groups(_user_id, _category \\ nil) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        ""
+        []
 
       _ ->
         raise "Gamend.Quests.groups/2 is a stub - only available at runtime on Gamend"
@@ -712,7 +712,7 @@ defmodule Gamend.Quests do
   def list_user_completions(_user_id, _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Quests.list_user_completions/2 is a stub - only available at runtime on Gamend"
@@ -1048,7 +1048,7 @@ defmodule Gamend.Quests do
   def visible_categories(_user_id \\ nil) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        ""
+        []
 
       _ ->
         raise "Gamend.Quests.visible_categories/1 is a stub - only available at runtime on Gamend"

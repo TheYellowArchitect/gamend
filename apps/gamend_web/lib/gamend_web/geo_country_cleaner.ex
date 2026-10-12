@@ -11,6 +11,7 @@ defmodule GamendWeb.GeoCountryCleaner do
 
   use GenServer
 
+  alias GamendWeb.Crawlers.Verify
   alias GamendWeb.Plugs.GeoCountry
 
   # Run cleanup every hour
@@ -29,7 +30,7 @@ defmodule GamendWeb.GeoCountryCleaner do
   @impl true
   def handle_info(:cleanup, state) do
     removed = GeoCountry.cleanup_old_buckets()
-    GamendWeb.Crawlers.Verify.cleanup()
+    Verify.cleanup()
 
     if removed > 0 do
       require Logger

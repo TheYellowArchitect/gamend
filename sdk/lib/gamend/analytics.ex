@@ -87,7 +87,7 @@ defmodule Gamend.Analytics do
   def count_totals(_key, _days \\ 7, _today \\ Date.utc_today()) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        0
+        []
 
       _ ->
         raise "Gamend.Analytics.count_totals/3 is a stub - only available at runtime on Gamend"
@@ -123,7 +123,7 @@ defmodule Gamend.Analytics do
   def daily_series(_days \\ 30, _today \\ Date.utc_today()) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Analytics.daily_series/2 is a stub - only available at runtime on Gamend"
@@ -172,7 +172,7 @@ defmodule Gamend.Analytics do
   def economy_flow(_days \\ 7, _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Analytics.economy_flow/2 is a stub - only available at runtime on Gamend"
@@ -191,7 +191,7 @@ defmodule Gamend.Analytics do
   def economy_totals(_days \\ 7, _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Analytics.economy_totals/2 is a stub - only available at runtime on Gamend"
@@ -211,7 +211,7 @@ defmodule Gamend.Analytics do
   def families(_prefix \\ "*", _days \\ 7, _today \\ Date.utc_today()) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Analytics.families/3 is a stub - only available at runtime on Gamend"
@@ -234,7 +234,7 @@ defmodule Gamend.Analytics do
   def feature_summary(_today \\ Date.utc_today()) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Analytics.feature_summary/1 is a stub - only available at runtime on Gamend"
@@ -294,6 +294,27 @@ defmodule Gamend.Analytics do
 
       _ ->
         raise "Gamend.Analytics.payers_since/1 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    One feature broken down by one of its dimensions over the last `days`
+    days: `[%{value, people, events}]`, people = distinct signed-in users,
+    largest first; a row without the dimension is `"none"`. The dimensions a
+    feature has are the keys of its family's `dims` (`families/3`).
+    
+        people_by_dimension("web.game.started", "game")
+        #=> [%{value: "hangman", people: 41, events: 212}, …]
+    
+  """
+  @spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t()) :: [map()]
+  def people_by_dimension(_name, _dim, _days \\ 30, _today \\ Date.utc_today()) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        []
+
+      _ ->
+        raise "Gamend.Analytics.people_by_dimension/4 is a stub - only available at runtime on Gamend"
     end
   end
 

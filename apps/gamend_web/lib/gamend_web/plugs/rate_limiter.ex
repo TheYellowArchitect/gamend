@@ -19,6 +19,7 @@ defmodule GamendWeb.Plugs.RateLimiter do
 
   import Plug.Conn
 
+  alias GamendWeb.Plugs.GeoCountry
   alias GamendWeb.Plugs.LocalePath
 
   # Declared so the values are documented, env-fed and visible in the admin
@@ -172,7 +173,7 @@ defmodule GamendWeb.Plugs.RateLimiter do
       {:deny, retry_after_ms} ->
         retry_secs = max(div(retry_after_ms, 1000), 1)
         # Who was throttled — a person, Googlebot, a scraper — for Admin → Geo.
-        GamendWeb.Plugs.GeoCountry.record_rate_limited(conn)
+        GeoCountry.record_rate_limited(conn)
 
         conn
         |> put_resp_header("retry-after", to_string(retry_secs))

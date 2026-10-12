@@ -655,7 +655,7 @@ defmodule Gamend.Leaderboards do
   def list_leaderboard_groups() do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Leaderboards.list_leaderboard_groups/0 is a stub - only available at runtime on Gamend"
@@ -678,7 +678,7 @@ defmodule Gamend.Leaderboards do
   def list_leaderboard_groups(_opts) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        %{}
+        []
 
       _ ->
         raise "Gamend.Leaderboards.list_leaderboard_groups/1 is a stub - only available at runtime on Gamend"
@@ -926,7 +926,7 @@ defmodule Gamend.Leaderboards do
   def resolve_slugs(_slugs) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        ""
+        %{}
 
       _ ->
         raise "Gamend.Leaderboards.resolve_slugs/1 is a stub - only available at runtime on Gamend"

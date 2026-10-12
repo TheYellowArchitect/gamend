@@ -126,6 +126,7 @@ defmodule Gamend.GDScript.API do
       "mau" => [0, 1],
       "new_users" => [2],
       "payers_since" => [1],
+      "people_by_dimension" => [2, 3, 4],
       "recent_events" => [0, 1],
       "record_activity" => [1, 2],
       "snapshot" => [0],

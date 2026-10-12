@@ -60,7 +60,7 @@ defmodule Gamend.Economy do
   def balances(_user_id) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
-        0
+        %{}
 
       _ ->
         raise "Gamend.Economy.balances/1 is a stub - only available at runtime on Gamend"

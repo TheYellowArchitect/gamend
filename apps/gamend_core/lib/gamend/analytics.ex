@@ -533,21 +533,22 @@ defmodule Gamend.Analytics do
     stop = start_of_day(Date.add(today, 1))
 
     # `->>` with a CAST: the same SQL on Postgres (jsonb) and SQLite (JSON
-    # text), and the cast tells Postgres which `->>` is meant.
+    # text), and the cast tells Postgres which `->>` is meant. Grouped by the
+    # selected column's name, not the expression again: written twice it
+    # binds `dim` twice ($1 and $5), and Postgres will not take the two for
+    # the same expression (`grouping_error`).
     from(e in Event,
       where: e.name == ^name and e.inserted_at >= ^start and e.inserted_at < ^stop,
-      group_by: fragment("? ->> CAST(? AS TEXT)", e.dims, ^dim),
-      select:
-        {fragment("? ->> CAST(? AS TEXT)", e.dims, ^dim), count(e.user_id, :distinct),
-         count(e.id)}
+      group_by: selected_as(:dim_value),
+      select: %{
+        value: selected_as(fragment("? ->> CAST(? AS TEXT)", e.dims, ^dim), :dim_value),
+        people: count(e.user_id, :distinct),
+        events: count(e.id)
+      }
     )
     |> Repo.all()
-    |> Enum.map(fn {value, people, events} ->
-      %{
-        value: if(is_nil(value), do: "none", else: to_string(value)),
-        people: people,
-        events: events
-      }
+    |> Enum.map(fn row ->
+      %{row | value: if(is_nil(row.value), do: "none", else: to_string(row.value))}
     end)
     |> Enum.sort_by(&{-&1.people, -&1.events, &1.value})
   end
