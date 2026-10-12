@@ -12,7 +12,7 @@
 - [added] **Smaller additions**: crawler statistics in Admin → Geo, FAQ sections on presentation pages, rate-limit-exempt IPs, KV pruning by prefix, slow query logging, and `Accounts.update_user_metadata/2`.
 - [breaking] **Registering takes no password**: the emailed code confirms the address and sets it. A crashing game hook answers 500 without details.
 - [changed] **Faster pages.** Links between pages reuse the open connection, settings and quests read less, and repeated per-user reads are cached.
-- [added] **A Back button on every page**: `<.back_link>` and `home_path/0` in `CoreComponents`, at the start of each title row, and `<.header back_href=…>` for a plain page. Pages one step under home go home in the reader's locale.
+- [added] **A Back button on every page**: `<.back_link>` and `home_path/0` in `CoreComponents`, at the start of each title row, and `<.header back_href=…>` for a plain page. Its link is the page's trail (pages one step under home go home in the reader's locale); a click returns to the page the reader came from instead, when that was a click inside the site in the same language (`back_link.js`, the Navigation API). **Hosts:** a page that deletes itself should navigate away with `replace: true`.
 - [changed] **Layout and accessibility.** Three page widths, breadcrumbs in the navbar, a navbar that fits a phone, and fixes from a Lighthouse pass. **Hosts:** declare `text-muted` and `--container-narrow` in your stylesheet, as `assets/css/app.css` does.
 - [changed] **Version 1.1**: releases are `1.1.<commit count>`, read from the new `VERSION` file.
 - [fixed] **`Sitemap.Cache.prune/0` reads every page of the storage listing**, so a host with over a thousand sitemap files no longer keeps every old signature.
