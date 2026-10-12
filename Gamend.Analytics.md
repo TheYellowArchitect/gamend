@@ -194,6 +194,20 @@ Accounts created on any UTC day in `from..to` (inclusive).
 
 Distinct users with a completed purchase since `from` (UTC date, inclusive).
 
+# `people_by_dimension`
+
+```elixir
+@spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t()) :: [map()]
+```
+
+One feature broken down by one of its dimensions over the last `days`
+days: `[%{value, people, events}]`, people = distinct signed-in users,
+largest first; a row without the dimension is `"none"`. The dimensions a
+feature has are the keys of its family's `dims` (`families/3`).
+
+    people_by_dimension("web.game.started", "game")
+    #=> [%{value: "hangman", people: 41, events: 212}, …]
+
 # `recent_events`
 
 ```elixir

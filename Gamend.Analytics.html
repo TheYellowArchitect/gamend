@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1314">
+    <meta name="project" content="gamend_core v1.1.1315">
 
 
-    <title>Gamend.Analytics — gamend_core v1.1.1314</title>
+    <title>Gamend.Analytics — gamend_core v1.1.1315</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-CC33BA49.js"></script>
+    <script defer src="dist/sidebar_items-51B18B47.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1314
+          v1.1.1315
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Analytics</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1314)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1315)</small>
 
     </h1>
 
@@ -337,6 +337,19 @@ with what <a href="#summary/1"><code class="inline">summary/1</code></a> says of
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#people_by_dimension/4" data-no-tooltip="" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today())</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>One feature broken down by one of its dimensions over the last <code class="inline">days</code>
+days: <code class="inline">[%{value, people, events}]</code>, people = distinct signed-in users,
+largest first; a row without the dimension is <code class="inline">&quot;none&quot;</code>. The dimensions a
+feature has are the keys of its family's <code class="inline">dims</code> (<a href="#families/3"><code class="inline">families/3</code></a>).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#recent_events/1" data-no-tooltip="" translate="no">recent_events(limit \\ 50)</a>
 
       </div>
@@ -470,7 +483,7 @@ One call, so a counter and its event can never disagree.</p></div>
       <h1 class="signature" translate="no">active_users(from, to)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L651" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L686" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -608,7 +621,7 @@ match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</
       <h1 class="signature" translate="no">daily_series(days \\ 30, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L679" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L714" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -638,7 +651,7 @@ when the cohort is empty or the horizon day has not happened yet.</p>
       <h1 class="signature" translate="no">dashboard_stats()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L739" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L774" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -668,7 +681,7 @@ when the cohort is empty or the horizon day has not happened yet.</p>
       <h1 class="signature" translate="no">dau(day \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L661" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L696" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -700,7 +713,7 @@ when the cohort is empty or the horizon day has not happened yet.</p>
       <h1 class="signature" translate="no">economy_flow(days \\ 7, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L535" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L570" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -735,7 +748,7 @@ value of negative deltas). Options: <code class="inline">:currency</code> to fil
       <h1 class="signature" translate="no">economy_totals(days \\ 7, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L570" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L605" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -867,7 +880,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
       <h1 class="signature" translate="no">mau(day \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L669" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L704" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -923,7 +936,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
       <h1 class="signature" translate="no">payers_since(from)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L747" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L782" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -941,6 +954,42 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
 <p>Distinct users with a completed purchase since <code class="inline">from</code> (UTC date, inclusive).</p>
   </section>
 </section>
+<section class="detail" id="people_by_dimension/4">
+
+    <span id="people_by_dimension/2"></span>
+
+    <span id="people_by_dimension/3"></span>
+
+  <div class="detail-header">
+    <a href="#people_by_dimension/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today())</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L530" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> people_by_dimension(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+
+      </div>
+
+<p>One feature broken down by one of its dimensions over the last <code class="inline">days</code>
+days: <code class="inline">[%{value, people, events}]</code>, people = distinct signed-in users,
+largest first; a row without the dimension is <code class="inline">&quot;none&quot;</code>. The dimensions a
+feature has are the keys of its family's <code class="inline">dims</code> (<a href="#families/3"><code class="inline">families/3</code></a>).</p><pre><code class="makeup elixir" translate="no"><span class="n">people_by_dimension</span><span class="p" data-group-id="group-1">(</span><span class="s">&quot;web.game.started&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;game&quot;</span><span class="p" data-group-id="group-1">)</span><span class="w">
+</span><span class="c1">#=&gt; [%{value: &quot;hangman&quot;, people: 41, events: 212}, …]</span></code></pre>
+  </section>
+</section>
 <section class="detail" id="recent_events/1">
 
     <span id="recent_events/0"></span>
@@ -953,7 +1002,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
       <h1 class="signature" translate="no">recent_events(limit \\ 50)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L522" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L557" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -983,7 +1032,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
       <h1 class="signature" translate="no">record_activity(user_id, now \\ DateTime.utc_now())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L599" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L634" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1056,7 +1105,7 @@ drift between two pages.</p>
       <h1 class="signature" translate="no">summary(today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L708" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L743" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1133,7 +1182,7 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
       <h1 class="signature" translate="no">wau(day \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L665" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L700" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1160,9 +1209,9 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1314">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1315">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1314">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1315">Hex Preview</a>
 
             </span>
 
