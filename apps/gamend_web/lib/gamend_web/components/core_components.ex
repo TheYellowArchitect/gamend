@@ -829,10 +829,13 @@ defmodule GamendWeb.CoreComponents do
   attr :class, :any, default: "btn btn-ghost btn-sm max-sm:btn-circle sm:btn-surface"
 
   @doc """
-  The Back button: one step up the page's own trail, which the browser's
-  Back is not (it goes wherever the reader came from). Every page under
-  home has one at the start of its title row, the page one step under home
-  pointing at `home_path/0`.
+  The Back button. Every page under home has one at the start of its title
+  row, its link one step up the page's own trail (the page one step under
+  home pointing at `home_path/0`). A click goes back to the page the reader
+  came from instead, when they came by a click inside the site
+  (`back_link.js`, on `data-back`): from a finished round's results, Back is
+  the round, not the progress page. Arriving from elsewhere, in a new tab or
+  in another language, it follows the link.
 
   The word from `sm` up; a phone gets the arrow alone, which is the whole
   meaning, and the room goes to the heading. `sr-only`, not `hidden`, so it
@@ -844,7 +847,13 @@ defmodule GamendWeb.CoreComponents do
   """
   def back_link(assigns) do
     ~H"""
-    <.link navigate={@navigate} href={@href} class={@class} title={@label || gettext("Back")}>
+    <.link
+      navigate={@navigate}
+      href={@href}
+      class={@class}
+      title={@label || gettext("Back")}
+      data-back
+    >
       <.icon name="hero-arrow-left-solid" class="size-4 rtl:-scale-x-100" />
       <span class="sr-only sm:not-sr-only">{@label || gettext("Back")}</span>
     </.link>

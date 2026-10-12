@@ -34,6 +34,7 @@ import {startConnectionState} from "./connection_state"
 import {startSearchPalette} from "./search_palette"
 import {startAnonymousSession} from "./anonymous_session"
 import {startLiveNav} from "./live_nav"
+import {startBackLink} from "./back_link"
 import {ReportForm, ReportPagePath, startLastPage} from "./report_form"
 import topbar from "../vendor/topbar"
 
@@ -548,6 +549,10 @@ function nativeScrollRestoreOnReload() {
   })
 }
 nativeScrollRestoreOnReload()
+
+// Back returns to the page the reader came from, when that was a click
+// inside the site; else its link, the page's trail (`back_link.js`).
+startBackLink()
 
 loadExtraHooks().then((extraHooks) => {
   const liveSocket = createLiveSocket(extraHooks)

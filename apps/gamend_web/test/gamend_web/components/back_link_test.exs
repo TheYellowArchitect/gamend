@@ -21,6 +21,13 @@ defmodule GamendWeb.Components.BackLinkTest do
     assert plain =~ ~s(class="sr-only sm:not-sr-only")
   end
 
+  # `back_link.js` takes a click on it back to the page the reader came from,
+  # when they came by a click inside the site; the link is the fallback.
+  test "is marked for back_link.js, live or plain" do
+    assert render_component(&CoreComponents.back_link/1, navigate: "/x") =~ "data-back"
+    assert render_component(&CoreComponents.back_link/1, href: "/y") =~ "data-back"
+  end
+
   test "the header's Back takes a plain page too" do
     html =
       render_component(&CoreComponents.header/1,
