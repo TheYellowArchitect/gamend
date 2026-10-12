@@ -59,4 +59,31 @@ defmodule GamendWeb.AdminLive.AnalyticsTest do
 
     assert html =~ "Counters · last 30 days"
   end
+
+  test "a feature broken down by one of its dimensions: people per value", %{conn: conn} do
+    conn = admin_conn(conn)
+    a = AccountsFixtures.user_fixture()
+    b = AccountsFixtures.user_fixture()
+
+    for {user, game} <- [{a, "hangman"}, {b, "hangman"}, {b, "crossword"}] do
+      :ok = Analytics.track("web.game.started", %{game: game, lang: "ro"}, user_id: user.id)
+    end
+
+    {:ok, lv, html} = live(conn, ~p"/admin/analytics")
+
+    # The busiest feature with dimensions, by its first dimension.
+    assert html =~ ~s(<option value="web.game.started" selected)
+    assert html =~ ~s(<option value="game" selected)
+    # hangman: two people, one round each; crossword below it.
+    assert lv |> element("#breakdown-rows") |> render() =~
+             ~r/hangman.*>2<.*>2<.*crossword.*>1<.*>1</s
+
+    html =
+      lv
+      |> form("#breakdown", %{"name" => "web.game.started", "dim" => "lang"})
+      |> render_change()
+
+    assert html =~ ~s(<option value="lang" selected)
+    assert lv |> element("#breakdown-rows") |> render() =~ ~r/>ro<.*>2<.*>3</s
+  end
 end

@@ -380,6 +380,41 @@ defmodule Gamend.AnalyticsTest do
     end
   end
 
+  describe "people_by_dimension/4" do
+    test "distinct people and events per value of one dimension, largest first" do
+      a = AccountsFixtures.user_fixture()
+      b = AccountsFixtures.user_fixture()
+
+      for {user, game} <- [{a, "hangman"}, {a, "hangman"}, {b, "hangman"}, {b, "crossword"}] do
+        :ok =
+          Analytics.track("web.game.started", %{game: game, lang: "ro"},
+            user_id: user.id,
+            at: at(@today)
+          )
+      end
+
+      # A visitor's round counts as an event, not a person; a round without
+      # the dimension is "none".
+      :ok = Analytics.track("web.game.started", %{game: "hangman"}, at: at(@today))
+      :ok = Analytics.track("web.game.started", %{lang: "ro"}, at: at(@today))
+      # Outside the window.
+      :ok = Analytics.track("web.game.started", %{game: "memory"}, at: at(Date.add(@today, -40)))
+
+      assert Analytics.people_by_dimension("web.game.started", "game", 30, @today) == [
+               %{value: "hangman", people: 2, events: 4},
+               %{value: "crossword", people: 1, events: 1},
+               %{value: "none", people: 0, events: 1}
+             ]
+
+      assert Analytics.people_by_dimension("web.game.started", "lang", 30, @today) == [
+               %{value: "ro", people: 2, events: 5},
+               %{value: "none", people: 0, events: 1}
+             ]
+
+      assert Analytics.people_by_dimension("web.test.started", "lang", 30, @today) == []
+    end
+  end
+
   describe "recent_events/1" do
     test "newest first, as many as asked" do
       for n <- 1..3 do

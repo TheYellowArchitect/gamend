@@ -517,6 +517,41 @@ defmodule Gamend.Analytics do
     }
   end
 
+  @doc """
+  One feature broken down by one of its dimensions over the last `days`
+  days: `[%{value, people, events}]`, people = distinct signed-in users,
+  largest first; a row without the dimension is `"none"`. The dimensions a
+  feature has are the keys of its family's `dims` (`families/3`).
+
+      people_by_dimension("web.game.started", "game")
+      #=> [%{value: "hangman", people: 41, events: 212}, …]
+  """
+  @spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t()) :: [map()]
+  def people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today())
+      when is_binary(name) and is_binary(dim) and is_integer(days) and days > 0 do
+    start = start_of_day(Date.add(today, -(days - 1)))
+    stop = start_of_day(Date.add(today, 1))
+
+    # `->>` with a CAST: the same SQL on Postgres (jsonb) and SQLite (JSON
+    # text), and the cast tells Postgres which `->>` is meant.
+    from(e in Event,
+      where: e.name == ^name and e.inserted_at >= ^start and e.inserted_at < ^stop,
+      group_by: fragment("? ->> CAST(? AS TEXT)", e.dims, ^dim),
+      select:
+        {fragment("? ->> CAST(? AS TEXT)", e.dims, ^dim), count(e.user_id, :distinct),
+         count(e.id)}
+    )
+    |> Repo.all()
+    |> Enum.map(fn {value, people, events} ->
+      %{
+        value: if(is_nil(value), do: "none", else: to_string(value)),
+        people: people,
+        events: events
+      }
+    end)
+    |> Enum.sort_by(&{-&1.people, -&1.events, &1.value})
+  end
+
   @doc "The last `limit` events, newest first."
   @spec recent_events(pos_integer()) :: [Event.t()]
   def recent_events(limit \\ 50) when is_integer(limit) and limit > 0 do
