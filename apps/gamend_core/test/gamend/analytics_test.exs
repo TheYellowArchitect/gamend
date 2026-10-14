@@ -274,7 +274,7 @@ defmodule Gamend.AnalyticsTest do
              }
     end
 
-    test "a visitor's event has no user, a nil field is dropped, a bad field is dropped with a warning" do
+    test "a visitor's event is counted and not kept, a nil field is dropped, a bad field is dropped with a warning" do
       log =
         capture_log(fn ->
           :ok =
@@ -286,8 +286,7 @@ defmodule Gamend.AnalyticsTest do
       assert log =~ "field odd = [1, 2] dropped"
       assert log =~ "field \"Bad Key\" dropped"
 
-      assert [%Event{user_id: nil, dims: %{"section" => "games"} = dims}] = Repo.all(Event)
-      refute Map.has_key?(dims, "lang")
+      assert Repo.all(Event) == []
 
       assert Analytics.count_totals("web.page*", 1, @today) == [
                {"web.page", 1},
@@ -356,11 +355,11 @@ defmodule Gamend.AnalyticsTest do
       # Twice today is one active user.
       :ok = Analytics.track("web.test.finished", %{lang: "es"}, user_id: a.id, at: at(@today))
       :ok = Analytics.track("web.test.finished", %{lang: "ro"}, user_id: b.id, at: at(@today))
-      # A visitor is an event, not a user.
+      # A visitor is counted, not kept: no row, so no feature.
       :ok = Analytics.track("web.test.finished", %{lang: "ro"}, at: at(@today))
       :ok = Analytics.track("web.page", %{section: "home"}, at: at(@today))
 
-      assert [tests, pages] = Analytics.feature_summary(@today)
+      assert [tests] = Analytics.feature_summary(@today)
 
       assert tests.name == "web.test.finished"
       assert tests.dau == 2
@@ -368,15 +367,13 @@ defmodule Gamend.AnalyticsTest do
       assert tests.mau == 2
       assert tests.stickiness == 1.0
       # The week is today and the six days before: a's first day is out of it.
-      assert tests.events_7d == 4
+      assert tests.events_7d == 3
       assert tests.new_7d == 1
       assert tests.new_30d == 2
       # a's day 7 is today, and a is here; b has not reached any horizon.
       assert tests.d7 == 1.0
       assert tests.d1 == 0.0
       assert tests.d30 == nil
-
-      assert %{name: "web.page", dau: 0, mau: 0, stickiness: nil, events_7d: 1} = pages
     end
   end
 
@@ -393,22 +390,24 @@ defmodule Gamend.AnalyticsTest do
           )
       end
 
-      # A visitor's round counts as an event, not a person; a round without
-      # the dimension is "none".
+      # A round without the dimension is "none"; a visitor's is not kept.
+      :ok = Analytics.track("web.game.started", %{lang: "ro"}, user_id: b.id, at: at(@today))
       :ok = Analytics.track("web.game.started", %{game: "hangman"}, at: at(@today))
-      :ok = Analytics.track("web.game.started", %{lang: "ro"}, at: at(@today))
       # Outside the window.
-      :ok = Analytics.track("web.game.started", %{game: "memory"}, at: at(Date.add(@today, -40)))
+      :ok =
+        Analytics.track("web.game.started", %{game: "memory"},
+          user_id: a.id,
+          at: at(Date.add(@today, -40))
+        )
 
       assert Analytics.people_by_dimension("web.game.started", "game", 30, @today) == [
-               %{value: "hangman", people: 2, events: 4},
+               %{value: "hangman", people: 2, events: 3},
                %{value: "crossword", people: 1, events: 1},
-               %{value: "none", people: 0, events: 1}
+               %{value: "none", people: 1, events: 1}
              ]
 
       assert Analytics.people_by_dimension("web.game.started", "lang", 30, @today) == [
-               %{value: "ro", people: 2, events: 5},
-               %{value: "none", people: 0, events: 1}
+               %{value: "ro", people: 2, events: 5}
              ]
 
       assert Analytics.people_by_dimension("web.test.started", "lang", 30, @today) == []
@@ -417,8 +416,14 @@ defmodule Gamend.AnalyticsTest do
 
   describe "recent_events/1" do
     test "newest first, as many as asked" do
+      user = AccountsFixtures.user_fixture()
+
       for n <- 1..3 do
-        :ok = Analytics.track("e.#{n}", %{}, at: DateTime.add(at(@today), n, :minute))
+        :ok =
+          Analytics.track("e.#{n}", %{},
+            user_id: user.id,
+            at: DateTime.add(at(@today), n, :minute)
+          )
       end
 
       assert Analytics.recent_events(2) |> Enum.map(& &1.name) == ["e.3", "e.2"]

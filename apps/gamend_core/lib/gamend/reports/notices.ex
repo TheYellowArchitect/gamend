@@ -26,8 +26,9 @@ defmodule Gamend.Reports.Notices do
   def reporter_title, do: @reporter_title
 
   @doc """
-  Tell every admin how many reports are open. Nothing is sent at zero: an
-  emptied queue leaves the last alert as it was, read or not.
+  Tell every admin how many reports are open, with a link to the queue
+  (`"url"`, which `/notifications` and a push open). Nothing is sent at zero:
+  an emptied queue leaves the last alert as it was, read or not.
   """
   @spec notify_admins(non_neg_integer()) :: :ok
   def notify_admins(0), do: :ok
@@ -40,7 +41,11 @@ defmodule Gamend.Reports.Notices do
       end
 
     Enum.each(Accounts.list_admin_ids(), fn admin_id ->
-      deliver(admin_id, @admin_title, content, %{"type" => "report", "open_reports" => open_count})
+      deliver(admin_id, @admin_title, content, %{
+        "type" => "report",
+        "open_reports" => open_count,
+        "url" => "/admin/reports"
+      })
     end)
   end
 

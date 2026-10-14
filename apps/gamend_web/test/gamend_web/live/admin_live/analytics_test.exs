@@ -14,7 +14,7 @@ defmodule GamendWeb.AdminLive.AnalyticsTest do
     log_in_user(conn, admin)
   end
 
-  test "renders the summary tiles and the per-day table", %{conn: conn} do
+  test "the overview: summary tiles, charts and the per-day table", %{conn: conn} do
     conn = admin_conn(conn)
     user = AccountsFixtures.user_fixture()
     :ok = Analytics.record_activity(user.id, DateTime.utc_now())
@@ -24,16 +24,17 @@ defmodule GamendWeb.AdminLive.AnalyticsTest do
     assert html =~ "Analytics"
     assert html =~ "DAU"
     assert html =~ "D30"
+    assert html =~ ~s(id="chart-active")
     assert html =~ Date.to_iso8601(Date.utc_today())
     # Nothing has reached a D7 yet: rendered as a dash, never as 0%.
     assert html =~ "—"
 
-    html = lv |> element("button[phx-click='window'][phx-value-days='90']") |> render_click()
-    assert html =~ "btn-active"
+    html = lv |> element("a", "90 days") |> render_click()
+    assert_patch(lv, ~p"/admin/analytics?days=90")
     assert length(Regex.scan(~r/<td class="font-mono">/, html)) == 90
   end
 
-  test "features, the counters grouped by key, and the newest events", %{conn: conn} do
+  test "features, counters and the rows of an event", %{conn: conn} do
     conn = admin_conn(conn)
     user = AccountsFixtures.user_fixture()
 
@@ -42,25 +43,22 @@ defmodule GamendWeb.AdminLive.AnalyticsTest do
         user_id: user.id
       )
 
-    {:ok, lv, html} = live(conn, ~p"/admin/analytics")
+    {:ok, _lv, html} = live(conn, ~p"/admin/analytics/features")
+    assert html =~ "web.game.finished"
 
-    # The feature row, the grouped counter with its dimension values, the row.
-    assert html =~ "Features"
+    {:ok, lv, html} = live(conn, ~p"/admin/analytics/counters")
     assert html =~ "web.game.finished"
     assert html =~ "hangman"
+
+    lv |> element("a", "30 days") |> render_click()
+    assert_patch(lv, ~p"/admin/analytics/counters?days=30")
+
+    {:ok, _lv, html} = live(conn, ~p"/admin/analytics/explore?event=web.game.finished")
     assert html =~ "score=7"
     assert html =~ String.slice(user.id, 0, 8)
-    assert html =~ "Counters · last 7 days"
-
-    html =
-      lv
-      |> element("button[phx-click='counter_window'][phx-value-days='30']")
-      |> render_click()
-
-    assert html =~ "Counters · last 30 days"
   end
 
-  test "a feature broken down by one of its dimensions: people per value", %{conn: conn} do
+  test "an event broken down by one of its dimensions: people per value", %{conn: conn} do
     conn = admin_conn(conn)
     a = AccountsFixtures.user_fixture()
     b = AccountsFixtures.user_fixture()
@@ -69,21 +67,18 @@ defmodule GamendWeb.AdminLive.AnalyticsTest do
       :ok = Analytics.track("web.game.started", %{game: game, lang: "ro"}, user_id: user.id)
     end
 
-    {:ok, lv, html} = live(conn, ~p"/admin/analytics")
+    {:ok, lv, _html} = live(conn, ~p"/admin/analytics/explore?event=web.game.started&by=game")
 
-    # The busiest feature with dimensions, by its first dimension.
-    assert html =~ ~s(<option value="web.game.started" selected)
-    assert html =~ ~s(<option value="game" selected)
     # hangman: two people, one round each; crossword below it.
-    assert lv |> element("#breakdown-rows") |> render() =~
+    assert lv |> element("#explore-breakdown") |> render() =~
              ~r/hangman.*>2<.*>2<.*crossword.*>1<.*>1</s
 
-    html =
-      lv
-      |> form("#breakdown", %{"name" => "web.game.started", "dim" => "lang"})
-      |> render_change()
+    {:ok, lv, _html} = live(conn, ~p"/admin/analytics/explore?event=web.game.started&by=lang")
+    assert lv |> element("#explore-breakdown") |> render() =~ ~r/>\s*ro\s*<.*>2<.*>3</s
 
-    assert html =~ ~s(<option value="lang" selected)
-    assert lv |> element("#breakdown-rows") |> render() =~ ~r/>ro<.*>2<.*>3</s
+    # One account: its page, and Explore narrowed to it.
+    {:ok, _lv, html} = live(conn, ~p"/admin/analytics/people?user=#{a.id}")
+    assert html =~ "web.game.started"
+    assert html =~ a.id
   end
 end

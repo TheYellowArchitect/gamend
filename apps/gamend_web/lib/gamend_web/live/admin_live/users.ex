@@ -462,6 +462,12 @@ defmodule GamendWeb.AdminLive.Users do
               >
                 KV Data
               </.link>
+              <.link
+                navigate={~p"/admin/analytics/people?user=#{@selected_user.id}"}
+                class="btn btn-surface btn-xs"
+              >
+                Activity
+              </.link>
             </div>
 
             <div

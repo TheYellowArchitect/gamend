@@ -947,6 +947,11 @@ defmodule GamendWeb.Router.Shared do
           live "/admin/storage", AdminLive.Storage, :index
           live "/admin/economy", AdminLive.Economy, :index
           live "/admin/analytics", AdminLive.Analytics, :index
+          live "/admin/analytics/features", AdminLive.AnalyticsFeatures, :index
+          live "/admin/analytics/explore", AdminLive.AnalyticsExplore, :index
+          live "/admin/analytics/people", AdminLive.AnalyticsPeople, :index
+          live "/admin/analytics/counters", AdminLive.AnalyticsCounters, :index
+          live "/admin/analytics/economy", AdminLive.AnalyticsEconomy, :index
         end
       end
     end

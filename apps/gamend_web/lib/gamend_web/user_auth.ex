@@ -271,6 +271,10 @@ defmodule GamendWeb.UserAuth do
   def fetch_current_scope_for_user(conn, _opts) do
     with {token, conn} <- ensure_user_token(conn),
          {user, token_inserted_at} <- Accounts.get_user_by_session_token(token) do
+      # A reader back on their cookie signs nothing in, so no login path
+      # records the day: this does (a cache read once it is recorded).
+      Gamend.Analytics.record_activity(user.id)
+
       conn
       |> assign(:current_scope, Scope.for_user(user))
       |> maybe_reissue_user_session_token(user, token_inserted_at)
@@ -506,6 +510,7 @@ defmodule GamendWeb.UserAuth do
       |> assign_guest_ip(session)
 
     remember_reader(socket)
+    record_reader_day(socket)
 
     # Attach hook to capture current_path for nav active state.
     # Only works for views mounted via live/3 in the router.
@@ -559,6 +564,18 @@ defmodule GamendWeb.UserAuth do
   # evening" for a daily and its reminder, and the language an email is
   # written in. A write happens only on a change, so a page load costs a map
   # lookup.
+  # A socket can outlive the day its page was served on, and a live
+  # navigation is not a request: the day is recorded on every connected mount
+  # too (a cache read once it is).
+  defp record_reader_day(socket) do
+    with true <- Phoenix.LiveView.connected?(socket),
+         %Accounts.User{id: id} <- Scope.user(socket.assigns.current_scope) do
+      Gamend.Analytics.record_activity(id)
+    end
+
+    :ok
+  end
+
   defp remember_reader(socket) do
     with true <- Phoenix.LiveView.connected?(socket),
          %Accounts.User{} = user <- Scope.user(socket.assigns.current_scope) do

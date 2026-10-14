@@ -19,8 +19,8 @@ defmodule Gamend.Analytics do
     by empty hearts). The game picks the keys; the engine sums them.
     `families/3` reads them back grouped: a base key with its dimensions.
   * **Events** — `track/3`: one call that counts (the name, and the name per
-    dimension) AND keeps the row — who, when, every field — in
-    `analytics_events`. The counters answer "how many" forever; the rows
+    dimension) AND, for an account, keeps the row — who, when, every field —
+    in `analytics_events`. A visitor's event is counted only. The counters answer "how many" forever; the rows
     answer what a sum cannot: how many distinct people did a thing
     (`feature_summary/1`: DAU / WAU / MAU, first-timers and D1 / D7 / D30
     per feature), in what order, with what else. Writes are gathered by
@@ -47,6 +47,7 @@ defmodule Gamend.Analytics do
   alias Gamend.Analytics.Buffer
   alias Gamend.Analytics.DailyCount
   alias Gamend.Analytics.Event
+  alias Gamend.Analytics.Segment
   alias Gamend.Cache
   alias Gamend.Economy.LedgerEntry
   alias Gamend.Payments.Purchase
@@ -233,9 +234,14 @@ defmodule Gamend.Analytics do
 
   @doc """
   Records that something happened: `name` is counted for the day (`count/3`),
-  once more per DIMENSION (`name.lang:ro`), and the whole event —
-  `dims`, `user_id`, the moment — is kept as a row in `analytics_events`.
-  One call, so a counter and its event can never disagree.
+  once more per DIMENSION (`name.lang:ro`), and, when it has a user, the
+  whole event — `dims`, `user_id`, the moment — is kept as a row in
+  `analytics_events`. One call, so a counter and its event can never
+  disagree.
+
+  An event with no user (a visitor, a webhook) is counted and never kept: a
+  row is there to say WHO, and a visitor has no id to say it with. On a site
+  crawlers read, they were nearly every row.
 
   `name` is dotted `[a-z0-9_]`, up to #{@name_max} chars (`"web.game.finished"`).
   `dims` is a map of the event's fields, atom or string keys of `[a-z0-9_]`:
@@ -247,8 +253,8 @@ defmodule Gamend.Analytics do
       row, never counted;
     * `nil` is dropped.
 
-  Options: `user_id:` (nil for a visitor; nulled when the account is
-  deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
+  Options: `user_id:` (nil for a visitor: counted only; nulled on the kept
+  row when the account is deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
   name or field is dropped with a warning, the rest is kept.
 
       Analytics.track("web.game.finished",
@@ -277,15 +283,7 @@ defmodule Gamend.Analytics do
         count(name, 1, at)
         Enum.each(dimensions, fn {k, v} -> count("#{name}.#{k}:#{v}", 1, at) end)
 
-        row = %{
-          id: Gamend.UUIDv7.generate(),
-          name: name,
-          dims: fields,
-          user_id: user_id,
-          inserted_at: DateTime.truncate(at, :second)
-        }
-
-        if Buffer.buffered?(), do: Buffer.event(row), else: write_events([row])
+        if user_id, do: keep_row(name, fields, user_id, at)
     end
 
     :ok
@@ -294,6 +292,18 @@ defmodule Gamend.Analytics do
   def track(name, dims, opts) do
     Logger.warning("analytics: event dropped: #{inspect({name, dims, opts})}")
     :ok
+  end
+
+  defp keep_row(name, fields, user_id, at) do
+    row = %{
+      id: Gamend.UUIDv7.generate(),
+      name: name,
+      dims: fields,
+      user_id: user_id,
+      inserted_at: DateTime.truncate(at, :second)
+    }
+
+    if Buffer.buffered?(), do: Buffer.event(row), else: write_events([row])
   end
 
   defp valid_name?(name),
@@ -418,14 +428,17 @@ defmodule Gamend.Analytics do
   with what `summary/1` says of the whole site: `[%{name, dau, wau, mau,
   stickiness, events_7d, new_7d, new_30d, d1, d7, d30}]`, largest MAU first.
 
-  Active = at least one event of that name that day, signed-in users only
-  (a visitor has no id to count once). "New" = first event of the name in
-  the window (a player back after #{@feature_window_days} quiet days reads as
-  new). D1 / D7 / D30 are pooled over the first-day cohorts old enough to
-  have reached the horizon, as `summary/1` pools sign-up cohorts.
+  Active = at least one event of that name that day (only an account's
+  events are kept as rows). "New" = first event of the name in the window (a
+  player back after #{@feature_window_days} quiet days reads as new). D1 / D7
+  / D30 are pooled over the first-day cohorts old enough to have reached the
+  horizon, as `summary/1` pools sign-up cohorts.
+
+  Options: `segment:` (`segments/0`, default `:all`).
   """
-  @spec feature_summary(Date.t()) :: [map()]
-  def feature_summary(today \\ Date.utc_today()) do
+  @spec feature_summary(Date.t(), keyword()) :: [map()]
+  def feature_summary(today \\ Date.utc_today(), opts \\ []) do
+    segment = Keyword.get(opts, :segment, :all)
     first = Date.add(today, -(@feature_window_days - 1))
     start = start_of_day(first)
     stop = start_of_day(Date.add(today, 1))
@@ -436,6 +449,7 @@ defmodule Gamend.Analytics do
         group_by: [e.name, fragment("date(?)", e.inserted_at), e.user_id],
         select: {e.name, fragment("date(?)", e.inserted_at), e.user_id}
       )
+      |> in_segment(segment)
       |> Repo.all()
       |> Enum.group_by(&elem(&1, 0), fn {_name, day, user} -> {to_date(day), user} end)
 
@@ -447,6 +461,7 @@ defmodule Gamend.Analytics do
         group_by: e.name,
         select: {e.name, count(e.id)}
       )
+      |> in_segment(segment)
       |> Repo.all()
       |> Map.new()
 
@@ -521,13 +536,15 @@ defmodule Gamend.Analytics do
   One feature broken down by one of its dimensions over the last `days`
   days: `[%{value, people, events}]`, people = distinct signed-in users,
   largest first; a row without the dimension is `"none"`. The dimensions a
-  feature has are the keys of its family's `dims` (`families/3`).
+  feature has are the keys of its family's `dims` (`families/3`). Options:
+  `segment:` (`segments/0`).
 
       people_by_dimension("web.game.started", "game")
       #=> [%{value: "hangman", people: 41, events: 212}, …]
   """
-  @spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t()) :: [map()]
-  def people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today())
+  @spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t(), keyword()) ::
+          [map()]
+  def people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today(), opts \\ [])
       when is_binary(name) and is_binary(dim) and is_integer(days) and days > 0 do
     start = start_of_day(Date.add(today, -(days - 1)))
     stop = start_of_day(Date.add(today, 1))
@@ -546,6 +563,7 @@ defmodule Gamend.Analytics do
         events: count(e.id)
       }
     )
+    |> in_segment(Keyword.get(opts, :segment, :all))
     |> Repo.all()
     |> Enum.map(fn row ->
       %{row | value: if(is_nil(row.value), do: "none", else: to_string(row.value))}
@@ -680,51 +698,76 @@ defmodule Gamend.Analytics do
 
   defp seen_key(user_id), do: {:analytics, :seen_day, user_id}
 
+  # -- segments ------------------------------------------------------------------
+
+  @doc "Every segment the people numbers split by (`Gamend.Analytics.Segment`)."
+  @spec segments() :: [Segment.t()]
+  def segments, do: Segment.all()
+
+  @doc "A segment from a request parameter; anything unknown is `:all`."
+  @spec segment(term()) :: Segment.t()
+  def segment(param), do: Segment.parse(param)
+
+  defp in_segment(query, segment), do: Segment.restrict(query, segment)
+
   # -- active users --------------------------------------------------------------
 
-  @doc "Distinct users seen on any day in `from..to` (inclusive, UTC dates)."
-  @spec active_users(Date.t(), Date.t()) :: non_neg_integer()
-  def active_users(%Date{} = from, %Date{} = to) do
-    Repo.one(
-      from a in ActivityDay,
-        where: a.day >= ^from and a.day <= ^to,
-        select: count(a.user_id, :distinct)
-    ) || 0
+  @doc """
+  Distinct users seen on any day in `from..to` (inclusive, UTC dates).
+  Options: `segment:` (`segments/0`).
+  """
+  @spec active_users(Date.t(), Date.t(), keyword()) :: non_neg_integer()
+  def active_users(%Date{} = from, %Date{} = to, opts \\ []) do
+    from(a in ActivityDay,
+      where: a.day >= ^from and a.day <= ^to,
+      select: count(a.user_id, :distinct)
+    )
+    |> in_segment(Keyword.get(opts, :segment, :all))
+    |> Repo.one() || 0
   end
 
   @doc "Daily active users on `day` (default: today, UTC)."
-  @spec dau(Date.t()) :: non_neg_integer()
-  def dau(day \\ Date.utc_today()), do: active_users(day, day)
+  @spec dau(Date.t(), keyword()) :: non_neg_integer()
+  def dau(day \\ Date.utc_today(), opts \\ []), do: active_users(day, day, opts)
 
   @doc "Weekly active users: distinct users seen in the 7 days ending on `day`."
-  @spec wau(Date.t()) :: non_neg_integer()
-  def wau(day \\ Date.utc_today()), do: active_users(Date.add(day, -6), day)
+  @spec wau(Date.t(), keyword()) :: non_neg_integer()
+  def wau(day \\ Date.utc_today(), opts \\ []), do: active_users(Date.add(day, -6), day, opts)
 
   @doc "Monthly active users: distinct users seen in the 30 days ending on `day`."
-  @spec mau(Date.t()) :: non_neg_integer()
-  def mau(day \\ Date.utc_today()), do: active_users(Date.add(day, -29), day)
+  @spec mau(Date.t(), keyword()) :: non_neg_integer()
+  def mau(day \\ Date.utc_today(), opts \\ []), do: active_users(Date.add(day, -29), day, opts)
 
   # -- cohorts -------------------------------------------------------------------
 
   @doc """
   One row per UTC day for the last `days` days ending on `today`, oldest
-  first: `%{day, active, new_users, d1, d7, d30}`. A retention rate is `nil`
-  when the cohort is empty or the horizon day has not happened yet.
+  first: `%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}`.
+  `wau` / `mau` are the distinct users of the 7 / 30 days ending on that day,
+  and `stickiness` is `active ÷ mau` of that day, so each row reads as the
+  headline would have on it. A retention rate is `nil` when the cohort is
+  empty or the horizon day has not happened yet. Options: `segment:`
+  (`segments/0`).
   """
-  @spec daily_series(pos_integer(), Date.t()) :: [map()]
-  def daily_series(days \\ @series_days, today \\ Date.utc_today())
+  @spec daily_series(pos_integer(), Date.t(), keyword()) :: [map()]
+  def daily_series(days \\ @series_days, today \\ Date.utc_today(), opts \\ [])
       when is_integer(days) and days > 0 do
+    segment = Keyword.get(opts, :segment, :all)
     first = Date.add(today, -(days - 1))
-    active = active_counts_by_day(first, today)
-    %{sizes: sizes, retained: retained} = cohort_snapshot(first, today)
+    rolling = rolling_active(first, today, segment)
+    %{sizes: sizes, retained: retained} = cohort_snapshot(first, today, segment)
 
     for offset <- 0..(days - 1) do
       day = Date.add(first, offset)
       size = Map.get(sizes, day, 0)
+      %{active: active, wau: wau, mau: mau} = Map.fetch!(rolling, day)
 
       %{
         day: day,
-        active: Map.get(active, day, 0),
+        active: active,
+        wau: wau,
+        mau: mau,
+        stickiness: ratio(active, mau),
         new_users: size,
         d1: cohort_rate(retained, day, 1, size, today),
         d7: cohort_rate(retained, day, 7, size, today),
@@ -733,31 +776,83 @@ defmodule Gamend.Analytics do
     end
   end
 
+  # `%{day => %{active, wau, mau}}` for every day in `first..today`: each
+  # user's days seen, spread over the 7 and 30 days they count in. One read
+  # of the days that can count (30 before `first` on), so a 90-day table is
+  # one query, not 180.
+  defp rolling_active(first, today, segment) do
+    from_day = Date.add(first, -29)
+    first_n = Date.to_gregorian_days(first)
+    last_n = Date.to_gregorian_days(today)
+
+    seen =
+      from(a in ActivityDay,
+        where: a.day >= ^from_day and a.day <= ^today,
+        select: {a.user_id, a.day}
+      )
+      |> in_segment(segment)
+      |> Repo.all()
+      |> Enum.group_by(&elem(&1, 0), &(&1 |> elem(1) |> to_date() |> Date.to_gregorian_days()))
+
+    empty = Map.new(first_n..last_n, &{&1, {0, 0, 0}})
+
+    seen
+    |> Enum.reduce(empty, fn {_user, days}, acc -> add_user_days(acc, days, first_n, last_n) end)
+    |> Map.new(fn {n, {d, w, m}} ->
+      {Date.from_gregorian_days(n), %{active: d, wau: w, mau: m}}
+    end)
+  end
+
+  # One user's days seen, added to every `{active, wau, mau}` they count in.
+  defp add_user_days(acc, days, first_n, last_n) do
+    week = covered(days, 7, first_n, last_n)
+    month = covered(days, 30, first_n, last_n)
+    seen = MapSet.new(days)
+
+    Enum.reduce(month, acc, fn n, acc ->
+      Map.update!(acc, n, fn {d, w, m} ->
+        {d + one_if(MapSet.member?(seen, n)), w + one_if(MapSet.member?(week, n)), m + 1}
+      end)
+    end)
+  end
+
+  defp one_if(true), do: 1
+  defp one_if(false), do: 0
+
+  # The days in `first_n..last_n` a user seen on `days` counts in, for a
+  # window of `width` days ending on each.
+  defp covered(days, width, first_n, last_n) do
+    for d <- days, n <- max(d, first_n)..min(d + width - 1, last_n)//1, into: MapSet.new(), do: n
+  end
+
   @doc """
   Headline numbers as of `today`: DAU / WAU / MAU, stickiness (DAU ÷ MAU),
   new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
   of the last #{@cohort_window_days} days that is old enough to have reached
   the horizon, and payer conversion (distinct users with a completed purchase
-  in the last 30 days ÷ MAU).
+  in the last 30 days ÷ MAU). Options: `segment:` (`segments/0`).
   """
-  @spec summary(Date.t()) :: map()
-  def summary(today \\ Date.utc_today()) do
-    dau = dau(today)
-    mau = mau(today)
+  @spec summary(Date.t(), keyword()) :: map()
+  def summary(today \\ Date.utc_today(), opts \\ []) do
+    segment = Keyword.get(opts, :segment, :all)
+    opts = [segment: segment]
+    dau = dau(today, opts)
+    mau = mau(today, opts)
     first = Date.add(today, -(@cohort_window_days - 1))
-    %{sizes: sizes, retained: retained} = cohort_snapshot(first, today)
+    %{sizes: sizes, retained: retained} = cohort_snapshot(first, today, segment)
 
     pooled =
       Map.new(@horizons, fn n ->
         {n, pooled_rate(sizes, retained, n, today)}
       end)
 
-    payers = payers_since(Date.add(today, -29))
+    payers = payers_since(Date.add(today, -29), opts)
 
     %{
       day: today,
+      segment: segment,
       dau: dau,
-      wau: wau(today),
+      wau: wau(today, opts),
       mau: mau,
       stickiness: ratio(dau, mau),
       new_users_7d: sum_sizes(sizes, Date.add(today, -6), today),
@@ -778,58 +873,56 @@ defmodule Gamend.Analytics do
     end)
   end
 
-  @doc "Distinct users with a completed purchase since `from` (UTC date, inclusive)."
-  @spec payers_since(Date.t()) :: non_neg_integer()
-  def payers_since(%Date{} = from) do
+  @doc """
+  Distinct users with a completed purchase since `from` (UTC date, inclusive).
+  Options: `segment:` (`segments/0`).
+  """
+  @spec payers_since(Date.t(), keyword()) :: non_neg_integer()
+  def payers_since(%Date{} = from, opts \\ []) do
     start = start_of_day(from)
 
-    Repo.one(
-      from p in Purchase,
-        where: p.status == "completed" and p.inserted_at >= ^start,
-        select: count(p.user_id, :distinct)
-    ) || 0
+    from(p in Purchase,
+      where: p.status == "completed" and p.inserted_at >= ^start,
+      select: count(p.user_id, :distinct)
+    )
+    |> in_segment(Keyword.get(opts, :segment, :all))
+    |> Repo.one() || 0
   end
 
   # Cohort sizes (users registered per UTC day) and retained counts
   # (`{cohort_day, seen_day} => users`) for cohorts registered in `first..today`.
   # One grouped query each; the join output is at most days² rows, so the
   # per-horizon lookups happen in Elixir rather than as N more queries.
-  defp cohort_snapshot(first, today) do
+  defp cohort_snapshot(first, today, segment) do
     start = start_of_day(first)
     stop = start_of_day(Date.add(today, 1))
 
     sizes =
       from(u in User,
+        as: :user,
         where: u.inserted_at >= ^start and u.inserted_at < ^stop,
         group_by: fragment("date(?)", u.inserted_at),
         select: {fragment("date(?)", u.inserted_at), count(u.id)}
       )
+      |> in_segment(segment)
       |> Repo.all()
       |> Map.new(fn {day, n} -> {to_date(day), n} end)
 
     retained =
       from(a in ActivityDay,
         join: u in User,
+        as: :user,
         on: u.id == a.user_id,
         where: u.inserted_at >= ^start and u.inserted_at < ^stop,
         where: a.day >= ^first and a.day <= ^today,
         group_by: [fragment("date(?)", u.inserted_at), a.day],
         select: {fragment("date(?)", u.inserted_at), a.day, count(a.user_id)}
       )
+      |> in_segment(segment)
       |> Repo.all()
       |> Map.new(fn {cohort, day, n} -> {{to_date(cohort), to_date(day)}, n} end)
 
     %{sizes: sizes, retained: retained}
-  end
-
-  defp active_counts_by_day(first, today) do
-    from(a in ActivityDay,
-      where: a.day >= ^first and a.day <= ^today,
-      group_by: a.day,
-      select: {a.day, count(a.user_id)}
-    )
-    |> Repo.all()
-    |> Map.new(fn {day, n} -> {to_date(day), n} end)
   end
 
   # Retention of one cohort at horizon `n`: nil until day+n has happened.

@@ -85,6 +85,9 @@ defmodule GamendWeb.AdminLive.Index do
           <.link navigate={~p"/admin/reports"} class="btn btn-surface">
             Reports ({@content_reports})
           </.link>
+          <.link navigate={~p"/admin/translations"} class="btn btn-surface">
+            Translations
+          </.link>
           <.link navigate={~p"/admin/quests"} class="btn btn-surface">
             Quests ({@quest_stats.definitions})
           </.link>
@@ -182,6 +185,10 @@ defmodule GamendWeb.AdminLive.Index do
                   <% end %>
                 </div>
               </div>
+
+              <.stat_card title="Sessions" path={~p"/admin/sessions"} value={@sessions_count}>
+                <div>Signed-in browser sessions</div>
+              </.stat_card>
 
               <%!-- 3. Activity --%>
               <div class="card bg-base-100 p-4">
@@ -338,6 +345,14 @@ defmodule GamendWeb.AdminLive.Index do
                 </div>
               </div>
 
+              <.stat_card title="Friends" path={~p"/admin/friends"} value={@friends_count}>
+                <div>Friendships</div>
+                <div>
+                  Blocks:
+                  <.link navigate={~p"/admin/blacklist"} class="link">{@blacklist_count}</.link>
+                </div>
+              </.stat_card>
+
               <%!-- 8. Chat --%>
               <div class="card bg-base-100 p-4">
                 <div class="flex items-center justify-between mb-2">
@@ -376,6 +391,13 @@ defmodule GamendWeb.AdminLive.Index do
                   </div>
                 </div>
               </div>
+
+              <.stat_card title="Reports" path={~p"/admin/reports"} value={@content_reports}>
+                <div>Open reports</div>
+                <div>Fixed: {Map.get(@report_counts, "fixed", 0)}</div>
+                <div>Won't fix: {Map.get(@report_counts, "wontfix", 0)}</div>
+                <div>Duplicate: {Map.get(@report_counts, "duplicate", 0)}</div>
+              </.stat_card>
 
               <%!-- 9. Translations --%>
               <div class="card bg-base-100 p-4">
@@ -437,6 +459,19 @@ defmodule GamendWeb.AdminLive.Index do
                   <div>Claimable now: {@quest_stats.claimable_now}</div>
                 </div>
               </div>
+
+              <.stat_card
+                title="Notifications"
+                path={~p"/admin/notifications"}
+                value={@notifications_count}
+              >
+                <div>In-app notifications stored</div>
+              </.stat_card>
+
+              <.stat_card title="Push devices" path={~p"/admin/push"} value={@push_stats.live}>
+                <div>Disabled: {@push_stats.disabled}</div>
+                <div :for={{platform, n} <- @push_stats.by_platform}>{platform}: {n}</div>
+              </.stat_card>
 
               <%!-- 12. Live Connections --%>
               <div class="card bg-base-100 p-4">
@@ -736,11 +771,51 @@ defmodule GamendWeb.AdminLive.Index do
                   </div>
                 </div>
               </div>
+
+              <.stat_card
+                :for={card <- @host_cards}
+                title={card.title}
+                path={card.path}
+                value={card[:value]}
+              >
+                <div :for={line <- card[:lines] || []}>
+                  <%= case line do %>
+                    <% text when is_binary(text) -> %>
+                      {text}
+                    <% {label, nil, path} -> %>
+                      <.link navigate={path} class="link">{label}</.link>
+                    <% {label, value, path} -> %>
+                      {label}: <.link navigate={path} class="link">{value}</.link>
+                    <% {label, value} -> %>
+                      {label}: {value}
+                  <% end %>
+                </div>
+              </.stat_card>
             </div>
           </div>
         </div>
       </div>
     </Layouts.app>
+    """
+  end
+
+  # One dashboard card: a title, its page, a headline figure, the lines under
+  # it. Host cards (`GamendWeb.AdminCard`) are drawn with it too.
+  attr :title, :string, required: true
+  attr :path, :string, required: true
+  attr :value, :any, default: nil
+  slot :inner_block
+
+  defp stat_card(assigns) do
+    ~H"""
+    <div class="card bg-base-100 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm font-semibold">{@title}</div>
+        <.link navigate={@path} class="link link-primary text-xs">View →</.link>
+      </div>
+      <div :if={@value != nil} class="text-2xl font-bold">{@value}</div>
+      <div class="text-xs text-muted mt-2 space-y-1">{render_slot(@inner_block)}</div>
+    </div>
     """
   end
 
@@ -790,7 +865,8 @@ defmodule GamendWeb.AdminLive.Index do
       chat_senders: Task.async(fn -> Gamend.Chat.count_unique_senders() end),
       chat_by_type: Task.async(fn -> Gamend.Chat.count_messages_by_type() end),
       open_reports: Task.async(fn -> Reports.count_open_reports() end),
-      content_reports: Task.async(fn -> Gamend.Reports.count_open() end),
+      report_counts: Task.async(fn -> Gamend.Reports.count_by_status() end),
+      host_cards: Task.async(fn -> GamendWeb.AdminCard.all() end),
       active_mutes: Task.async(fn -> Gamend.Chat.count_mutes(%{"active" => true}) end),
       quest_stats: Task.async(fn -> Gamend.Quests.dashboard_stats() end),
       payments_stats: Task.async(fn -> Payments.admin_stats() end),
@@ -860,7 +936,9 @@ defmodule GamendWeb.AdminLive.Index do
        chat_by_group: Map.get(r.chat_by_type, "group", 0),
        chat_by_friend: Map.get(r.chat_by_type, "friend", 0),
        open_reports: r.open_reports,
-       content_reports: r.content_reports,
+       content_reports: Map.get(r.report_counts, "open", 0),
+       report_counts: r.report_counts,
+       host_cards: r.host_cards,
        active_mutes: r.active_mutes,
        translation_stats: r.translation_stats,
        quest_stats: r.quest_stats,

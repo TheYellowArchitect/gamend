@@ -68,8 +68,9 @@ defmodule Gamend.RetentionTest do
     Application.put_env(:gamend_core, Gamend.Retention, analytics_events_days: 30)
 
     old_day = DateTime.add(DateTime.utc_now(), -40, :day)
-    :ok = Gamend.Analytics.track("web.page", %{section: "home"}, at: old_day)
-    :ok = Gamend.Analytics.track("web.page", %{section: "home"})
+    user = AccountsFixtures.user_fixture()
+    :ok = Gamend.Analytics.track("web.page", %{section: "home"}, user_id: user.id, at: old_day)
+    :ok = Gamend.Analytics.track("web.page", %{section: "home"}, user_id: user.id)
 
     results = Retention.prune_all()
 

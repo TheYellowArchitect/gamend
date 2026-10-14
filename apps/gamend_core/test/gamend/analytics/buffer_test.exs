@@ -3,6 +3,7 @@ defmodule Gamend.Analytics.BufferTest do
   # as counters and rows. Not async: the window is application config.
   use Gamend.DataCase, async: false
 
+  alias Gamend.AccountsFixtures
   alias Gamend.Analytics
   alias Gamend.Analytics.Buffer
   alias Gamend.Analytics.Event
@@ -29,8 +30,11 @@ defmodule Gamend.Analytics.BufferTest do
 
   test "gathers counters and events until a flush lands them in the caller's process" do
     assert Buffer.buffered?()
+    user = AccountsFixtures.user_fixture()
 
-    :ok = Analytics.track("web.game.started", %{game: "hangman"}, at: at(@today))
+    :ok =
+      Analytics.track("web.game.started", %{game: "hangman"}, user_id: user.id, at: at(@today))
+
     :ok = Analytics.count("level.finished", 2, at(@today))
 
     assert Repo.all(Event) == []
@@ -66,8 +70,9 @@ defmodule Gamend.Analytics.BufferTest do
   test "with the window off, writes go through at once" do
     SettingsHelpers.put(:gamend_core, Buffer, :flush_ms, 0)
     refute Buffer.buffered?()
+    user = AccountsFixtures.user_fixture()
 
-    :ok = Analytics.track("web.page", %{section: "home"}, at: at(@today))
+    :ok = Analytics.track("web.page", %{section: "home"}, user_id: user.id, at: at(@today))
     assert [%Event{name: "web.page"}] = Repo.all(Event)
     assert {0, 0} = Analytics.flush()
   end

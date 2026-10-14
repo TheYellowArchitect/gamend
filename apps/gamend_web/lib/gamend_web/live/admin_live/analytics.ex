@@ -1,151 +1,92 @@
 defmodule GamendWeb.AdminLive.Analytics do
   @moduledoc """
-  Admin view over player activity and retention: DAU / WAU / MAU, new users,
-  D1 / D7 / D30 cohort retention and payer conversion, plus a per-day table
-  for the last 30 (or 90) UTC days; then the same per FEATURE (every event
-  name `Gamend.Analytics.track/3` was given), the daily counters grouped by
-  key with their dimensions, and the newest event rows. Read-only; the
-  numbers come from `Gamend.Analytics`. Grafana is the place to graph them.
+  Analytics → Overview: DAU / WAU / MAU, stickiness, D1 / D7 / D30 cohort
+  retention and payer conversion, charts of active and new accounts and of
+  stickiness per day, and the per-day table, for one segment (all /
+  registered / guest) over 30 or 90 UTC days. The other tabs
+  (`GamendWeb.AdminLive.AnalyticsComponents.tabs/0`) look at features,
+  single events, one account, the counters and the economy. Read-only; the
+  numbers come from `Gamend.Analytics`.
   """
   use GamendWeb, :live_view
 
+  import GamendWeb.AdminLive.AnalyticsComponents
+  import GamendWeb.Charts
+
   alias Gamend.Analytics
+  alias Gamend.Analytics.Segment
 
   @windows [30, 90]
-  @counter_windows [7, 30, 90]
-  @recent_events 50
-  @breakdown_days 30
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:page_title, "Admin · Analytics")
-     |> assign(:days, 30)
-     |> assign(:counter_days, 7)
-     |> assign(:breakdown_choice, nil)
-     |> reload()}
-  end
-
-  # One feature by one of its dimensions (people per game, per language…).
-  def handle_event("breakdown", %{"name" => name} = params, socket) do
-    {:noreply,
-     socket
-     |> assign(:breakdown_choice, {name, Map.get(params, "dim")})
-     |> reload()}
+    {:ok, assign(socket, :page_title, "Admin · Analytics")}
   end
 
   @impl true
-  def handle_event("window", %{"days" => days}, socket) do
-    days =
-      case Integer.parse(days) do
-        {n, ""} when n in @windows -> n
-        _ -> 30
-      end
-
-    {:noreply, socket |> assign(:days, days) |> reload()}
+  def handle_params(params, _uri, socket) do
+    {:noreply,
+     socket
+     |> assign(:segment, Segment.parse(params["segment"]))
+     |> assign(:days, int_param(params, "days", @windows, 30))
+     |> load()}
   end
 
-  def handle_event("counter_window", %{"days" => days}, socket) do
-    days =
-      case Integer.parse(days) do
-        {n, ""} when n in @counter_windows -> n
-        _ -> 7
-      end
+  @impl true
+  def handle_event("refresh", _params, socket), do: {:noreply, load(socket)}
 
-    {:noreply, socket |> assign(:counter_days, days) |> reload()}
-  end
-
-  def handle_event("refresh", _params, socket), do: {:noreply, reload(socket)}
-
-  # Economy uses a fixed 7-day window: it answers "what is the game doing
-  # this week", the cohort table answers "how are we trending".
-  @flow_days 7
-
-  defp reload(socket) do
+  defp load(socket) do
     # Gathered for up to a flush window; a reader wants now.
     _ = Analytics.flush()
     today = Date.utc_today()
-
-    features = Analytics.feature_summary(today)
+    opts = [segment: socket.assigns.segment]
+    series = Analytics.daily_series(socket.assigns.days, today, opts)
 
     socket
-    |> assign(:today, today)
-    |> assign(:summary, Analytics.summary(today))
-    |> assign(:series, socket.assigns.days |> Analytics.daily_series(today) |> Enum.reverse())
-    |> assign(:economy, Analytics.economy_totals(@flow_days, today: today))
-    |> assign(:features, features)
-    |> assign(:breakdown, breakdown(features, socket.assigns.breakdown_choice, today))
-    |> assign(:families, Analytics.families("*", socket.assigns.counter_days, today))
-    |> assign(:events, Analytics.recent_events(@recent_events))
-    |> assign(:flow_days, @flow_days)
+    |> assign(:summary, Analytics.summary(today, opts))
+    |> assign(:series, series)
   end
 
-  # The feature and dimension chosen (or the busiest feature that has one, by
-  # its first dimension), with every dimension the feature has and the rows.
-  defp breakdown(features, choice, today) do
-    names = Enum.map(features, & &1.name)
-    dims_of = fn name -> dims_of(name, today) end
+  defp here(assigns, changes) do
+    params =
+      Map.merge(
+        %{"segment" => Atom.to_string(assigns.segment), "days" => assigns.days},
+        changes
+      )
 
-    {name, dims} =
-      case choice do
-        {name, _dim} when is_binary(name) and name != "" ->
-          {name, dims_of.(name)}
-
-        _ ->
-          Enum.find_value(names, {nil, []}, fn n ->
-            with [_ | _] = d <- dims_of.(n), do: {n, d}
-          end)
-      end
-
-    dim =
-      case choice do
-        {^name, dim} when is_binary(dim) -> if dim in dims, do: dim, else: List.first(dims)
-        _ -> List.first(dims)
-      end
-
-    rows =
-      if is_binary(name) and is_binary(dim),
-        do: Analytics.people_by_dimension(name, dim, @breakdown_days, today),
-        else: []
-
-    %{names: names, name: name, dims: dims, dim: dim, rows: rows, days: @breakdown_days}
+    link_to("/admin/analytics", params, %{"segment" => "all", "days" => "30"})
   end
-
-  # A feature's dimensions are the counters written under its name
-  # (`name.dim:value`), so they are known without reading a row.
-  defp dims_of(name, today) do
-    (name <> ".*")
-    |> Analytics.families(@breakdown_days, today)
-    |> Enum.find_value([], fn %{key: key, dims: dims} ->
-      if key == name, do: dims |> Map.keys() |> Enum.sort()
-    end)
-  end
-
-  # ── render ────────────────────────────────────────────────────────────────
 
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div class="space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <.link navigate={~p"/admin"} class="btn btn-surface btn-sm">&larr; Back to Admin</.link>
-            <h1 class="text-xl font-bold">Analytics · activity &amp; retention</h1>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-muted">
-              UTC days · as of {Date.to_iso8601(@summary.day)}
-            </span>
+        <.analytics_header
+          tab="overview"
+          note={"Accounts seen per UTC day, as of #{Date.to_iso8601(@summary.day)}. Registered = an email or a provider; Guests = a device or a browser only, as the account is now. Visitors without an account are in Counters."}
+        >
+          <:controls>
+            <.switch
+              label="Segment"
+              options={for s <- Segment.all(), do: {s, Segment.label(s)}}
+              selected={@segment}
+              to={&here(assigns, %{"segment" => Atom.to_string(&1)})}
+            />
+            <.switch
+              label="Window"
+              options={[{30, "30 days"}, {90, "90 days"}]}
+              selected={@days}
+              to={&here(assigns, %{"days" => &1})}
+            />
             <button phx-click="refresh" class="btn btn-ghost btn-sm">Refresh</button>
-          </div>
-        </div>
+          </:controls>
+        </.analytics_header>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
-          <.stat title="DAU" value={@summary.dau} desc="seen today" />
-          <.stat title="WAU" value={@summary.wau} desc="last 7 days" />
-          <.stat title="MAU" value={@summary.mau} desc="last 30 days" />
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+          <.stat title="DAU" value={num(@summary.dau)} desc="seen today" />
+          <.stat title="WAU" value={num(@summary.wau)} desc="last 7 days" />
+          <.stat title="MAU" value={num(@summary.mau)} desc="last 30 days" />
           <.stat title="Stickiness" value={pct(@summary.stickiness)} desc="DAU ÷ MAU" />
           <.stat title="D1" value={pct(@summary.d1)} desc="back the next day" />
           <.stat title="D7" value={pct(@summary.d7)} desc="back on day 7" />
@@ -157,316 +98,74 @@ defmodule GamendWeb.AdminLive.Analytics do
           />
         </div>
 
-        <div class="text-xs text-muted">
-          New users: {@summary.new_users_7d} in the last 7 days, {@summary.new_users_30d} in the last 30.
-          Retention is pooled over the cohorts of the last 60 days that have reached each horizon
-          (a D7 needs a cohort at least 7 days old); "—" means no cohort has reached it yet.
-        </div>
+        <p class="text-xs text-muted">
+          New accounts: {num(@summary.new_users_7d)} in the last 7 days, {num(@summary.new_users_30d)} in the last 30. Retention is pooled over the cohorts of the last 60 days that have
+          reached each horizon (a D7 needs a cohort at least 7 days old); "—" means none has yet.
+        </p>
 
-        <div class="card bg-base-200">
-          <div class="card-body">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <h2 class="card-title">Per day</h2>
-              <div class="join">
-                <button
-                  :for={n <- [30, 90]}
-                  phx-click="window"
-                  phx-value-days={n}
-                  class={["btn btn-sm join-item", @days == n && "btn-active"]}
-                >
-                  {n} days
-                </button>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="table table-sm table-zebra">
-                <thead>
-                  <tr>
-                    <th>Day (UTC)</th>
-                    <th class="text-right">Active</th>
-                    <th class="text-right">New</th>
-                    <th class="text-right">D1</th>
-                    <th class="text-right">D7</th>
-                    <th class="text-right">D30</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr :for={row <- @series}>
-                    <td class="font-mono">{Date.to_iso8601(row.day)}</td>
-                    <td class="text-right">{row.active}</td>
-                    <td class="text-right">{row.new_users}</td>
-                    <td class="text-right">{pct(row.d1)}</td>
-                    <td class="text-right">{pct(row.d7)}</td>
-                    <td class="text-right">{pct(row.d30)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="text-xs text-muted mt-2">
-              D1/D7/D30 on a row are that day's sign-up cohort: of the players who registered
-              that day, the share seen again exactly 1 / 7 / 30 days later.
-            </p>
+        <.panel>
+          <div class="grid gap-6 md:grid-cols-3">
+            <.bars
+              id="chart-active"
+              title="Active"
+              points={for r <- @series, do: {r.day, r.active}}
+              summary={"today #{num(@summary.dau)}"}
+            />
+            <.bars
+              id="chart-new"
+              title="New accounts"
+              points={for r <- @series, do: {r.day, r.new_users}}
+              summary={"#{num(Enum.sum_by(@series, & &1.new_users))} in #{@days} days"}
+            />
+            <.line
+              id="chart-stickiness"
+              title="Stickiness"
+              points={for r <- @series, do: {r.day, r.stickiness}}
+              summary="active ÷ MAU"
+            />
           </div>
-        </div>
+        </.panel>
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card bg-base-200">
-            <div class="card-body">
-              <h2 class="card-title">Economy · last {@flow_days} days</h2>
-              <p class="text-xs text-muted">
-                Every wallet grant and spend, by the ledger <code>reason</code> the game
-                passed. Sources are positive, sinks negative — the Net column is what inflates
-                or drains balances.
-              </p>
-              <div class="overflow-x-auto">
-                <table class="table table-sm table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Currency</th>
-                      <th>Reason</th>
-                      <th class="text-right">Granted</th>
-                      <th class="text-right">Spent</th>
-                      <th class="text-right">Net</th>
-                      <th class="text-right">Entries</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr :for={row <- @economy}>
-                      <td class="font-mono">{row.currency}</td>
-                      <td class="font-mono">{row.reason}</td>
-                      <td class="text-right">{row.granted}</td>
-                      <td class="text-right">{row.spent}</td>
-                      <td class={["text-right font-semibold", net_class(row.net)]}>{row.net}</td>
-                      <td class="text-right">{row.entries}</td>
-                    </tr>
-                    <tr :if={@economy == []}>
-                      <td colspan="6" class="text-muted">
-                        No ledger entries in the window.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        <.panel title="Per day">
+          <div class="overflow-x-auto">
+            <table class="table table-sm table-zebra" id="analytics-days">
+              <thead>
+                <tr>
+                  <th>Day (UTC)</th>
+                  <th class="text-right">Active</th>
+                  <th class="text-right">WAU</th>
+                  <th class="text-right">MAU</th>
+                  <th class="text-right">Stick.</th>
+                  <th class="text-right">New</th>
+                  <th class="text-right">D1</th>
+                  <th class="text-right">D7</th>
+                  <th class="text-right">D30</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr :for={row <- Enum.reverse(@series)}>
+                  <td class="font-mono">{Date.to_iso8601(row.day)}</td>
+                  <td class="text-right tabular-nums">{num(row.active)}</td>
+                  <td class="text-right tabular-nums">{num(row.wau)}</td>
+                  <td class="text-right tabular-nums">{num(row.mau)}</td>
+                  <td class="text-right tabular-nums">{pct(row.stickiness)}</td>
+                  <td class="text-right tabular-nums">{num(row.new_users)}</td>
+                  <td class="text-right tabular-nums">{pct(row.d1)}</td>
+                  <td class="text-right tabular-nums">{pct(row.d7)}</td>
+                  <td class="text-right tabular-nums">{pct(row.d30)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-
-          <div class="card bg-base-200">
-            <div class="card-body">
-              <h2 class="card-title">Features · who does what</h2>
-              <p class="text-xs text-muted">
-                Every event name (<code>Gamend.Analytics.track/3</code>) as a feature:
-                distinct signed-in users with an event that day / 7 days / 30 days, how
-                many were new to it (first event in the last 60 days) and, of those, the
-                share back at it 1 / 7 / 30 days later. Events count visitors too.
-              </p>
-              <div class="overflow-x-auto">
-                <table class="table table-sm table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Feature</th>
-                      <th class="text-right">DAU</th>
-                      <th class="text-right">WAU</th>
-                      <th class="text-right">MAU</th>
-                      <th class="text-right">Stick.</th>
-                      <th class="text-right">New 7d</th>
-                      <th class="text-right">New 30d</th>
-                      <th class="text-right">D1</th>
-                      <th class="text-right">D7</th>
-                      <th class="text-right">D30</th>
-                      <th class="text-right">Events 7d</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr :for={f <- @features}>
-                      <td class="font-mono">{f.name}</td>
-                      <td class="text-right">{f.dau}</td>
-                      <td class="text-right">{f.wau}</td>
-                      <td class="text-right">{f.mau}</td>
-                      <td class="text-right">{pct(f.stickiness)}</td>
-                      <td class="text-right">{f.new_7d}</td>
-                      <td class="text-right">{f.new_30d}</td>
-                      <td class="text-right">{pct(f.d1)}</td>
-                      <td class="text-right">{pct(f.d7)}</td>
-                      <td class="text-right">{pct(f.d30)}</td>
-                      <td class="text-right">{f.events_7d}</td>
-                    </tr>
-                    <tr :if={@features == []}>
-                      <td colspan="11" class="text-muted">No events yet.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div :if={@breakdown.name} class="mt-4">
-                <form id="breakdown" phx-change="breakdown" class="flex flex-wrap items-end gap-2">
-                  <label class="form-control">
-                    <span class="label-text text-xs">Feature</span>
-                    <select name="name" class="select select-bordered select-sm">
-                      <option :for={n <- @breakdown.names} value={n} selected={n == @breakdown.name}>
-                        {n}
-                      </option>
-                    </select>
-                  </label>
-                  <label class="form-control">
-                    <span class="label-text text-xs">By</span>
-                    <select name="dim" class="select select-bordered select-sm">
-                      <option :for={d <- @breakdown.dims} value={d} selected={d == @breakdown.dim}>
-                        {d}
-                      </option>
-                      <option :if={@breakdown.dims == []} value="">—</option>
-                    </select>
-                  </label>
-                  <span class="text-xs text-muted pb-2">
-                    distinct signed-in people and events, last {@breakdown.days} days
-                  </span>
-                </form>
-                <div class="overflow-x-auto">
-                  <table class="table table-sm table-zebra" id="breakdown-rows">
-                    <thead>
-                      <tr>
-                        <th>{@breakdown.dim || "—"}</th>
-                        <th class="text-right">People</th>
-                        <th class="text-right">Events</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr :for={row <- @breakdown.rows}>
-                        <td class="font-mono">{row.value}</td>
-                        <td class="text-right">{row.people}</td>
-                        <td class="text-right">{row.events}</td>
-                      </tr>
-                      <tr :if={@breakdown.rows == []}>
-                        <td colspan="3" class="text-muted">Nothing in the window.</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card bg-base-200">
-          <div class="card-body">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <h2 class="card-title">Counters · last {@counter_days} days</h2>
-              <div class="join">
-                <button
-                  :for={n <- [7, 30, 90]}
-                  phx-click="counter_window"
-                  phx-value-days={n}
-                  class={["btn btn-sm join-item", @counter_days == n && "btn-active"]}
-                >
-                  {n} days
-                </button>
-              </div>
-            </div>
-            <p class="text-xs text-muted">
-              Daily counters (<code>Gamend.Analytics.count/3</code>, and one per <code>track/3</code>
-              and per dimension of it) grouped by key, each dimension's
-              values largest first. Whatever the game and the site report; empty until they do.
-            </p>
-            <div class="overflow-x-auto">
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Key</th>
-                    <th class="text-right">Today</th>
-                    <th class="text-right">Total</th>
-                    <th>By dimension</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr :for={fam <- @families}>
-                    <td class="font-mono align-top">{fam.key}</td>
-                    <td class="text-right align-top">{Map.get(fam.by_day, @today, 0)}</td>
-                    <td class="text-right align-top font-semibold">{fam.total}</td>
-                    <td>
-                      <div :for={{dim, values} <- Enum.sort(fam.dims)} class="text-xs">
-                        <span class="font-mono text-muted">{dim}:</span>
-                        <span :for={{value, n} <- Enum.take(values, 12)} class="mr-2">
-                          <span class="font-mono">{value}</span> {n}
-                        </span>
-                        <span :if={length(values) > 12} class="text-muted">
-                          +{length(values) - 12} more
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr :if={@families == []}>
-                    <td colspan="4" class="text-muted">No counters yet.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="card bg-base-200">
-          <div class="card-body">
-            <h2 class="card-title">Newest events</h2>
-            <p class="text-xs text-muted">
-              The newest {length(@events)} rows of <code>analytics_events</code>: what is being
-              tracked right now, with its fields. A visitor has no user; a deleted account's
-              rows keep the event and lose the user.
-            </p>
-            <div class="overflow-x-auto">
-              <table class="table table-sm table-zebra">
-                <thead>
-                  <tr>
-                    <th>When (UTC)</th>
-                    <th>Event</th>
-                    <th>User</th>
-                    <th>Fields</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr :for={e <- @events}>
-                    <td class="font-mono whitespace-nowrap">
-                      {Calendar.strftime(e.inserted_at, "%m-%d %H:%M:%S")}
-                    </td>
-                    <td class="font-mono">{e.name}</td>
-                    <td class="font-mono">{short_id(e.user_id)}</td>
-                    <td class="font-mono text-xs">{fields(e.dims)}</td>
-                  </tr>
-                  <tr :if={@events == []}>
-                    <td colspan="4" class="text-muted">No events yet.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+          <p class="mt-2 text-xs text-muted">
+            WAU / MAU on a row are the distinct accounts of the 7 / 30 days ending that day, and
+            Stick. is that day's Active ÷ MAU. D1 / D7 / D30 on a row are that day's sign-up
+            cohort: of the accounts made that day, the share seen again exactly 1 / 7 / 30 days
+            later.
+          </p>
+        </.panel>
       </div>
     </Layouts.app>
     """
   end
-
-  defp short_id(nil), do: "—"
-  defp short_id(id) when is_binary(id), do: String.slice(id, 0, 8)
-
-  defp fields(dims) when is_map(dims),
-    do: dims |> Enum.sort() |> Enum.map_join("  ", fn {k, v} -> "#{k}=#{v}" end)
-
-  defp net_class(n) when n > 0, do: "text-success"
-  defp net_class(n) when n < 0, do: "text-error"
-  defp net_class(_), do: nil
-
-  attr :title, :string, required: true
-  attr :value, :any, required: true
-  attr :desc, :string, default: nil
-
-  defp stat(assigns) do
-    ~H"""
-    <div class="card bg-base-100 p-3">
-      <div class="text-xs text-muted">{@title}</div>
-      <div class="text-2xl font-bold">{@value}</div>
-      <div :if={@desc} class="text-xs text-muted">{@desc}</div>
-    </div>
-    """
-  end
-
-  defp pct(nil), do: "—"
-  defp pct(rate) when is_float(rate), do: "#{Float.round(rate * 100, 1)}%"
 end
