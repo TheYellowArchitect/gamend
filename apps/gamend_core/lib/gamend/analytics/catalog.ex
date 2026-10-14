@@ -215,7 +215,9 @@ defmodule Gamend.Analytics.Catalog do
       rates:
         event
         |> Map.get(:rates, [])
-        |> Enum.map(fn {num, den, label} -> {to_string(num), to_string(den), to_string(label)} end),
+        |> Enum.map(fn {num, den, label} ->
+          {to_string(num), to_string(den), to_string(label)}
+        end),
       declared: true
     }
   end

@@ -63,7 +63,10 @@ defmodule Gamend.Analytics.Explore do
       filter
       |> base()
       |> group_by([e], fragment("date(?)", e.inserted_at))
-      |> select([e], {fragment("date(?)", e.inserted_at), count(e.id), count(e.user_id, :distinct)})
+      |> select(
+        [e],
+        {fragment("date(?)", e.inserted_at), count(e.id), count(e.user_id, :distinct)}
+      )
       |> Repo.all()
       |> Map.new(fn {day, events, people} -> {to_date(day), {events, people}} end)
 

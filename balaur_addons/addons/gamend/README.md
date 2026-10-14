@@ -37,7 +37,7 @@ Admin – Analytics.
 | `get_analytics_daily(node, options)` | `GET /api/v1/admin/analytics/daily` | Per-day active / new users and cohort retention (admin) |
 | `get_analytics_economy(node, options)` | `GET /api/v1/admin/analytics/economy` | Currency granted / spent per day per ledger reason (admin) |
 | `get_analytics_snapshot(node)` | `GET /api/v1/admin/analytics/snapshot` | Live counters: players, lobbies, parties, quests, matchmaking, tournaments (admin) |
-| `get_analytics_summary(node)` | `GET /api/v1/admin/analytics` | DAU / WAU / MAU, D1 / D7 / D30 and payer conversion (admin) |
+| `get_analytics_summary(node, options)` | `GET /api/v1/admin/analytics` | DAU / WAU / MAU, D1 / D7 / D30 and payer conversion (admin) |
 
 ## gamend::admin_chat
 
