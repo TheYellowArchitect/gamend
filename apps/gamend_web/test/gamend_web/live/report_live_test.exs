@@ -35,15 +35,17 @@ defmodule GamendWeb.ReportLiveTest do
   end
 
   test "a visitor reports a page; the link's page is filled in", %{conn: conn} do
+    url = GamendWeb.Endpoint.url() <> "/games/ro"
     {:ok, lv, html} = live(conn, ~p"/report?kind=page&page=/games/ro")
-    assert html =~ ~s(value="/games/ro")
+    assert html =~ ~s(value="#{url}")
 
     html = lv |> form() |> render_submit(%{"description" => "The keyboard covers the answers"})
 
     assert html =~ "Thanks. We read every report."
     assert [%Report{} = report] = Reports.list()
     assert report.kind == "page"
-    assert report.subject == %{"path" => "/games/ro"}
+    assert report.subject == %{"path" => url}
+    assert report.subject_ref == "/games/ro"
     assert report.description == "The keyboard covers the answers"
     assert report.user_id == nil
   end
@@ -91,18 +93,15 @@ defmodule GamendWeb.ReportLiveTest do
     assert [%{"type" => "image/png"}] = Report.files(report)
   end
 
-  test "a signed-in reader gets their email filled in and the report is theirs", %{conn: conn} do
+  test "a signed-in reader's report is theirs, with no email", %{conn: conn} do
     %{conn: conn, user: user} = register_and_log_in_user(%{conn: conn})
-    {:ok, lv, html} = live(conn, ~p"/report?kind=page")
+    {:ok, lv, _html} = live(conn, ~p"/report?kind=page")
 
-    assert html =~ ~s(value="#{user.email}")
-
-    html = lv |> form() |> render_submit(%{"description" => "Broken", "email" => user.email})
+    html = lv |> form() |> render_submit(%{"description" => "Broken"})
     assert html =~ "notifications"
 
-    assert [%Report{user_id: user_id, email: email}] = Reports.list()
+    assert [%Report{user_id: user_id, email: nil}] = Reports.list()
     assert user_id == user.id
-    assert email == user.email
   end
 
   test "an address over its hourly cap is told to wait", %{conn: conn} do

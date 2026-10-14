@@ -24,7 +24,7 @@ defmodule GamendWeb.Reports.KindUI do
     2. the kind's topics as chips (`c:topic_label/1`, `c:topic_icon/1`);
     3. the kind's extra **fields** for the picked topic (`c:fields/1`), sent
        under `"data"`;
-    4. core's own: description, email, images, send.
+    4. core's own: description, images, send.
 
   ## In the queue
 

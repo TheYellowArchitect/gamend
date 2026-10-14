@@ -1,8 +1,8 @@
 defmodule GamendWeb.Reports.PageKind do
   @moduledoc """
   How core's `"page"` report kind looks (`Gamend.Reports.Kinds.Page`): a card
-  for "a page", and one field holding the page's address, filled with the
-  page the reader came from.
+  for "a page", and one field holding the page's full address, filled with
+  the page the reader came from.
   """
   use GamendWeb, :html
 
@@ -28,26 +28,33 @@ defmodule GamendWeb.Reports.PageKind do
     ~H"""
     <span :if={@report.subject["path"]} class="font-mono text-sm break-all">
       <.link
-        :if={String.starts_with?(@report.subject["path"], "/")}
+        :if={linkable?(@report.subject["path"])}
         href={@report.subject["path"]}
         target="_blank"
+        rel="noopener noreferrer"
         class="link"
       >
         {@report.subject["path"]}
       </.link>
-      <span :if={!String.starts_with?(@report.subject["path"], "/")}>
+      <span :if={!linkable?(@report.subject["path"])}>
         {@report.subject["path"]}
       </span>
     </span>
     <span :if={!@report.subject["path"]} class="text-muted">{gettext("No page")}</span>
     """
   end
+
+  # A path on this site, or a web address: never a `javascript:` a reporter typed.
+  defp linkable?(page) do
+    String.starts_with?(page, "/") or String.starts_with?(page, ["http://", "https://"])
+  end
 end
 
 defmodule GamendWeb.Reports.PageSubject do
   @moduledoc """
-  The page field on `/report`. Filled, in order of preference, from the
-  `?page=` the link carried, else by the `ReportPagePath` hook from the last
+  The page field on `/report`, holding the page's full URL. Filled, in order
+  of preference, from the `?page=` the link carried (a bare path gets this
+  site's address in front), else by the `ReportPagePath` hook from the last
   page this tab showed (kept in `sessionStorage` by `app.js`).
   """
   use GamendWeb, :live_component
@@ -88,7 +95,7 @@ defmodule GamendWeb.Reports.PageSubject do
           name="path"
           id={"#{@id}-path"}
           value={@path}
-          placeholder="/"
+          placeholder={GamendWeb.Endpoint.url() <> "/"}
           autocomplete="off"
           maxlength="500"
           phx-hook="ReportPagePath"
@@ -98,6 +105,9 @@ defmodule GamendWeb.Reports.PageSubject do
     </form>
     """
   end
+
+  defp prefill(%{"page" => "/" <> _ = path}),
+    do: String.slice(GamendWeb.Endpoint.url() <> path, 0, 500)
 
   defp prefill(%{"page" => page}) when is_binary(page) and page != "",
     do: String.slice(page, 0, 500)

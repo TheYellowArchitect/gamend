@@ -5,8 +5,8 @@ defmodule GamendWeb.ReportLive do
   The reader picks a kind (`Gamend.Reports.kinds/0`, each drawn by its
   `GamendWeb.Reports.KindUI`), the kind's component picks the subject, and
   this page adds what every report has: a topic, the kind's extra fields, a
-  description, an email for a reply (the account's, when signed in) and up to
-  the kind's number of images.
+  description and up to the kind's number of images. There is no email: a
+  signed-in reporter hears back through their notifications.
 
   The URL carries the choice and anything a link wants to prefill:
   `/report?kind=page&page=/games`. A kind's component reads the rest of the
@@ -16,11 +16,18 @@ defmodule GamendWeb.ReportLive do
   Images are shrunk in the browser before they are sent (the `ReportForm`
   hook: at most 1600 px wide, WebP where the browser can write it), which also
   drops a photo's location data. The server still checks every byte.
+
+  A report just sent can be edited: "Edit this report" brings the form back
+  as it was sent, and sending it again replaces that report (deleted first,
+  while still open, so the copy is not refused as already reported).
   """
   use GamendWeb, :live_view
 
+  require Logger
+
   alias Gamend.Accounts.Scope
   alias Gamend.Reports
+  alias Gamend.Reports.Report
   alias GamendWeb.LiveHelpers
   alias GamendWeb.RateLimit
   alias GamendWeb.Reports.KindUI
@@ -43,6 +50,8 @@ defmodule GamendWeb.ReportLive do
       |> assign(:path, "/report")
       |> assign(:kind, nil)
       |> assign(:sent, nil)
+      |> assign(:replacing, nil)
+      |> assign(:reward, Reports.reward_text(:promise))
       |> reset_form()
 
     # Always allowed, so the template can read `@uploads`; a kind that takes no
@@ -73,6 +82,7 @@ defmodule GamendWeb.ReportLive do
       if changed? do
         socket
         |> assign(:sent, nil)
+        |> assign(:replacing, nil)
         |> reset_form()
         |> assign(:topic, prefill_topic(kind, params))
       else
@@ -82,13 +92,15 @@ defmodule GamendWeb.ReportLive do
     {:noreply, socket}
   end
 
+  # A new form, and no images: a report sent keeps its images for an edit,
+  # and a kind that takes none refuses any left over from another.
   defp reset_form(socket) do
     socket
+    |> clear_uploads()
     |> assign(:subject, nil)
     |> assign(:topic, nil)
     |> assign(:data, %{})
     |> assign(:description, "")
-    |> assign(:email, account_email(socket))
     |> assign(:error, nil)
     |> assign(:form_key, System.unique_integer([:positive]))
   end
@@ -97,13 +109,6 @@ defmodule GamendWeb.ReportLive do
 
   defp prefill_topic(kind, params) do
     if params["topic"] in kind.topics(), do: params["topic"], else: nil
-  end
-
-  defp account_email(socket) do
-    case Scope.user(socket.assigns[:current_scope]) do
-      %{email: email} when is_binary(email) -> email
-      _ -> ""
-    end
   end
 
   # What a bug report needs and nobody types. The screen size arrives from the
@@ -141,7 +146,14 @@ defmodule GamendWeb.ReportLive do
   end
 
   def handle_event("again", _params, socket) do
-    {:noreply, socket |> assign(:sent, nil) |> reset_form()}
+    {:noreply, socket |> assign(:sent, nil) |> assign(:replacing, nil) |> reset_form()}
+  end
+
+  # The form comes back as it was sent. The report stands until the edit is
+  # sent, so leaving now loses nothing.
+  def handle_event("edit", _params, socket) do
+    replacing = if match?(%Report{}, socket.assigns.sent), do: socket.assigns.sent
+    {:noreply, socket |> assign(:sent, nil) |> assign(:replacing, replacing)}
   end
 
   def handle_event("send", params, socket) do
@@ -183,7 +195,6 @@ defmodule GamendWeb.ReportLive do
     |> assign(:topic, valid_topic(socket.assigns.kind, params["topic"]) || socket.assigns.topic)
     |> assign(:data, data_param(params["data"]))
     |> assign(:description, String.slice(params["description"] || "", 0, 2_000))
-    |> assign(:email, String.slice(params["email"] || "", 0, 160))
     |> assign(:error, nil)
   end
 
@@ -211,10 +222,24 @@ defmodule GamendWeb.ReportLive do
 
   defp submit(socket) do
     case read_images(socket) do
-      {:ok, images} -> submit(socket, images)
+      {:ok, images} -> socket |> drop_replaced() |> submit(images)
       {:error, reason} -> {:noreply, assign(socket, :error, error_text(socket, reason))}
     end
   end
+
+  # An edit replaces the report it came from. Only one still open goes: one
+  # an admin has closed meanwhile stays closed, and the edit is filed beside
+  # it. The report is the socket's own, never an id from the browser.
+  defp drop_replaced(%{assigns: %{replacing: %Report{id: id}}} = socket) do
+    with %Report{status: "open"} = report <- Reports.get(id),
+         {:error, reason} <- Reports.delete(report) do
+      Logger.warning("report #{id}: an edit could not replace it: #{inspect(reason)}")
+    end
+
+    assign(socket, :replacing, nil)
+  end
+
+  defp drop_replaced(socket), do: socket
 
   defp submit(socket, images) do
     %{kind: kind, topic: topic, subject: subject, data: data} = socket.assigns
@@ -224,8 +249,7 @@ defmodule GamendWeb.ReportLive do
       "topic" => topic,
       "subject" => subject || %{},
       "data" => data,
-      "description" => socket.assigns.description,
-      "email" => socket.assigns.email
+      "description" => socket.assigns.description
     }
 
     context = %{
@@ -238,7 +262,7 @@ defmodule GamendWeb.ReportLive do
 
     case Reports.create(params, context) do
       {:ok, report} ->
-        {:noreply, socket |> drop_uploads() |> assign(:sent, report)}
+        {:noreply, assign(socket, :sent, report)}
 
       {:error, reason} ->
         {:noreply, assign(socket, :error, error_text(socket, reason))}
@@ -269,16 +293,11 @@ defmodule GamendWeb.ReportLive do
     end
   end
 
-  defp drop_uploads(socket) do
-    case uploaded_entries(socket, :attachments) do
-      {[_ | _], []} ->
-        _ = consume_uploaded_entries(socket, :attachments, fn _meta, _entry -> {:ok, nil} end)
-        socket
-
-      _ ->
-        socket
-    end
+  defp clear_uploads(%{assigns: %{uploads: %{attachments: conf}}} = socket) do
+    Enum.reduce(conf.entries, socket, &cancel_upload(&2, :attachments, &1.ref))
   end
+
+  defp clear_uploads(socket), do: socket
 
   defp user_id(socket), do: Scope.user_id(socket.assigns[:current_scope])
 
@@ -306,12 +325,6 @@ defmodule GamendWeb.ReportLive do
   defp generic_error(reason) when reason in [:attachment_too_large, :attachment_type],
     do: gettext("That image cannot be used. Send a PNG, JPEG or WebP image.")
 
-  defp generic_error(%Ecto.Changeset{errors: errors}) do
-    if Keyword.has_key?(errors, :email),
-      do: gettext("Check the email address."),
-      else: gettext("Check what you entered and try again.")
-  end
-
   defp generic_error(_reason), do: gettext("Check what you entered and try again.")
 
   # ── render ───────────────────────────────────────────────────────────────
@@ -328,6 +341,9 @@ defmodule GamendWeb.ReportLive do
           </div>
           <p class="text-muted">
             {gettext("Tell us what is wrong and we will fix it. No account needed.")}
+            <%!-- What the host pays for a fixed report (`Reports.reward_text/1`):
+                only an account can be paid. --%>
+            <span :if={@reward && user_id_present?(@current_scope)}>{@reward}</span>
           </p>
         </div>
 
@@ -361,12 +377,19 @@ defmodule GamendWeb.ReportLive do
           <p :if={user_id_present?(@current_scope)} class="text-muted">
             {gettext("We will tell you in your notifications when it is fixed.")}
           </p>
-          <button type="button" class="btn btn-surface" phx-click="again">
-            {gettext("Report something else")}
-          </button>
+          <div class="flex flex-wrap justify-center gap-2">
+            <button type="button" class="btn btn-surface" phx-click="edit">
+              <.icon name="hero-pencil-square" class="size-4" /> {gettext("Edit this report")}
+            </button>
+            <button type="button" class="btn btn-surface" phx-click="again">
+              {gettext("Report something else")}
+            </button>
+          </div>
         </.panel>
 
-        <.panel :if={@kind && !@sent} class="space-y-5">
+        <%!-- Hidden, not removed, once sent: "Edit this report" brings it back
+            as it was, the subject's picker included. --%>
+        <.panel :if={@kind} class="space-y-5" hidden={@sent != nil}>
           <.live_component
             :if={KindUI.subject_component(@ui)}
             module={KindUI.subject_component(@ui)}
@@ -491,29 +514,10 @@ defmodule GamendWeb.ReportLive do
               </p>
             </div>
 
-            <label class="fieldset">
-              <span class="fieldset-label font-semibold">{gettext("Email for a reply (optional)")}</span>
-              <input
-                type="email"
-                name="email"
-                value={@email}
-                maxlength="160"
-                autocomplete="email"
-                class="input w-full"
-              />
-              <span class="fieldset-label">{gettext("Only used to answer this report.")}</span>
-            </label>
-
             <%!-- A field no person sees. A bot filling every field fills this. --%>
             <div class="hidden" aria-hidden="true">
               <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
             </div>
-
-            <p class="text-xs text-muted">
-              {gettext(
-                "Sent with your report: your browser, your screen size and the site's language."
-              )}
-            </p>
 
             <p :if={@error} class="text-error" role="alert" id="report-error">{@error}</p>
 

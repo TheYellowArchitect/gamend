@@ -2,10 +2,14 @@ defmodule Gamend.Reports.Kinds.Page do
   @moduledoc """
   The built-in report kind: something on a page is broken or looks wrong.
 
-  The subject is the page's path (query kept, fragment dropped), and the
-  duplicates key is the path alone. A full URL is accepted and cut down to its
-  path, so a reporter can paste the address bar; a URL on another site is
-  kept as typed, since the report may well be about a link that leads there.
+  The subject is the page's address as the reporter gave it, fragment
+  dropped: the full URL the form fills in (`GamendWeb.Reports.PageSubject`),
+  a pasted address bar, or a bare path. A URL on another site is kept too,
+  since the report may well be about a link that leads there.
+
+  The duplicates key is the page's path on this site, query dropped, so a
+  full URL and a bare path for the same page are one report; an address on
+  another site keys as itself.
   """
 
   @behaviour Gamend.Reports.Kind
@@ -47,23 +51,22 @@ defmodule Gamend.Reports.Kinds.Page do
   end
 
   defp normalize(value) when is_binary(value) do
-    case String.trim(value) do
+    case value |> String.trim() |> strip_fragment() do
       "" -> nil
-      "/" <> _ = path -> strip_fragment(path)
-      other -> from_url(other)
+      page -> page
     end
   end
 
   defp normalize(_value), do: nil
 
-  defp from_url(value) do
-    case URI.parse(value) do
-      %URI{scheme: scheme, path: path} = uri
-      when scheme in ["http", "https"] and is_binary(path) ->
-        if same_host?(uri), do: path <> query(uri), else: strip_fragment(value)
+  # This site's URL is keyed by its path; anything else by itself.
+  defp local_path(page) do
+    case URI.parse(page) do
+      %URI{scheme: scheme} = uri when scheme in ["http", "https"] ->
+        if same_host?(uri), do: uri.path || "/", else: page
 
       _ ->
-        strip_fragment(value)
+        page
     end
   end
 
@@ -76,14 +79,10 @@ defmodule Gamend.Reports.Kinds.Page do
 
   defp same_host?(_uri), do: false
 
-  defp query(%URI{query: nil}), do: ""
-  defp query(%URI{query: ""}), do: ""
-  defp query(%URI{query: query}), do: "?" <> query
-
   defp strip_fragment(value), do: value |> String.split("#", parts: 2) |> hd()
 
   # The grouping key: the path without its query, capped to the column.
-  defp ref(path) do
-    path |> String.split("?", parts: 2) |> hd() |> String.slice(0, 255)
+  defp ref(page) do
+    page |> local_path() |> String.split("?", parts: 2) |> hd() |> String.slice(0, 255)
   end
 end

@@ -49,12 +49,21 @@ defmodule Gamend.Reports.Notices do
   def notify_reporter(user_id, message),
     do: deliver(user_id, @reporter_title, message, %{"type" => "report_resolved"})
 
-  @doc "A starting point for the reply, by the status the report was closed with."
+  @doc """
+  A starting point for the reply, by the status the report was closed with.
+  A fixed one ends on what the host pays for it (`Gamend.Reports.reward_text/1`).
+  """
   @spec default_reporter_message(String.t(), String.t() | nil) :: String.t()
   def default_reporter_message(status, about \\ nil)
 
-  def default_reporter_message("fixed", about),
-    do: "Thanks for your report#{about(about)}. It is fixed now."
+  def default_reporter_message("fixed", about) do
+    fixed = "Thanks for your report#{about(about)}. It is fixed now."
+
+    case Gamend.Reports.reward_text(:paid) do
+      nil -> fixed
+      paid -> fixed <> " " <> paid
+    end
+  end
 
   def default_reporter_message("duplicate", about),
     do: "Thanks for your report#{about(about)}. Someone reported it before you, and we are on it."

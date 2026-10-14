@@ -133,11 +133,11 @@ defmodule Gamend.ReportsTest do
       assert report.source == "web"
     end
 
-    test "a full URL is cut to its path, query kept, fragment dropped" do
+    test "a full URL is kept, query kept, fragment dropped, and keyed by its path" do
       {:ok, report} =
         Reports.create(page(%{"subject" => %{"path" => "http://localhost/tests/ro?x=1#top"}}))
 
-      assert report.subject["path"] == "/tests/ro?x=1"
+      assert report.subject["path"] == "http://localhost/tests/ro?x=1"
       assert report.subject_ref == "/tests/ro"
     end
 

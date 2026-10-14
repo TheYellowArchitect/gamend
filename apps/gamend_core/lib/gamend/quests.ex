@@ -34,6 +34,12 @@ defmodule Gamend.Quests do
   Quests with `auto_claim` grant immediately on completion (skipping the
   `before_quest_claim` hook — there is no player request to veto).
 
+  **A finished run never expires.** A completed row waits for its claim
+  whatever period it finished in: `claim/2` pays the oldest one first, the list
+  shows that one until it is claimed and then the next, and the retention
+  prune keeps completed rows. A daily finished three days running and never
+  claimed is three claims, one after another.
+
   ## Resets
 
   `period_key` is derived from **UTC time** by the quest's reset (daily →
@@ -47,6 +53,11 @@ defmodule Gamend.Quests do
   as often as the player can finish it — for an endless objective, a calendar
   reset would cap the payout at once per period. It reuses `"static"` as its
   period and counts claims on the row instead (see `claim_count`).
+
+  A `repeat` row also **banks**: it keeps counting while it waits for its
+  claim (its objective counts pass the target), and each target's worth is
+  one claim. A claim takes one run's worth off every objective; the row stays
+  completed while another run is left, so the next claim is ready at once.
 
   UTC means one global rollover instant rather than one per player: a daily
   turns over at noon in New Zealand and mid-afternoon the day before on the US
@@ -419,8 +430,8 @@ defmodule Gamend.Quests do
   # A `repeat` quest breaks the premise: it re-arms the instant its reward is
   # paid, and `period_key/2` is the constant "static" for it, so a marker would
   # never roll over and would suppress every later event for the whole TTL —
-  # one completion per hour instead of an endless quest. It pays for the lock
-  # it actually needs, and only while it sits completed and unclaimed.
+  # one completion per hour instead of an endless quest. And it banks while it
+  # waits for its claim, so every event has to reach the row.
   defp mark_done(_user_id, %Quest{reset: "repeat"}, _now), do: :ok
 
   defp mark_done(user_id, quest, now) do
@@ -513,6 +524,11 @@ defmodule Gamend.Quests do
           end
 
         %QuestProgress{status: "active"} = progress ->
+          update_progress(progress, quest, event, amount, meta, now)
+
+        # A repeat run waiting for its claim, or mid-claim, keeps counting:
+        # what passes the target is the next run (see "Resets").
+        %QuestProgress{} = progress when quest.reset == "repeat" ->
           update_progress(progress, quest, event, amount, meta, now)
 
         %QuestProgress{} ->
@@ -626,20 +642,40 @@ defmodule Gamend.Quests do
     if objective_progress == progress.objective_progress do
       :noop
     else
-      completed? = all_objectives_met?(objective_progress, quest)
+      # A claimed row is a repeat run mid-claim: its re-arm decides what it
+      # becomes, from the counts this write leaves.
+      status =
+        cond do
+          progress.status == "claimed" -> "claimed"
+          all_objectives_met?(objective_progress, quest) -> "completed"
+          true -> "active"
+        end
+
+      completed_at =
+        case {progress.status, status} do
+          {"active", "completed"} -> now
+          {"active", _} -> nil
+          _ -> progress.completed_at
+        end
+
+      # A banked repeat run is a completion too, but only once per target's
+      # worth: every win counting toward the next run is not one.
+      new_run? =
+        runs_finished(objective_progress, quest) >
+          runs_finished(progress.objective_progress, quest)
 
       changeset =
         progress
         |> QuestProgress.changeset(%{
           objective_progress: objective_progress,
-          status: if(completed?, do: "completed", else: "active"),
-          completed_at: if(completed?, do: now)
+          status: status,
+          completed_at: completed_at
         })
         |> Ecto.Changeset.optimistic_lock(:lock_version)
 
       try do
         case Repo.update(changeset) do
-          {:ok, updated} -> {if(completed?, do: :completed, else: :advanced), updated}
+          {:ok, updated} -> {if(new_run?, do: :completed, else: :advanced), updated}
           {:error, changeset} -> {:error, changeset}
         end
       rescue
@@ -656,8 +692,13 @@ defmodule Gamend.Quests do
     |> Enum.reduce(current, fn {objective, index}, acc ->
       if objective_matches?(objective, event, meta) do
         key = Integer.to_string(index)
-        count = Map.get(acc, key, 0)
-        Map.put(acc, key, min(objective.target, count + amount))
+        count = Map.get(acc, key, 0) + amount
+        # Uncapped for a repeat quest: past the target is the next run, banked.
+        Map.put(
+          acc,
+          key,
+          if(quest.reset == "repeat", do: count, else: min(objective.target, count))
+        )
       else
         acc
       end
@@ -669,6 +710,31 @@ defmodule Gamend.Quests do
     |> Enum.with_index()
     |> Enum.all?(fn {objective, index} ->
       Map.get(objective_progress, Integer.to_string(index), 0) >= objective.target
+    end)
+  end
+
+  # Whole runs the counts hold: one for a finished run, more for a repeat row
+  # that banked. The slowest objective decides.
+  defp runs_finished(objective_progress, quest) do
+    quest.objectives
+    |> Enum.with_index()
+    |> Enum.map(fn {objective, index} ->
+      div(
+        Map.get(objective_progress || %{}, Integer.to_string(index), 0),
+        max(objective.target, 1)
+      )
+    end)
+    |> Enum.min(fn -> 0 end)
+  end
+
+  # What a claim leaves a repeat row: one run's worth off every objective.
+  defp spend_run(objective_progress, quest) do
+    quest.objectives
+    |> Enum.with_index()
+    |> Enum.reduce(%{}, fn {objective, index}, acc ->
+      key = Integer.to_string(index)
+      left = Map.get(objective_progress || %{}, key, 0) - objective.target
+      if left > 0, do: Map.put(acc, key, left), else: acc
     end)
   end
 
@@ -711,7 +777,9 @@ defmodule Gamend.Quests do
       Gamend.Hooks.internal_call(:after_quest_completed, [progress])
     end)
 
-    if quest.auto_claim do
+    # A run banked while the row is mid-claim is claimed by that claim's
+    # re-arm (`do_claim/3`), not here.
+    if quest.auto_claim and progress.status == "completed" do
       case do_claim(user_id, quest, skip_hooks: true) do
         {:ok, _} ->
           :ok
@@ -756,7 +824,8 @@ defmodule Gamend.Quests do
   # ---------------------------------------------------------------------------
 
   @doc """
-  Claim a completed quest's rewards for the current period.
+  Claim a completed quest's rewards: its oldest finished run still waiting,
+  whatever period it finished in, so claiming again pays the next one.
 
   Runs the `before_quest_claim` pipeline hook (veto), then transitions
   `completed → claimed` atomically — only the winner grants rewards.
@@ -776,14 +845,7 @@ defmodule Gamend.Quests do
 
   defp do_claim(user_id, quest, opts) do
     now = DateTime.utc_now(:second)
-    period_key = period_key(quest, now)
-
-    progress =
-      Repo.get_by(QuestProgress,
-        user_id: user_id,
-        quest_key: quest.key,
-        period_key: period_key
-      )
+    progress = claim_target(user_id, quest, now)
 
     with {:ok, progress} <- claimable(progress),
          :ok <- run_before_claim(user_id, quest, progress, opts),
@@ -794,7 +856,7 @@ defmodule Gamend.Quests do
       # its reward still unpaid. A crash in between leaves the row claimed with
       # rewards_granted_at set, which `rearm_repeat_quests/1` heals on the next
       # read rather than stranding the player on a quest that never comes back.
-      _ = maybe_rearm(quest, progress, now)
+      rearmed = maybe_rearm(quest, progress, now)
       progress = Repo.get_uuid(QuestProgress, progress.id)
 
       broadcast_progress(:quest_claimed, user_id, progress)
@@ -803,38 +865,91 @@ defmodule Gamend.Quests do
         Gamend.Hooks.internal_call(:after_quest_claimed, [progress])
       end)
 
+      # An auto-claim quest never leaves a run waiting, banked ones included.
+      if quest.auto_claim and rearmed == {:rearmed, :banked} do
+        _ = do_claim(user_id, quest, skip_hooks: true)
+      end
+
       {:ok, %{progress: progress, rewards: rewards}}
+    end
+  end
+
+  # The row a claim pays: the oldest completed one, any period, else the
+  # current period's (which says why there is nothing to claim).
+  defp claim_target(user_id, quest, now) do
+    from(p in QuestProgress,
+      where: p.user_id == ^user_id and p.quest_key == ^quest.key and p.status == "completed",
+      order_by: [asc: p.completed_at, asc: p.period_key],
+      limit: 1
+    )
+    |> Repo.one()
+    |> case do
+      nil ->
+        Repo.get_by(QuestProgress,
+          user_id: user_id,
+          quest_key: quest.key,
+          period_key: period_key(quest, now)
+        )
+
+      progress ->
+        progress
     end
   end
 
   # A `repeat` quest is available again the instant its reward is paid. The row
   # is reused rather than replaced so nothing else has to learn a new period
   # scheme — `claim_count` is what keeps the next payout's idempotency key
-  # distinct from this one's.
-  defp maybe_rearm(%Quest{reset: "repeat"}, %QuestProgress{} = progress, now) do
-    {count, _} =
-      from(p in QuestProgress,
-        where: p.id == ^progress.id and p.status == "claimed" and not is_nil(p.rewards_granted_at)
-      )
-      |> Repo.update_all(
-        set: [
-          status: "active",
-          objective_progress: %{},
-          completed_at: nil,
-          claimed_at: nil,
-          rewards_granted_at: nil,
-          updated_at: now
-        ],
-        # Bumped, not just incremented for its own sake: this wipes
-        # `objective_progress`, and an advance that read the row before the
-        # re-arm would otherwise write the pre-reset counts back over it.
-        inc: [claim_count: 1, lock_version: 1]
-      )
+  # distinct from this one's. One run's worth comes off the counts
+  # (`spend_run/2`); a row that banked more stays completed for the next claim.
+  defp maybe_rearm(%Quest{reset: "repeat"} = quest, %QuestProgress{id: id}, now),
+    do: rearm(quest, id, now, @advance_attempts)
 
-    count
+  defp maybe_rearm(_quest, _progress, _now), do: :noop
+
+  # Read, spend, write against the version read: an advance banking a run
+  # between the two moves `lock_version`, and the retry spends from its counts.
+  defp rearm(quest, id, now, attempts_left) do
+    case Repo.get_uuid(QuestProgress, id) do
+      %QuestProgress{status: "claimed", rewards_granted_at: %DateTime{}} = row ->
+        left = spend_run(row.objective_progress, quest)
+        banked? = all_objectives_met?(left, quest)
+
+        {count, _} =
+          from(p in QuestProgress,
+            where: p.id == ^id and p.status == "claimed" and p.lock_version == ^row.lock_version
+          )
+          |> Repo.update_all(
+            set: [
+              status: if(banked?, do: "completed", else: "active"),
+              objective_progress: left,
+              completed_at: if(banked?, do: now),
+              claimed_at: nil,
+              rewards_granted_at: nil,
+              updated_at: now
+            ],
+            inc: [claim_count: 1, lock_version: 1]
+          )
+
+        cond do
+          count == 1 ->
+            {:rearmed, if(banked?, do: :banked, else: :open)}
+
+          attempts_left > 1 ->
+            Process.sleep(:rand.uniform(@advance_retry_backoff_ms))
+            rearm(quest, id, now, attempts_left - 1)
+
+          true ->
+            # Left claimed and paid: `rearm_repeat_quests/1` heals it on the
+            # player's next read.
+            Logger.warning("quest re-arm contended for #{quest.key} (progress #{id})")
+            {:error, :contended}
+        end
+
+      _ ->
+        # Re-armed already, or its grant has not finished.
+        :noop
+    end
   end
-
-  defp maybe_rearm(_quest, _progress, _now), do: 0
 
   @counter_placeholder "%{n}"
 
@@ -953,18 +1068,20 @@ defmodule Gamend.Quests do
   """
   @spec rearm_repeat_quests(keyword()) :: non_neg_integer()
   def rearm_repeat_quests(opts \\ []) do
-    repeat_keys = active_quests() |> Enum.filter(&(&1.reset == "repeat")) |> Enum.map(& &1.key)
+    repeat = active_quests() |> Enum.filter(&(&1.reset == "repeat")) |> Map.new(&{&1.key, &1})
 
-    if repeat_keys == [] do
+    if repeat == %{} do
       0
     else
       now = DateTime.utc_now(:second)
+      repeat_keys = Map.keys(repeat)
 
       query =
         from p in QuestProgress,
           where:
             p.quest_key in ^repeat_keys and p.status == "claimed" and
-              not is_nil(p.rewards_granted_at)
+              not is_nil(p.rewards_granted_at),
+          select: {p.id, p.quest_key}
 
       query =
         case Keyword.get(opts, :user_id) do
@@ -972,20 +1089,15 @@ defmodule Gamend.Quests do
           user_id -> where(query, [p], p.user_id == ^user_id)
         end
 
-      {count, _} =
-        Repo.update_all(query,
-          set: [
-            status: "active",
-            objective_progress: %{},
-            completed_at: nil,
-            claimed_at: nil,
-            rewards_granted_at: nil,
-            updated_at: now
-          ],
-          inc: [claim_count: 1, lock_version: 1]
-        )
-
-      count
+      # Row by row, not one UPDATE: each keeps what it banked past the run
+      # just paid (`rearm/4`), which a blanket reset would wipe.
+      query
+      |> Repo.all()
+      # A claim re-arming the same row at once wins or loses the version race;
+      # the loser's re-read finds it re-armed and stops (`:noop`).
+      |> Enum.count(fn {id, key} ->
+        match?({:rearmed, _}, rearm(repeat[key], id, now, @advance_attempts))
+      end)
     end
   end
 
@@ -1172,6 +1284,7 @@ defmodule Gamend.Quests do
 
       now = DateTime.utc_now(:second)
       rows = chain_progress(user_id, members)
+      waiting = rows |> Map.values() |> oldest_waiting()
 
       done =
         for {{key, _period}, progress} <- rows,
@@ -1182,7 +1295,7 @@ defmodule Gamend.Quests do
       members
       |> Enum.with_index(1)
       |> Enum.map(fn {quest, tier} ->
-        progress = Map.get(rows, {quest.key, period_key(quest, now)})
+        progress = card_progress(waiting, rows, quest, now)
         prereq = quest.prerequisite_quest_key
 
         %{
@@ -1214,16 +1327,21 @@ defmodule Gamend.Quests do
   def group(user_id, group_key) when is_binary(group_key) and group_key != "" do
     now = DateTime.utc_now(:second)
 
+    candidates = Enum.filter(active_quests(), &(&1.group_key == group_key))
+    rows = chain_progress(user_id, candidates)
+    waiting = rows |> Map.values() |> oldest_waiting()
+
+    # Out of its window, a member still shows while a run of it waits, as on
+    # the list.
     members =
-      Enum.filter(active_quests(), &(&1.group_key == group_key and within_window?(&1, now)))
+      Enum.filter(candidates, &(within_window?(&1, now) or Map.has_key?(waiting, &1.key)))
 
     done_prereqs = done_prerequisites(user_id, Enum.map(members, & &1.prerequisite_quest_key))
-    rows = chain_progress(user_id, members)
 
     members
     |> Enum.filter(&visible_to_user?(&1, nil, done_prereqs))
     |> Enum.map(fn quest ->
-      progress = Map.get(rows, {quest.key, period_key(quest, now)})
+      progress = card_progress(waiting, rows, quest, now)
 
       %{
         quest: resolve_counter(quest, progress),
@@ -1235,12 +1353,12 @@ defmodule Gamend.Quests do
 
   def group(_user_id, _group_key), do: []
 
-  # The chain's earlier tiers may sit in past periods for resetting quests, so
-  # this reads each member's *current* period only — the same window the quest
-  # list uses. `done_prerequisites/2` is deliberately not reused here: it spans
-  # all periods, which is the unlock rule, and that distinction matters — a
-  # tier can be unlocked (prereq done once, ever) while its own current-period
-  # progress starts empty.
+  # Every period's rows, so a reader can take each member's current period —
+  # the same window the quest list uses — and any finished run still waiting
+  # for its claim (`card_progress/4`). `done_prerequisites/2` is deliberately
+  # not reused here: it spans all periods, which is the unlock rule, and that
+  # distinction matters — a tier can be unlocked (prereq done once, ever)
+  # while its own current-period progress starts empty.
   defp chain_progress(nil, _members), do: %{}
 
   defp chain_progress(user_id, members) do
@@ -1475,35 +1593,50 @@ defmodule Gamend.Quests do
   end
 
   # Every definition this viewer may see now, and their rows from ONE query:
-  # this period's row of each, and the done rows of any prerequisite (of any
+  # this period's row of each, every completed one still waiting for its
+  # claim, and the done rows of any prerequisite (of any
   # period, and whether or not the prerequisite itself is still listed).
   # `visible_entries/2` filters it in memory, so one read serves a page, its
   # count and its category tabs. The host filter is per quest
   # (`host_visible/2`), so applying it before the category filter is the same.
   defp user_state(user_id, now) do
-    quests =
-      active_quests()
-      |> Enum.filter(&within_window?(&1, now))
-      |> host_visible(user_id)
-
-    keys = Enum.map(quests, & &1.key)
+    # Out of its window a quest still lists while a run of it waits (a
+    # finished run never expires, see "Claiming"), so the window is applied
+    # after the read, which fetches those runs too.
+    candidates = host_visible(active_quests(), user_id)
+    candidate_keys = Enum.map(candidates, & &1.key)
     periods = current_period_keys(now)
 
     prereq_keys =
-      quests |> Enum.map(& &1.prerequisite_quest_key) |> Enum.reject(&is_nil/1) |> Enum.uniq()
+      candidates
+      |> Enum.map(& &1.prerequisite_quest_key)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
 
     rows =
       from(p in QuestProgress,
         where:
           p.user_id == ^user_id and
-            ((p.quest_key in ^keys and p.period_key in ^periods) or
+            ((p.quest_key in ^candidate_keys and
+                (p.period_key in ^periods or p.status == "completed")) or
                (p.quest_key in ^prereq_keys and p.status in ^@statuses_done))
       )
       |> Repo.all()
 
+    # Each quest's oldest finished run still waiting for its claim, any
+    # period: what its card stands for until claimed, then the next
+    # (`claim/2` pays in the same order).
+    waiting = rows |> Enum.filter(&(&1.quest_key in candidate_keys)) |> oldest_waiting()
+
+    quests =
+      Enum.filter(candidates, &(within_window?(&1, now) or Map.has_key?(waiting, &1.key)))
+
+    keys = Enum.map(quests, & &1.key)
+
     %{
       quests: quests,
       now: now,
+      waiting: waiting,
       rows:
         for(
           p <- rows,
@@ -1521,7 +1654,21 @@ defmodule Gamend.Quests do
     }
   end
 
-  defp visible_entries(%{quests: quests, now: now, rows: rows, done_prereqs: done}, opts) do
+  defp oldest_waiting(rows) do
+    rows
+    |> Enum.filter(&(&1.status == "completed"))
+    |> Enum.sort_by(&{&1.completed_at && DateTime.to_unix(&1.completed_at), &1.period_key})
+    |> Enum.reduce(%{}, fn p, acc -> Map.put_new(acc, p.quest_key, p) end)
+  end
+
+  defp card_progress(waiting, rows, quest, now) do
+    Map.get(waiting, quest.key) || Map.get(rows, {quest.key, period_key(quest, now)})
+  end
+
+  defp visible_entries(
+         %{quests: quests, now: now, rows: rows, waiting: waiting, done_prereqs: done},
+         opts
+       ) do
     category = Keyword.get(opts, :category)
     drop = Keyword.get(opts, :drop_groups, [])
     status = Keyword.get(opts, :status)
@@ -1531,7 +1678,7 @@ defmodule Gamend.Quests do
 
     quests
     |> Enum.map(fn quest ->
-      progress = Map.get(rows, {quest.key, period_key(quest, now)})
+      progress = card_progress(waiting, rows, quest, now)
 
       %{
         quest: resolve_counter(quest, progress),
@@ -1679,15 +1826,27 @@ defmodule Gamend.Quests do
     end
   end
 
-  @doc "Number of completed-but-unclaimed quests for a user (badge count)."
+  @doc """
+  Claims waiting for a user (badge count): every finished run of an active
+  quest not yet claimed, whatever period it finished in, and each run a
+  `repeat` row banked.
+  """
   @spec claimable_count(user_id()) :: non_neg_integer()
   def claimable_count(user_id) when is_binary(user_id) do
+    quests = Map.new(active_quests(), &{&1.key, &1})
+
     from(p in QuestProgress,
-      join: q in Quest,
-      on: q.key == p.quest_key,
-      where: p.user_id == ^user_id and p.status == "completed" and q.active == true
+      where: p.user_id == ^user_id and p.status == "completed",
+      select: {p.quest_key, p.objective_progress}
     )
-    |> Repo.aggregate(:count)
+    |> Repo.all()
+    |> Enum.reduce(0, fn {key, counts}, total ->
+      case Map.get(quests, key) do
+        nil -> total
+        %Quest{reset: "repeat"} = quest -> total + max(runs_finished(counts, quest), 1)
+        %Quest{} -> total + 1
+      end
+    end)
   end
 
   @doc "Get a user's progress row for a quest's current period."
@@ -1878,6 +2037,7 @@ defmodule Gamend.Quests do
   @doc """
   Deletes daily/weekly progress rows whose period ended more than
   `max_quest_period_history` days ago (called from `Gamend.Retention`).
+  A completed row stays until it is claimed: a finished run never expires.
   """
   @spec prune_old_periods() :: non_neg_integer()
   def prune_old_periods do
@@ -1886,7 +2046,7 @@ defmodule Gamend.Quests do
 
     {count, _} =
       from(p in QuestProgress,
-        where: p.period_key != "static" and p.inserted_at < ^cutoff
+        where: p.period_key != "static" and p.status != "completed" and p.inserted_at < ^cutoff
       )
       |> Repo.delete_all()
 

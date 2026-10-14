@@ -146,12 +146,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       ]}>
         <.user_avatar user={Scope.user(@current_scope)} class="w-6 h-6" />
         <.player_name name={display_name(Scope.user(@current_scope))} class="max-w-[8rem]" />
-        <span
-          :if={@notif_unread_count > 0}
-          class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold rounded-full bg-error text-error-content"
-        >
-          {@notif_unread_count}
-        </span>
+        <.count_pill count={@notif_unread_count} />
         <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
       </summary>
       <ul class="menu menu-sm dropdown-content mt-2 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-56">
@@ -193,12 +188,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           >
             <.icon name="hero-bell-solid" class="w-4 h-4" />
             {GamendWeb.HostLayouts.translate("Notifications")}
-            <span
-              :if={@notif_unread_count > 0}
-              class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold rounded-full bg-error text-error-content"
-            >
-              {@notif_unread_count}
-            </span>
+            <.count_pill count={@notif_unread_count} />
           </.link>
         </li>
         <li :if={GamendWeb.Features.enabled?(:web_chat)}>
@@ -261,14 +251,27 @@ defmodule GamendWeb.HostLayoutNavigation do
         authenticated_links: Enum.reject(assigns.authenticated_links, &pinned_link?/1)
       )
 
+    # On a phone every count is behind the hamburger, so it shows their total.
+    menu_count =
+      if(assigns.current_scope, do: assigns.notif_unread_count, else: 0) +
+        Enum.sum(
+          Enum.map(
+            assigns.primary_links ++ assigns.authenticated_links ++ assigns.account_links,
+            &Map.get(&1, "count", 0)
+          )
+        )
+
+    assigns = assign(assigns, :menu_count, menu_count)
+
     ~H"""
     <div class="xl:hidden flex items-center gap-1">
       <.mobile_pinned_links links={@pinned_links} current_path={@current_path} />
       <details class="dropdown dropdown-end" data-navbar-dropdown>
         <summary
           aria-label={GamendWeb.HostLayouts.translate("Open navigation menu")}
-          class="btn btn-ghost btn-circle list-none"
+          class="btn btn-ghost btn-circle list-none relative"
         >
+          <.count_pill count={@menu_count} class="absolute -top-1 -end-1" />
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -629,6 +632,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       <.icon :if={link["icon"]} name={link["icon"]} class={icon_class(link["color"])} />
       <span class="text-sm font-semibold">{translate_label(link["label"])}</span>
       <.nav_badge entry={link} />
+      <.count_pill count={link["count"]} />
     </a>
     """
   end
@@ -667,12 +671,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           <span class="flex items-center gap-2">
             <.user_avatar user={Scope.user(@current_scope)} class="w-5 h-5" />
             <.player_name name={display_name(Scope.user(@current_scope))} class="max-w-full" />
-            <span
-              :if={@notif_unread_count > 0}
-              class="ms-0.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold rounded-full bg-error text-error-content"
-            >
-              {@notif_unread_count}
-            </span>
+            <.count_pill count={@notif_unread_count} class="ms-0.5" />
           </span>
           <.icon
             name="hero-chevron-down-solid"
@@ -699,12 +698,7 @@ defmodule GamendWeb.HostLayoutNavigation do
             >
               <.icon name="hero-bell-solid" class="w-4 h-4" />
               {GamendWeb.HostLayouts.translate("Notifications")}
-              <span
-                :if={@notif_unread_count > 0}
-                class="ms-0.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold rounded-full bg-error text-error-content"
-              >
-                {@notif_unread_count}
-              </span>
+              <.count_pill count={@notif_unread_count} class="ms-0.5" />
             </a>
           </li>
           <li :if={GamendWeb.Features.enabled?(:web_chat)} class="w-full">
@@ -777,6 +771,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         ]}>
           <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
           {translate_label(@link["label"])}
+          <.count_pill count={@link["count"]} />
           <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
         </summary>
         <ul class="menu menu-sm dropdown-content mt-2 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-64">
@@ -805,6 +800,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
         {translate_label(@link["label"])}
         <.nav_badge entry={@link} />
+        <.count_pill count={@link["count"]} />
       </a>
     <% end %>
     """
@@ -836,6 +832,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           <span class="flex items-center gap-2">
             <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
             <span>{translate_label(@link["label"])}</span>
+            <.count_pill count={@link["count"]} />
           </span>
           <.icon
             name="hero-chevron-down-solid"
@@ -875,6 +872,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
         {translate_label(@link["label"])}
         <.nav_badge entry={@link} />
+        <.count_pill count={@link["count"]} />
       </a>
     <% end %>
     """
@@ -909,6 +907,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           <summary class={[if(@active?, do: "menu-active", else: "")]}>
             <.icon :if={@entry["icon"]} name={@entry["icon"]} class={icon_class(@entry["color"])} />
             {translate_label(@entry["label"])}
+            <.count_pill count={@entry["count"]} />
           </summary>
           <ul>
             <.dropdown_menu_entries entries={@entry["items"]} current_path={@current_path} />
@@ -931,6 +930,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           <.icon :if={@entry["icon"]} name={@entry["icon"]} class={icon_class(@entry["color"])} />
           {translate_label(@entry["label"])}
           <.nav_badge entry={@entry} />
+          <.count_pill count={@entry["count"]} />
         </a>
       </li>
     <% end %>
@@ -941,23 +941,45 @@ defmodule GamendWeb.HostLayoutNavigation do
     scope = assigns.current_scope
     auth_level = auth_level(Scope.user(scope))
 
+    entries = fn key, default_auth ->
+      assigns.navigation
+      |> section_entries(key, auth_level, default_auth, scope)
+      |> Enum.map(&resolve_entry_count(&1, scope))
+    end
+
     assign(assigns,
-      primary_links:
-        section_entries(assigns.navigation, "primary_links", auth_level, "any", scope),
-      guest_links:
-        section_entries(assigns.navigation, "guest_links", auth_level, "unauthenticated", scope),
-      authenticated_links:
-        section_entries(
-          assigns.navigation,
-          "authenticated_links",
-          auth_level,
-          "authenticated",
-          scope
-        ),
-      account_links:
-        section_entries(assigns.navigation, "account_links", auth_level, "authenticated", scope)
+      primary_links: entries.("primary_links", "any"),
+      guest_links: entries.("guest_links", "unauthenticated"),
+      authenticated_links: entries.("authenticated_links", "authenticated"),
+      account_links: entries.("account_links", "authenticated")
     )
   end
+
+  # An entry's `"count"`: a `{Module.fun}` token that resolves to a number of
+  # things waiting for the viewer there (quests to claim), drawn as the same
+  # pill as the unread notifications. A group shows its items' total, so a
+  # count inside a closed dropdown still shows on the dropdown. Resolved here
+  # and not in `section_entries/5`, which `flat_links/2` shares: a search
+  # index has no use for the numbers and should not pay for them.
+  defp resolve_entry_count(%{"items" => items} = entry, scope) when is_list(items) do
+    items = Enum.map(items, &resolve_entry_count(&1, scope))
+
+    entry
+    |> Map.put("items", items)
+    |> Map.put("count", Enum.sum(Enum.map(items, &Map.get(&1, "count", 0))))
+  end
+
+  defp resolve_entry_count(%{"count" => token} = entry, scope) when is_binary(token) do
+    count =
+      case token |> resolve_dynamic_tokens(scope) |> String.trim() |> Integer.parse() do
+        {n, ""} when n > 0 -> n
+        _ -> 0
+      end
+
+    Map.put(entry, "count", count)
+  end
+
+  defp resolve_entry_count(entry, _scope), do: Map.delete(entry, "count")
 
   defp section_entries(navigation, key, auth_level, default_auth, scope) do
     navigation
@@ -1067,6 +1089,25 @@ defmodule GamendWeb.HostLayoutNavigation do
       class="badge badge-xs badge-primary whitespace-nowrap"
     >
       {translate_label(@entry["badge"])}
+    </span>
+    """
+  end
+
+  attr :count, :any, default: 0
+  attr :class, :string, default: nil
+
+  # The red number on the nav: unread notifications, an entry's `"count"`
+  # (quests to claim). Nothing at zero.
+  defp count_pill(assigns) do
+    ~H"""
+    <span
+      :if={is_integer(@count) and @count > 0}
+      class={[
+        "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold rounded-full bg-error text-error-content",
+        @class
+      ]}
+    >
+      {@count}
     </span>
     """
   end

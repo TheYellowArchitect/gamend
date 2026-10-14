@@ -590,7 +590,13 @@ defmodule GamendWeb.QuestsLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
+    <%!-- `nav_key`: a claim moves the navbar's quest count and coin balance. --%>
+    <Layouts.app
+      flash={@flash}
+      current_scope={@current_scope}
+      current_path={assigns[:current_path]}
+      nav_key={@claimable_count}
+    >
       <div class="space-y-6">
         <%!-- Header --%>
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -861,7 +867,8 @@ defmodule GamendWeb.QuestsLive do
           _ -> 0
         end
 
-      "#{done} / #{objective.target}"
+      # A repeat row banks past its target; the card shows the run at hand.
+      "#{min(done, objective.target)} / #{objective.target}"
     end
   end
 
@@ -910,7 +917,8 @@ defmodule GamendWeb.QuestsLive do
     claimed? = progress != nil and progress.status == "claimed"
     # Hidden quests stay teasers until earned, the way achievements did.
     secret? = quest.hidden and not done?
-    left = time_left(quest, assigns.now)
+    # A finished run waits for its claim with no clock: nothing to count down.
+    left = if claimable, do: nil, else: time_left(quest, assigns.now)
     # A card standing for more than itself is the group, not the member picked to
     # represent it, so it takes the group's name and opens the whole list. Only
     # the collapsed entry stands for the group: a member listed because its

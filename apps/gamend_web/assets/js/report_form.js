@@ -6,8 +6,9 @@
 // again leaves its EXIF behind, location included. The server checks the bytes
 // either way, so a browser that cannot draw an image sends it as it is.
 //
-// `ReportPagePath` fills the page field with the page the reader came from,
-// which `startLastPage` keeps in sessionStorage as they move around the site.
+// `ReportPagePath` fills the page field with the full URL of the page the
+// reader came from, which `startLastPage` keeps in sessionStorage as they move
+// around the site.
 
 const MAX_WIDTH = 1600
 const MAX_HEIGHT = 4000
@@ -121,10 +122,16 @@ export const ReportPagePath = {
   },
 }
 
+// The page's full URL, fragment dropped. A bare path (kept by an older page
+// in this tab) gets the site's address in front.
+function fullUrl(origin, page) {
+  return page.startsWith("/") ? origin + page : page
+}
+
 function lastPage() {
   try {
     const stored = sessionStorage.getItem(LAST_PAGE_KEY)
-    if (stored) return stored
+    if (stored) return fullUrl(window.location.origin, stored)
   } catch (_error) {
     // Storage blocked: fall through to the referrer.
   }
@@ -132,7 +139,7 @@ function lastPage() {
   try {
     const referrer = new URL(document.referrer)
     if (referrer.origin === window.location.origin && !isReportPath(referrer.pathname)) {
-      return referrer.pathname + referrer.search
+      return referrer.origin + referrer.pathname + referrer.search
     }
   } catch (_error) {
     // No referrer, or not a URL.
@@ -142,10 +149,10 @@ function lastPage() {
 }
 
 function remember() {
-  const {pathname, search} = window.location
+  const {origin, pathname, search} = window.location
   if (isReportPath(pathname)) return
   try {
-    sessionStorage.setItem(LAST_PAGE_KEY, pathname + search)
+    sessionStorage.setItem(LAST_PAGE_KEY, origin + pathname + search)
   } catch (_error) {
     // Private mode or blocked storage: the field stays empty, which is fine.
   }

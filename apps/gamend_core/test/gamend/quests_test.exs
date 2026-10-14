@@ -1014,9 +1014,10 @@ defmodule Gamend.QuestsTest do
 
       old = DateTime.add(DateTime.utc_now(:second), -100 * 86_400)
 
+      # Claimed: a completed row waits for its claim and is never pruned.
       Repo.update_all(
         from(p in QuestProgress, where: p.quest_key == "prune_daily"),
-        set: [inserted_at: old]
+        set: [inserted_at: old, status: "claimed"]
       )
 
       Repo.update_all(

@@ -145,6 +145,13 @@ end
 def after_report_resolved(_report), do: :ok
 ```
 
+Say so where the reporter looks. `config :gamend_core, :report_reward,
+{MyGame.Reports, :reward_text}` is called with `:promise` (a line the report
+page shows a signed-in reader, in their locale: "When we fix it, you get 20
+coins.") and `:paid` (the sentence the default reply to a fixed report ends
+on: "You got 20 coins."). Unset, or a blank answer, says nothing. Core pays
+nothing itself.
+
 ## Closing a report
 
 From the queue: **Fixed**, **Duplicate** or **Won't fix**. Each takes a note

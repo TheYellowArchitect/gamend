@@ -32,6 +32,14 @@ defmodule Gamend.Reports do
       again fires it again, so anything it pays should carry an idempotency
       key on the report id.
 
+  ## Rewards
+
+  Core pays nothing for a report. A host that pays from
+  `after_report_resolved/1` says so in its own words with
+  `config :gamend_core, :report_reward, {MyGame.Reports, :reward_text}`
+  (`reward_text/1` below): the report page shows the promise to a signed-in
+  reader, and the reply to a fixed report's reporter ends on the payment.
+
   ## Attachments
 
   Images only (PNG, JPEG, WebP), checked by their bytes, stored under
@@ -127,6 +135,23 @@ defmodule Gamend.Reports do
   @doc "The image types an attachment may be."
   @spec image_types() :: [String.t()]
   def image_types, do: @image_types
+
+  @doc """
+  What the host says a fixed report earns, or nil when it says nothing.
+
+  `:promise` is the line the report page shows a signed-in reader, in the
+  reader's locale ("When we fix it, you get 25 coins."); `:paid` is the
+  sentence the reply to a fixed report ends on ("You got 25 coins."). Both
+  come from `config :gamend_core, :report_reward, {module, fun}`, called as
+  `fun.(which)`; a blank answer is nil.
+  """
+  @spec reward_text(:promise | :paid) :: String.t() | nil
+  def reward_text(which) when which in [:promise, :paid] do
+    case Application.get_env(:gamend_core, :report_reward) do
+      {module, fun} -> blank(apply(module, fun, [which]))
+      nil -> nil
+    end
+  end
 
   @doc "The resolved value of a setting, for the web layer and tests."
   @spec resolved_config(atom()) :: term()
