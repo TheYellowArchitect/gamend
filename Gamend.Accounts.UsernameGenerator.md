@@ -22,6 +22,11 @@ Generate a username candidate from registration attrs (string keys).
 Uses `attrs["display_name"]` when it slugs to something usable, a random
 word otherwise. Attempts beyond 3 widen the numeric suffix.
 
+Draws from a random state of its own, never the calling process's `:rand`
+state: a caller that seeded `:rand` for a repeatable draw and left it
+seeded made every account it created try the same names, and once those
+were taken registration gave up.
+
 # `slug`
 
 ```elixir

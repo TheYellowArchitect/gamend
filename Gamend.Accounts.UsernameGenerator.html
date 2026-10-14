@@ -5,10 +5,10 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1317">
+    <meta name="project" content="gamend_core v1.1.1318">
 
 
-    <title>Gamend.Accounts.UsernameGenerator — gamend_core v1.1.1317</title>
+    <title>Gamend.Accounts.UsernameGenerator — gamend_core v1.1.1318</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1317
+          v1.1.1318
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Accounts.<wbr />UsernameGenerator</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1317)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1318)</small>
 
     </h1>
 
@@ -188,7 +188,7 @@ little survives. A name that transliterates to ASCII keeps doing so
       <h1 class="signature" translate="no">generate(attrs \\ %{}, attempt \\ 1)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/accounts/username_generator.ex#L52" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/accounts/username_generator.ex#L57" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -204,7 +204,10 @@ little survives. A name that transliterates to ASCII keeps doing so
       </div>
 
 <p>Generate a username candidate from registration attrs (string keys).</p><p>Uses <code class="inline">attrs[&quot;display_name&quot;]</code> when it slugs to something usable, a random
-word otherwise. Attempts beyond 3 widen the numeric suffix.</p>
+word otherwise. Attempts beyond 3 widen the numeric suffix.</p><p>Draws from a random state of its own, never the calling process's <code class="inline">:rand</code>
+state: a caller that seeded <code class="inline">:rand</code> for a repeatable draw and left it
+seeded made every account it created try the same names, and once those
+were taken registration gave up.</p>
   </section>
 </section>
 <section class="detail" id="slug/1">
@@ -217,7 +220,7 @@ word otherwise. Attempts beyond 3 widen the numeric suffix.</p>
       <h1 class="signature" translate="no">slug(name)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/accounts/username_generator.ex#L70" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/accounts/username_generator.ex#L82" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -247,9 +250,9 @@ little survives. A name that transliterates to ASCII keeps doing so
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1317">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1318">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1317">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1318">Hex Preview</a>
 
             </span>
 
