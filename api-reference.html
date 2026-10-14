@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1319">
+    <meta name="project" content="gamend_core v1.1.1320">
 
 
-    <title>API Reference — gamend_core v1.1.1319</title>
+    <title>API Reference — gamend_core v1.1.1320</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-B354AAC7.js"></script>
+    <script defer src="dist/sidebar_items-61B5C232.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1319
+          v1.1.1320
         </div>
       </div>
     </div>
@@ -92,7 +92,7 @@ gamend_core
 
 <div id="top-content">
   <div class="heading-with-actions top-heading">
-    <h1>API Reference <small class="app-vsn">gamend_core v#1.1.1319</small></h1>
+    <h1>API Reference <small class="app-vsn">gamend_core v#1.1.1320</small></h1>
 <a href="api-reference.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
   <i class="ri-markdown-line" aria-hidden="true"></i>
   <span class="sr-only">Copy Markdown</span>
@@ -444,6 +444,19 @@ database write per request, on the request's own connection.</p></div>
 </div>
 <div class="summary-row">
   <div class="summary-signature">
+    <a href="Gamend.Analytics.Catalog.html" translate="no">Gamend.<wbr />Analytics.<wbr />Catalog</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>What the analytics a game reports MEAN: which events and counters there
+are, what each is called, which group it belongs to, which of its fields
+are dimensions (a closed set to filter and break down by) and which are
+numbers (to average). The admin Analytics pages read it to group, label
+and offer filters; nothing is stored by it.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
     <a href="Gamend.Analytics.DailyCount.html" translate="no">Gamend.<wbr />Analytics.<wbr />DailyCount</a>
 
   </div>
@@ -464,6 +477,32 @@ stores and sums them. Written by <a href="Gamend.Analytics.html#count/3"><code c
 <code class="inline">user_id</code> (nil for a visitor, nulled when the account is deleted) and
 <code class="inline">inserted_at</code>, the moment it happened. Written by <a href="Gamend.Analytics.html#track/3"><code class="inline">Gamend.Analytics.track/3</code></a>
 through <a href="Gamend.Analytics.Buffer.html"><code class="inline">Gamend.Analytics.Buffer</code></a>, in batches, never one row at a time.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Gamend.Analytics.Explore.html" translate="no">Gamend.<wbr />Analytics.<wbr />Explore</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Reading the event rows (<code class="inline">analytics_events</code>) one question at a time: one
+event, a group of them or all, over a range of UTC days, in one segment
+(<a href="Gamend.Analytics.Segment.html"><code class="inline">Gamend.Analytics.Segment</code></a>), narrowed by any of the events' dimensions
+(<code class="inline">lang = ro</code>, <code class="inline">mode = daily</code>) or to one account. The admin Analytics
+pages' Explore and People tabs are built on it.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Gamend.Analytics.Segment.html" translate="no">Gamend.<wbr />Analytics.<wbr />Segment</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>The ways the people numbers split: <code class="inline">:all</code>, <code class="inline">:registered</code> (an account with
+an identity: an email, a provider) and <code class="inline">:guest</code> (an account backed by
+nothing but a device or a browser, <a href="Gamend.Accounts.User.html#anonymous?/1"><code class="inline">Gamend.Accounts.User.anonymous?/1</code></a>).
+A visitor with no account is in none of them: the daily counters count
+them, no row does.</p></div>
 
 </div>
 <div class="summary-row">
@@ -2425,9 +2464,9 @@ the production key, read from <code class="inline">.env</code> like the server r
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1319">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1320">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1319">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1320">Hex Preview</a>
 
             </span>
 

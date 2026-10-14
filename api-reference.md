@@ -1,4 +1,4 @@
-# gamend_core v1.1.1319 - API Reference
+# gamend_core v1.1.1320 - API Reference
 
 ## Modules
 
@@ -13,6 +13,11 @@ and business logic.
 upsert per `(key, day)` counter and one `insert_all` for the events, every
 `flush_ms`. A page view at twenty requests a second is otherwise a
 database write per request, on the request's own connection.
+- [Gamend.Analytics.Catalog](Gamend.Analytics.Catalog.md): What the analytics a game reports MEAN: which events and counters there
+are, what each is called, which group it belongs to, which of its fields
+are dimensions (a closed set to filter and break down by) and which are
+numbers (to average). The admin Analytics pages read it to group, label
+and offer filters; nothing is stored by it.
 - [Gamend.Analytics.DailyCount](Gamend.Analytics.DailyCount.md): A named counter for one UTC day. Keys are free-form dotted strings owned by
 the game (`"level.finished"`, `"level.started.lang:ja"`); the engine only
 stores and sums them. Written by `Gamend.Analytics.count/3`.
@@ -22,6 +27,16 @@ stores and sums them. Written by `Gamend.Analytics.count/3`.
 `user_id` (nil for a visitor, nulled when the account is deleted) and
 `inserted_at`, the moment it happened. Written by `Gamend.Analytics.track/3`
 through `Gamend.Analytics.Buffer`, in batches, never one row at a time.
+- [Gamend.Analytics.Explore](Gamend.Analytics.Explore.md): Reading the event rows (`analytics_events`) one question at a time: one
+event, a group of them or all, over a range of UTC days, in one segment
+(`Gamend.Analytics.Segment`), narrowed by any of the events' dimensions
+(`lang = ro`, `mode = daily`) or to one account. The admin Analytics
+pages' Explore and People tabs are built on it.
+- [Gamend.Analytics.Segment](Gamend.Analytics.Segment.md): The ways the people numbers split: `:all`, `:registered` (an account with
+an identity: an email, a provider) and `:guest` (an account backed by
+nothing but a device or a browser, `Gamend.Accounts.User.anonymous?/1`).
+A visitor with no account is in none of them: the daily counters count
+them, no row does.
 - [Gamend.ApiConventions](Gamend.ApiConventions.md): Mechanical checks for the conventions in `docs/specs/api-conventions.md`.
 - [Gamend.Broadcast](Gamend.Broadcast.md): PubSub broadcasts that must never take the caller down with them.
 - [Gamend.Captcha](Gamend.Captcha.md): Human verification for the unauthenticated browser forms, via

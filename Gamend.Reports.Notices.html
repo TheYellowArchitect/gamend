@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1319">
+    <meta name="project" content="gamend_core v1.1.1320">
 
 
-    <title>Gamend.Reports.Notices — gamend_core v1.1.1319</title>
+    <title>Gamend.Reports.Notices — gamend_core v1.1.1320</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-B354AAC7.js"></script>
+    <script defer src="dist/sidebar_items-61B5C232.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1319
+          v1.1.1320
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Reports.<wbr />Notices</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1319)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1320)</small>
 
     </h1>
 
@@ -162,8 +162,9 @@ A fixed one ends on what the host pays for it (<a href="Gamend.Reports.html#rewa
 
       </div>
 
-        <div class="summary-synopsis"><p>Tell every admin how many reports are open. Nothing is sent at zero: an
-emptied queue leaves the last alert as it was, read or not.</p></div>
+        <div class="summary-synopsis"><p>Tell every admin how many reports are open, with a link to the queue
+(<code class="inline">&quot;url&quot;</code>, which <code class="inline">/notifications</code> and a push open). Nothing is sent at zero:
+an emptied queue leaves the last alert as it was, read or not.</p></div>
 
     </div>
 
@@ -241,7 +242,7 @@ emptied queue leaves the last alert as it was, read or not.</p></div>
       <h1 class="signature" translate="no">default_reporter_message(status, about \\ nil)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports/notices.ex#L57" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports/notices.ex#L62" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -270,7 +271,7 @@ A fixed one ends on what the host pays for it (<a href="Gamend.Reports.html#rewa
       <h1 class="signature" translate="no">notify_admins(open_count)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports/notices.ex#L33" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports/notices.ex#L34" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -285,8 +286,9 @@ A fixed one ends on what the host pays for it (<a href="Gamend.Reports.html#rewa
 
       </div>
 
-<p>Tell every admin how many reports are open. Nothing is sent at zero: an
-emptied queue leaves the last alert as it was, read or not.</p>
+<p>Tell every admin how many reports are open, with a link to the queue
+(<code class="inline">&quot;url&quot;</code>, which <code class="inline">/notifications</code> and a push open). Nothing is sent at zero:
+an emptied queue leaves the last alert as it was, read or not.</p>
   </section>
 </section>
 <section class="detail" id="notify_reporter/2">
@@ -299,7 +301,7 @@ emptied queue leaves the last alert as it was, read or not.</p>
       <h1 class="signature" translate="no">notify_reporter(user_id, message)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports/notices.ex#L49" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports/notices.ex#L54" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -354,9 +356,9 @@ emptied queue leaves the last alert as it was, read or not.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1319">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1320">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1319">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1320">Hex Preview</a>
 
             </span>
 

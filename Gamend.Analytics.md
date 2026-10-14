@@ -20,8 +20,8 @@ The one place aggregate numbers come from. Four families:
   by empty hearts). The game picks the keys; the engine sums them.
   `families/3` reads them back grouped: a base key with its dimensions.
 * **Events** — `track/3`: one call that counts (the name, and the name per
-  dimension) AND keeps the row — who, when, every field — in
-  `analytics_events`. The counters answer "how many" forever; the rows
+  dimension) AND, for an account, keeps the row — who, when, every field —
+  in `analytics_events`. A visitor's event is counted only. The counters answer "how many" forever; the rows
   answer what a sum cannot: how many distinct people did a thing
   (`feature_summary/1`: DAU / WAU / MAU, first-timers and D1 / D7 / D30
   per feature), in what order, with what else. Writes are gathered by
@@ -46,10 +46,11 @@ public stats page.
 # `active_users`
 
 ```elixir
-@spec active_users(Date.t(), Date.t()) :: non_neg_integer()
+@spec active_users(Date.t(), Date.t(), keyword()) :: non_neg_integer()
 ```
 
 Distinct users seen on any day in `from..to` (inclusive, UTC dates).
+Options: `segment:` (`segments/0`).
 
 # `count`
 
@@ -90,12 +91,16 @@ match a prefix (`"level.started.lang:*"`).
 # `daily_series`
 
 ```elixir
-@spec daily_series(pos_integer(), Date.t()) :: [map()]
+@spec daily_series(pos_integer(), Date.t(), keyword()) :: [map()]
 ```
 
 One row per UTC day for the last `days` days ending on `today`, oldest
-first: `%{day, active, new_users, d1, d7, d30}`. A retention rate is `nil`
-when the cohort is empty or the horizon day has not happened yet.
+first: `%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}`.
+`wau` / `mau` are the distinct users of the 7 / 30 days ending on that day,
+and `stickiness` is `active ÷ mau` of that day, so each row reads as the
+headline would have on it. A retention rate is `nil` when the cohort is
+empty or the horizon day has not happened yet. Options: `segment:`
+(`segments/0`).
 
 # `dashboard_stats`
 
@@ -108,7 +113,7 @@ when the cohort is empty or the horizon day has not happened yet.
 # `dau`
 
 ```elixir
-@spec dau(Date.t()) :: non_neg_integer()
+@spec dau(Date.t(), keyword()) :: non_neg_integer()
 ```
 
 Daily active users on `day` (default: today, UTC).
@@ -149,18 +154,20 @@ first. `prefix` as in `counts/3` (`"web.*"`, or one key).
 # `feature_summary`
 
 ```elixir
-@spec feature_summary(Date.t()) :: [map()]
+@spec feature_summary(Date.t(), keyword()) :: [map()]
 ```
 
 Every event name of the last 60 days as a feature,
 with what `summary/1` says of the whole site: `[%{name, dau, wau, mau,
 stickiness, events_7d, new_7d, new_30d, d1, d7, d30}]`, largest MAU first.
 
-Active = at least one event of that name that day, signed-in users only
-(a visitor has no id to count once). "New" = first event of the name in
-the window (a player back after 60 quiet days reads as
-new). D1 / D7 / D30 are pooled over the first-day cohorts old enough to
-have reached the horizon, as `summary/1` pools sign-up cohorts.
+Active = at least one event of that name that day (only an account's
+events are kept as rows). "New" = first event of the name in the window (a
+player back after 60 quiet days reads as new). D1 / D7
+/ D30 are pooled over the first-day cohorts old enough to have reached the
+horizon, as `summary/1` pools sign-up cohorts.
+
+Options: `segment:` (`segments/0`, default `:all`).
 
 # `flush`
 
@@ -173,7 +180,7 @@ Writes everything `Gamend.Analytics.Buffer` has gathered, now, in the caller's p
 # `mau`
 
 ```elixir
-@spec mau(Date.t()) :: non_neg_integer()
+@spec mau(Date.t(), keyword()) :: non_neg_integer()
 ```
 
 Monthly active users: distinct users seen in the 30 days ending on `day`.
@@ -189,21 +196,24 @@ Accounts created on any UTC day in `from..to` (inclusive).
 # `payers_since`
 
 ```elixir
-@spec payers_since(Date.t()) :: non_neg_integer()
+@spec payers_since(Date.t(), keyword()) :: non_neg_integer()
 ```
 
 Distinct users with a completed purchase since `from` (UTC date, inclusive).
+Options: `segment:` (`segments/0`).
 
 # `people_by_dimension`
 
 ```elixir
-@spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t()) :: [map()]
+@spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t(), keyword()) ::
+  [map()]
 ```
 
 One feature broken down by one of its dimensions over the last `days`
 days: `[%{value, people, events}]`, people = distinct signed-in users,
 largest first; a row without the dimension is `"none"`. The dimensions a
-feature has are the keys of its family's `dims` (`families/3`).
+feature has are the keys of its family's `dims` (`families/3`). Options:
+`segment:` (`segments/0`).
 
     people_by_dimension("web.game.started", "game")
     #=> [%{value: "hangman", people: 41, events: 212}, …]
@@ -226,6 +236,22 @@ Records that `user_id` was seen on the UTC day of `now`. Idempotent; the
 common case (already recorded today) is a single cache read. Never raises —
 a missing user (deleted mid-request) is a silent no-op, like the
 `last_seen_at` touch this rides along with.
+
+# `segment`
+
+```elixir
+@spec segment(term()) :: Gamend.Analytics.Segment.t()
+```
+
+A segment from a request parameter; anything unknown is `:all`.
+
+# `segments`
+
+```elixir
+@spec segments() :: [Gamend.Analytics.Segment.t()]
+```
+
+Every segment the people numbers split by (`Gamend.Analytics.Segment`).
 
 # `snapshot`
 
@@ -254,14 +280,14 @@ drift between two pages.
 # `summary`
 
 ```elixir
-@spec summary(Date.t()) :: map()
+@spec summary(Date.t(), keyword()) :: map()
 ```
 
 Headline numbers as of `today`: DAU / WAU / MAU, stickiness (DAU ÷ MAU),
 new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
 of the last 60 days that is old enough to have reached
 the horizon, and payer conversion (distinct users with a completed purchase
-in the last 30 days ÷ MAU).
+in the last 30 days ÷ MAU). Options: `segment:` (`segments/0`).
 
 # `track`
 
@@ -270,9 +296,14 @@ in the last 30 days ÷ MAU).
 ```
 
 Records that something happened: `name` is counted for the day (`count/3`),
-once more per DIMENSION (`name.lang:ro`), and the whole event —
-`dims`, `user_id`, the moment — is kept as a row in `analytics_events`.
-One call, so a counter and its event can never disagree.
+once more per DIMENSION (`name.lang:ro`), and, when it has a user, the
+whole event — `dims`, `user_id`, the moment — is kept as a row in
+`analytics_events`. One call, so a counter and its event can never
+disagree.
+
+An event with no user (a visitor, a webhook) is counted and never kept: a
+row is there to say WHO, and a visitor has no id to say it with. On a site
+crawlers read, they were nearly every row.
 
 `name` is dotted `[a-z0-9_]`, up to 64 chars (`"web.game.finished"`).
 `dims` is a map of the event's fields, atom or string keys of `[a-z0-9_]`:
@@ -284,8 +315,8 @@ One call, so a counter and its event can never disagree.
     row, never counted;
   * `nil` is dropped.
 
-Options: `user_id:` (nil for a visitor; nulled when the account is
-deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
+Options: `user_id:` (nil for a visitor: counted only; nulled on the kept
+row when the account is deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
 name or field is dropped with a warning, the rest is kept.
 
     Analytics.track("web.game.finished",
@@ -295,7 +326,7 @@ name or field is dropped with a warning, the rest is kept.
 # `wau`
 
 ```elixir
-@spec wau(Date.t()) :: non_neg_integer()
+@spec wau(Date.t(), keyword()) :: non_neg_integer()
 ```
 
 Weekly active users: distinct users seen in the 7 days ending on `day`.

@@ -32,8 +32,9 @@ A fixed one ends on what the host pays for it (`Gamend.Reports.reward_text/1`).
 @spec notify_admins(non_neg_integer()) :: :ok
 ```
 
-Tell every admin how many reports are open. Nothing is sent at zero: an
-emptied queue leaves the last alert as it was, read or not.
+Tell every admin how many reports are open, with a link to the queue
+(`"url"`, which `/notifications` and a push open). Nothing is sent at zero:
+an emptied queue leaves the last alert as it was, read or not.
 
 # `notify_reporter`
 

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="gamend_core v1.1.1320">
+
+
+    <title>Gamend.Analytics.Explore — gamend_core v1.1.1320</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-61B5C232.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+gamend_core
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.1.1320
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of gamend_core</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">Gamend.<wbr />Analytics.<wbr />Explore</span> 
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1320)</small>
+
+    </h1>
+
+<a href="Gamend.Analytics.Explore.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+
+      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p>Reading the event rows (<code class="inline">analytics_events</code>) one question at a time: one
+event, a group of them or all, over a range of UTC days, in one segment
+(<a href="Gamend.Analytics.Segment.html"><code class="inline">Gamend.Analytics.Segment</code></a>), narrowed by any of the events' dimensions
+(<code class="inline">lang = ro</code>, <code class="inline">mode = daily</code>) or to one account. The admin Analytics
+pages' Explore and People tabs are built on it.</p><p>A filter is a map (<a href="#filter/1"><code class="inline">filter/1</code></a> fills the defaults):</p><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="group-1">%{</span><span class="ss">names</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-2">[</span><span class="s">&quot;web.game.finished&quot;</span><span class="p" data-group-id="group-2">]</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="ss">:all</span><span class="p">,</span><span class="w"> </span><span class="ss">from</span><span class="p">:</span><span class="w"> </span><span class="ld">~D[…]</span><span class="p">,</span><span class="w"> </span><span class="ss">to</span><span class="p">:</span><span class="w"> </span><span class="ld">~D[…]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">segment</span><span class="p">:</span><span class="w"> </span><span class="ss">:all</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-3">%{</span><span class="s">&quot;lang&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;ro&quot;</span><span class="p" data-group-id="group-3">}</span><span class="p">,</span><span class="w"> </span><span class="ss">user_id</span><span class="p">:</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="group-1">}</span></code></pre><p>A <code class="inline">where</code> value of <code class="inline">&quot;none&quot;</code> matches the events without that field, the
+way a breakdown names them.</p><p>Rows are an account's only (a visitor's event is a counter), so every
+number here is about accounts. <code class="inline">counter_series/4</code> reads the counters,
+where everyone is, for the same event.</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h2>
+<div class="summary-types summary">
+  <h3>
+    <a href="#types">Types</a>
+  </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:filter/0" data-no-tooltip="" translate="no">filter()</a>
+
+      </div>
+
+    </div>
+
+</div>
+<div class="summary-functions summary">
+  <h3>
+    <a href="#functions">Functions</a>
+  </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#active_days/3" data-no-tooltip="" translate="no">active_days(user_id, from, to)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The days <code class="inline">user_id</code> was seen in <code class="inline">from..to</code>, as a set of dates.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#breakdown/3" data-no-tooltip="" translate="no">breakdown(filter, dim, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The filter's events by the values of one dimension, most people first:
+<code class="inline">[%{value, events, people, measures: %{m =&gt; avg}, rates: %{label =&gt; r}}]</code>.
+A row without the field is <code class="inline">&quot;none&quot;</code>. Options: <code class="inline">measures:</code> (field names to
+average), <code class="inline">rates:</code> (<code class="inline">{numerator, denominator, label}</code>: the sum of one
+over the sum of the other, a score over its questions).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#counter_series/1" data-no-tooltip="" translate="no">counter_series(filter)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The daily counter behind an event, everyone included, for the filter's
+days: the bare name with no <code class="inline">where</code>, <code class="inline">name.dim:value</code> with one, nil with
+more (no counter holds two dimensions at once) or with several names.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#filter/1" data-no-tooltip="" translate="no">filter(opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A filter from options: <code class="inline">names:</code> (default <code class="inline">:all</code>), <code class="inline">to:</code> (default today),
+<code class="inline">from:</code> or <code class="inline">days:</code> (default 30, ending on <code class="inline">to</code>), <code class="inline">segment:</code>, <code class="inline">where:</code>,
+<code class="inline">user_id:</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#measures/2" data-no-tooltip="" translate="no">measures(filter, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The filter's whole-range averages and rates, as <a href="#breakdown/3"><code class="inline">breakdown/3</code></a> computes
+them per value: <code class="inline">%{measures: %{m =&gt; avg}, rates: %{label =&gt; r}}</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#names/2" data-no-tooltip="" translate="no">names(days \\ 90, to \\ Date.utc_today())</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The event names with a row in the last <code class="inline">days</code> days ending on <code class="inline">to</code>, by how
+many rows, most first: <code class="inline">[{name, events}]</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#person/2" data-no-tooltip="" translate="no">person(user_id, today \\ Date.utc_today())</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>What one account has done: <code class="inline">%{first_day, last_day, days_active, days_active_30, events, by_name}</code> — its activity days (all of them, and
+in the last 30), its event rows, and those by name (<code class="inline">[%{name, events, last_at}]</code>, most first).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#rows/2" data-no-tooltip="" translate="no">rows(filter, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>One page of the filter's rows, newest first, each with its account
+(<code class="inline">user</code>, nil once the account is deleted): <code class="inline">%{rows, total}</code>. Options:
+<code class="inline">page:</code> (from 1), <code class="inline">page_size:</code> (default 50).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#series/1" data-no-tooltip="" translate="no">series(filter)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Every day of the filter's range: <code class="inline">[%{day, events, people}]</code>, oldest first.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#totals/1" data-no-tooltip="" translate="no">totals(filter)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The filter's events and distinct people.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="types" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h2>
+
+    <div class="types-list">
+<section class="detail" id="t:filter/0">
+
+  <div class="detail-header">
+    <a href="#t:filter/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">filter()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L30" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> filter() :: %{
+  names: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()] | :all,
+  from: <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(),
+  to: <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(),
+  segment: <a href="Gamend.Analytics.Segment.html#t:t/0">Gamend.Analytics.Segment.t</a>(),
+  where: %{required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()},
+  user_id: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil
+}</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
+
+  <section id="functions" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h2>
+
+    <div class="functions-list">
+<section class="detail" id="active_days/3">
+
+  <div class="detail-header">
+    <a href="#active_days/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">active_days(user_id, from, to)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L305" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> active_days(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/MapSet.html#t:t/1">MapSet.t</a>(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>())</pre>
+
+      </div>
+
+<p>The days <code class="inline">user_id</code> was seen in <code class="inline">from..to</code>, as a set of dates.</p>
+  </section>
+</section>
+<section class="detail" id="breakdown/3">
+
+    <span id="breakdown/2"></span>
+
+  <div class="detail-header">
+    <a href="#breakdown/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">breakdown(filter, dim, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L96" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> breakdown(<a href="#t:filter/0">filter</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+
+      </div>
+
+<p>The filter's events by the values of one dimension, most people first:
+<code class="inline">[%{value, events, people, measures: %{m =&gt; avg}, rates: %{label =&gt; r}}]</code>.
+A row without the field is <code class="inline">&quot;none&quot;</code>. Options: <code class="inline">measures:</code> (field names to
+average), <code class="inline">rates:</code> (<code class="inline">{numerator, denominator, label}</code>: the sum of one
+over the sum of the other, a score over its questions).</p>
+  </section>
+</section>
+<section class="detail" id="counter_series/1">
+
+  <div class="detail-header">
+    <a href="#counter_series/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">counter_series(filter)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L240" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> counter_series(<a href="#t:filter/0">filter</a>()) :: [%{day: <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), count: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">integer</a>()}] | nil</pre>
+
+      </div>
+
+<p>The daily counter behind an event, everyone included, for the filter's
+days: the bare name with no <code class="inline">where</code>, <code class="inline">name.dim:value</code> with one, nil with
+more (no counter holds two dimensions at once) or with several names.</p>
+  </section>
+</section>
+<section class="detail" id="filter/1">
+
+  <div class="detail-header">
+    <a href="#filter/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">filter(opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L45" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> filter(<a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="#t:filter/0">filter</a>()</pre>
+
+      </div>
+
+<p>A filter from options: <code class="inline">names:</code> (default <code class="inline">:all</code>), <code class="inline">to:</code> (default today),
+<code class="inline">from:</code> or <code class="inline">days:</code> (default 30, ending on <code class="inline">to</code>), <code class="inline">segment:</code>, <code class="inline">where:</code>,
+<code class="inline">user_id:</code>.</p>
+  </section>
+</section>
+<section class="detail" id="measures/2">
+
+    <span id="measures/1"></span>
+
+  <div class="detail-header">
+    <a href="#measures/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">measures(filter, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L164" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> measures(<a href="#t:filter/0">filter</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: %{measures: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>(), rates: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()}</pre>
+
+      </div>
+
+<p>The filter's whole-range averages and rates, as <a href="#breakdown/3"><code class="inline">breakdown/3</code></a> computes
+them per value: <code class="inline">%{measures: %{m =&gt; avg}, rates: %{label =&gt; r}}</code>.</p>
+  </section>
+</section>
+<section class="detail" id="names/2">
+
+    <span id="names/0"></span>
+
+    <span id="names/1"></span>
+
+  <div class="detail-header">
+    <a href="#names/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">names(days \\ 90, to \\ Date.utc_today())</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L225" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> names(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: [{<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()}]</pre>
+
+      </div>
+
+<p>The event names with a row in the last <code class="inline">days</code> days ending on <code class="inline">to</code>, by how
+many rows, most first: <code class="inline">[{name, events}]</code>.</p>
+  </section>
+</section>
+<section class="detail" id="person/2">
+
+    <span id="person/1"></span>
+
+  <div class="detail-header">
+    <a href="#person/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">person(user_id, today \\ Date.utc_today())</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L269" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> person(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()</pre>
+
+      </div>
+
+<p>What one account has done: <code class="inline">%{first_day, last_day, days_active, days_active_30, events, by_name}</code> — its activity days (all of them, and
+in the last 30), its event rows, and those by name (<code class="inline">[%{name, events, last_at}]</code>, most first).</p>
+  </section>
+</section>
+<section class="detail" id="rows/2">
+
+    <span id="rows/1"></span>
+
+  <div class="detail-header">
+    <a href="#rows/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">rows(filter, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L204" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> rows(<a href="#t:filter/0">filter</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: %{
+  rows: [<a href="Gamend.Analytics.Event.html#t:t/0">Gamend.Analytics.Event.t</a>()],
+  total: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()
+}</pre>
+
+      </div>
+
+<p>One page of the filter's rows, newest first, each with its account
+(<code class="inline">user</code>, nil once the account is deleted): <code class="inline">%{rows, total}</code>. Options:
+<code class="inline">page:</code> (from 1), <code class="inline">page_size:</code> (default 50).</p>
+  </section>
+</section>
+<section class="detail" id="series/1">
+
+  <div class="detail-header">
+    <a href="#series/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">series(filter)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L61" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> series(<a href="#t:filter/0">filter</a>()) :: [%{day: <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), events: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">integer</a>(), people: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">integer</a>()}]</pre>
+
+      </div>
+
+<p>Every day of the filter's range: <code class="inline">[%{day, events, people}]</code>, oldest first.</p>
+  </section>
+</section>
+<section class="detail" id="totals/1">
+
+  <div class="detail-header">
+    <a href="#totals/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">totals(filter)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics/explore.ex#L78" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> totals(<a href="#t:filter/0">filter</a>()) :: %{events: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">integer</a>(), people: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">integer</a>()}</pre>
+
+      </div>
+
+<p>The filter's events and distinct people.</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/gamend_core/1.1.1320">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1320">Hex Preview</a>
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="gamend_core.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

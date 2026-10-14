@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1319">
+    <meta name="project" content="gamend_core v1.1.1320">
 
 
-    <title>Gamend.Analytics — gamend_core v1.1.1319</title>
+    <title>Gamend.Analytics — gamend_core v1.1.1320</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-B354AAC7.js"></script>
+    <script defer src="dist/sidebar_items-61B5C232.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1319
+          v1.1.1320
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Analytics</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1319)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1320)</small>
 
     </h1>
 
@@ -127,8 +127,8 @@ ledger <code class="inline">reason</code>, straight from <code class="inline">le
 events that have no table of their own (a level finished, a start blocked
 by empty hearts). The game picks the keys; the engine sums them.
 <a href="#families/3"><code class="inline">families/3</code></a> reads them back grouped: a base key with its dimensions.</li><li><strong>Events</strong> — <a href="#track/3"><code class="inline">track/3</code></a>: one call that counts (the name, and the name per
-dimension) AND keeps the row — who, when, every field — in
-<code class="inline">analytics_events</code>. The counters answer &quot;how many&quot; forever; the rows
+dimension) AND, for an account, keeps the row — who, when, every field —
+in <code class="inline">analytics_events</code>. A visitor's event is counted only. The counters answer &quot;how many&quot; forever; the rows
 answer what a sum cannot: how many distinct people did a thing
 (<a href="#feature_summary/1"><code class="inline">feature_summary/1</code></a>: DAU / WAU / MAU, first-timers and D1 / D7 / D30
 per feature), in what order, with what else. Writes are gathered by
@@ -171,11 +171,12 @@ public stats page.</p>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#active_users/2" data-no-tooltip="" translate="no">active_users(from, to)</a>
+        <a href="#active_users/3" data-no-tooltip="" translate="no">active_users(from, to, opts \\ [])</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Distinct users seen on any day in <code class="inline">from..to</code> (inclusive, UTC dates).</p></div>
+        <div class="summary-synopsis"><p>Distinct users seen on any day in <code class="inline">from..to</code> (inclusive, UTC dates).
+Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
@@ -216,13 +217,17 @@ match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#daily_series/2" data-no-tooltip="" translate="no">daily_series(days \\ 30, today \\ Date.utc_today())</a>
+        <a href="#daily_series/3" data-no-tooltip="" translate="no">daily_series(days \\ 30, today \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
         <div class="summary-synopsis"><p>One row per UTC day for the last <code class="inline">days</code> days ending on <code class="inline">today</code>, oldest
-first: <code class="inline">%{day, active, new_users, d1, d7, d30}</code>. A retention rate is <code class="inline">nil</code>
-when the cohort is empty or the horizon day has not happened yet.</p></div>
+first: <code class="inline">%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}</code>.
+<code class="inline">wau</code> / <code class="inline">mau</code> are the distinct users of the 7 / 30 days ending on that day,
+and <code class="inline">stickiness</code> is <code class="inline">active ÷ mau</code> of that day, so each row reads as the
+headline would have on it. A retention rate is <code class="inline">nil</code> when the cohort is
+empty or the horizon day has not happened yet. Options: <code class="inline">segment:</code>
+(<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
@@ -238,7 +243,7 @@ when the cohort is empty or the horizon day has not happened yet.</p></div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#dau/1" data-no-tooltip="" translate="no">dau(day \\ Date.utc_today())</a>
+        <a href="#dau/2" data-no-tooltip="" translate="no">dau(day \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
@@ -286,7 +291,7 @@ first. <code class="inline">prefix</code> as in <a href="#counts/3"><code class=
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#feature_summary/1" data-no-tooltip="" translate="no">feature_summary(today \\ Date.utc_today())</a>
+        <a href="#feature_summary/2" data-no-tooltip="" translate="no">feature_summary(today \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
@@ -307,7 +312,7 @@ with what <a href="#summary/1"><code class="inline">summary/1</code></a> says of
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#mau/1" data-no-tooltip="" translate="no">mau(day \\ Date.utc_today())</a>
+        <a href="#mau/2" data-no-tooltip="" translate="no">mau(day \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
@@ -327,24 +332,26 @@ with what <a href="#summary/1"><code class="inline">summary/1</code></a> says of
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#payers_since/1" data-no-tooltip="" translate="no">payers_since(from)</a>
+        <a href="#payers_since/2" data-no-tooltip="" translate="no">payers_since(from, opts \\ [])</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Distinct users with a completed purchase since <code class="inline">from</code> (UTC date, inclusive).</p></div>
+        <div class="summary-synopsis"><p>Distinct users with a completed purchase since <code class="inline">from</code> (UTC date, inclusive).
+Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#people_by_dimension/4" data-no-tooltip="" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today())</a>
+        <a href="#people_by_dimension/5" data-no-tooltip="" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
         <div class="summary-synopsis"><p>One feature broken down by one of its dimensions over the last <code class="inline">days</code>
 days: <code class="inline">[%{value, people, events}]</code>, people = distinct signed-in users,
 largest first; a row without the dimension is <code class="inline">&quot;none&quot;</code>. The dimensions a
-feature has are the keys of its family's <code class="inline">dims</code> (<a href="#families/3"><code class="inline">families/3</code></a>).</p></div>
+feature has are the keys of its family's <code class="inline">dims</code> (<a href="#families/3"><code class="inline">families/3</code></a>). Options:
+<code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
@@ -373,6 +380,26 @@ a missing user (deleted mid-request) is a silent no-op, like the
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#segment/1" data-no-tooltip="" translate="no">segment(param)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A segment from a request parameter; anything unknown is <code class="inline">:all</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#segments/0" data-no-tooltip="" translate="no">segments()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Every segment the people numbers split by (<a href="Gamend.Analytics.Segment.html"><code class="inline">Gamend.Analytics.Segment</code></a>).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#snapshot/0" data-no-tooltip="" translate="no">snapshot()</a>
 
       </div>
@@ -383,7 +410,7 @@ a missing user (deleted mid-request) is a silent no-op, like the
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#summary/1" data-no-tooltip="" translate="no">summary(today \\ Date.utc_today())</a>
+        <a href="#summary/2" data-no-tooltip="" translate="no">summary(today \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
@@ -391,7 +418,7 @@ a missing user (deleted mid-request) is a silent no-op, like the
 new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
 of the last 60 days that is old enough to have reached
 the horizon, and payer conversion (distinct users with a completed purchase
-in the last 30 days ÷ MAU).</p></div>
+in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
@@ -402,15 +429,16 @@ in the last 30 days ÷ MAU).</p></div>
       </div>
 
         <div class="summary-synopsis"><p>Records that something happened: <code class="inline">name</code> is counted for the day (<a href="#count/3"><code class="inline">count/3</code></a>),
-once more per DIMENSION (<code class="inline">name.lang:ro</code>), and the whole event —
-<code class="inline">dims</code>, <code class="inline">user_id</code>, the moment — is kept as a row in <code class="inline">analytics_events</code>.
-One call, so a counter and its event can never disagree.</p></div>
+once more per DIMENSION (<code class="inline">name.lang:ro</code>), and, when it has a user, the
+whole event — <code class="inline">dims</code>, <code class="inline">user_id</code>, the moment — is kept as a row in
+<code class="inline">analytics_events</code>. One call, so a counter and its event can never
+disagree.</p></div>
 
     </div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#wau/1" data-no-tooltip="" translate="no">wau(day \\ Date.utc_today())</a>
+        <a href="#wau/2" data-no-tooltip="" translate="no">wau(day \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
@@ -442,7 +470,7 @@ One call, so a counter and its event can never disagree.</p></div>
       <h1 class="signature" translate="no">rate()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L66" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L67" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -473,17 +501,19 @@ One call, so a counter and its event can never disagree.</p></div>
     </h2>
 
     <div class="functions-list">
-<section class="detail" id="active_users/2">
+<section class="detail" id="active_users/3">
+
+    <span id="active_users/2"></span>
 
   <div class="detail-header">
-    <a href="#active_users/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#active_users/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">active_users(from, to)</h1>
+      <h1 class="signature" translate="no">active_users(from, to, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L687" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L720" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -494,11 +524,12 @@ One call, so a counter and its event can never disagree.</p></div>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> active_users(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> active_users(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
 
       </div>
 
-<p>Distinct users seen on any day in <code class="inline">from..to</code> (inclusive, UTC dates).</p>
+<p>Distinct users seen on any day in <code class="inline">from..to</code> (inclusive, UTC dates).
+Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
   </section>
 </section>
 <section class="detail" id="count/3">
@@ -515,7 +546,7 @@ One call, so a counter and its event can never disagree.</p></div>
       <h1 class="signature" translate="no">count(key, n \\ 1, now \\ DateTime.utc_now())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L142" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L143" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -553,7 +584,7 @@ raises; a bad key is dropped with a warning.</p>
       <h1 class="signature" translate="no">count_totals(key, days \\ 7, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L217" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L218" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -585,7 +616,7 @@ raises; a bad key is dropped with a warning.</p>
       <h1 class="signature" translate="no">counts(key, days \\ 7, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L193" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L194" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -607,21 +638,23 @@ ending on <code class="inline">today</code>, as <code class="inline">%{key =&gt;
 match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</p>
   </section>
 </section>
-<section class="detail" id="daily_series/2">
+<section class="detail" id="daily_series/3">
 
     <span id="daily_series/0"></span>
 
     <span id="daily_series/1"></span>
 
+    <span id="daily_series/2"></span>
+
   <div class="detail-header">
-    <a href="#daily_series/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#daily_series/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">daily_series(days \\ 30, today \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">daily_series(days \\ 30, today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L715" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L753" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -632,13 +665,17 @@ match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> daily_series(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+          <pre translate="no"><span class="attribute">@spec</span> daily_series(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
 
       </div>
 
 <p>One row per UTC day for the last <code class="inline">days</code> days ending on <code class="inline">today</code>, oldest
-first: <code class="inline">%{day, active, new_users, d1, d7, d30}</code>. A retention rate is <code class="inline">nil</code>
-when the cohort is empty or the horizon day has not happened yet.</p>
+first: <code class="inline">%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}</code>.
+<code class="inline">wau</code> / <code class="inline">mau</code> are the distinct users of the 7 / 30 days ending on that day,
+and <code class="inline">stickiness</code> is <code class="inline">active ÷ mau</code> of that day, so each row reads as the
+headline would have on it. A retention rate is <code class="inline">nil</code> when the cohort is
+empty or the horizon day has not happened yet. Options: <code class="inline">segment:</code>
+(<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
   </section>
 </section>
 <section class="detail" id="dashboard_stats/0">
@@ -651,7 +688,7 @@ when the cohort is empty or the horizon day has not happened yet.</p>
       <h1 class="signature" translate="no">dashboard_stats()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L775" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L870" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -669,19 +706,21 @@ when the cohort is empty or the horizon day has not happened yet.</p>
 <p><a href="#summary/0"><code class="inline">summary/0</code></a> cached for a few minutes, for the admin index.</p>
   </section>
 </section>
-<section class="detail" id="dau/1">
+<section class="detail" id="dau/2">
 
     <span id="dau/0"></span>
 
+    <span id="dau/1"></span>
+
   <div class="detail-header">
-    <a href="#dau/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#dau/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">dau(day \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">dau(day \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L697" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L731" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -692,7 +731,7 @@ when the cohort is empty or the horizon day has not happened yet.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> dau(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> dau(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
 
       </div>
 
@@ -713,7 +752,7 @@ when the cohort is empty or the horizon day has not happened yet.</p>
       <h1 class="signature" translate="no">economy_flow(days \\ 7, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L571" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L589" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -748,7 +787,7 @@ value of negative deltas). Options: <code class="inline">:currency</code> to fil
       <h1 class="signature" translate="no">economy_totals(days \\ 7, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L606" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L624" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -782,7 +821,7 @@ value of negative deltas). Options: <code class="inline">:currency</code> to fil
       <h1 class="signature" translate="no">families(prefix \\ &quot;*&quot;, days \\ 7, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L369" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L379" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -805,19 +844,21 @@ the keys <code class="inline">web.game.finished.lang:ro</code> and <code class="
 first. <code class="inline">prefix</code> as in <a href="#counts/3"><code class="inline">counts/3</code></a> (<code class="inline">&quot;web.*&quot;</code>, or one key).</p>
   </section>
 </section>
-<section class="detail" id="feature_summary/1">
+<section class="detail" id="feature_summary/2">
 
     <span id="feature_summary/0"></span>
 
+    <span id="feature_summary/1"></span>
+
   <div class="detail-header">
-    <a href="#feature_summary/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#feature_summary/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">feature_summary(today \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">feature_summary(today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L428" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L440" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -828,16 +869,16 @@ first. <code class="inline">prefix</code> as in <a href="#counts/3"><code class=
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> feature_summary(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+          <pre translate="no"><span class="attribute">@spec</span> feature_summary(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
 
       </div>
 
 <p>Every event name of the last 60 days as a feature,
-with what <a href="#summary/1"><code class="inline">summary/1</code></a> says of the whole site: <code class="inline">[%{name, dau, wau, mau, stickiness, events_7d, new_7d, new_30d, d1, d7, d30}]</code>, largest MAU first.</p><p>Active = at least one event of that name that day, signed-in users only
-(a visitor has no id to count once). &quot;New&quot; = first event of the name in
-the window (a player back after 60 quiet days reads as
-new). D1 / D7 / D30 are pooled over the first-day cohorts old enough to
-have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools sign-up cohorts.</p>
+with what <a href="#summary/1"><code class="inline">summary/1</code></a> says of the whole site: <code class="inline">[%{name, dau, wau, mau, stickiness, events_7d, new_7d, new_30d, d1, d7, d30}]</code>, largest MAU first.</p><p>Active = at least one event of that name that day (only an account's
+events are kept as rows). &quot;New&quot; = first event of the name in the window (a
+player back after 60 quiet days reads as new). D1 / D7
+/ D30 are pooled over the first-day cohorts old enough to have reached the
+horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools sign-up cohorts.</p><p>Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>, default <code class="inline">:all</code>).</p>
   </section>
 </section>
 <section class="detail" id="flush/0">
@@ -850,7 +891,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
       <h1 class="signature" translate="no">flush()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L185" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L186" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -868,19 +909,21 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
 <p>Writes everything <a href="Gamend.Analytics.Buffer.html"><code class="inline">Gamend.Analytics.Buffer</code></a> has gathered, now, in the caller's process.</p>
   </section>
 </section>
-<section class="detail" id="mau/1">
+<section class="detail" id="mau/2">
 
     <span id="mau/0"></span>
 
+    <span id="mau/1"></span>
+
   <div class="detail-header">
-    <a href="#mau/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#mau/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">mau(day \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">mau(day \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L705" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L739" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -891,7 +934,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> mau(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> mau(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
 
       </div>
 
@@ -908,7 +951,7 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
       <h1 class="signature" translate="no">new_users(from, to)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L117" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L118" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -926,17 +969,19 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
 <p>Accounts created on any UTC day in <code class="inline">from..to</code> (inclusive).</p>
   </section>
 </section>
-<section class="detail" id="payers_since/1">
+<section class="detail" id="payers_since/2">
+
+    <span id="payers_since/1"></span>
 
   <div class="detail-header">
-    <a href="#payers_since/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#payers_since/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">payers_since(from)</h1>
+      <h1 class="signature" translate="no">payers_since(from, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L783" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L881" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -947,28 +992,31 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> payers_since(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> payers_since(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
 
       </div>
 
-<p>Distinct users with a completed purchase since <code class="inline">from</code> (UTC date, inclusive).</p>
+<p>Distinct users with a completed purchase since <code class="inline">from</code> (UTC date, inclusive).
+Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
   </section>
 </section>
-<section class="detail" id="people_by_dimension/4">
+<section class="detail" id="people_by_dimension/5">
 
     <span id="people_by_dimension/2"></span>
 
     <span id="people_by_dimension/3"></span>
 
+    <span id="people_by_dimension/4"></span>
+
   <div class="detail-header">
-    <a href="#people_by_dimension/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#people_by_dimension/5" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L530" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L547" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -979,14 +1027,16 @@ have reached the horizon, as <a href="#summary/1"><code class="inline">summary/1
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> people_by_dimension(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+          <pre translate="no"><span class="attribute">@spec</span> people_by_dimension(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) ::
+  [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
 
       </div>
 
 <p>One feature broken down by one of its dimensions over the last <code class="inline">days</code>
 days: <code class="inline">[%{value, people, events}]</code>, people = distinct signed-in users,
 largest first; a row without the dimension is <code class="inline">&quot;none&quot;</code>. The dimensions a
-feature has are the keys of its family's <code class="inline">dims</code> (<a href="#families/3"><code class="inline">families/3</code></a>).</p><pre><code class="makeup elixir" translate="no"><span class="n">people_by_dimension</span><span class="p" data-group-id="group-1">(</span><span class="s">&quot;web.game.started&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;game&quot;</span><span class="p" data-group-id="group-1">)</span><span class="w">
+feature has are the keys of its family's <code class="inline">dims</code> (<a href="#families/3"><code class="inline">families/3</code></a>). Options:
+<code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p><pre><code class="makeup elixir" translate="no"><span class="n">people_by_dimension</span><span class="p" data-group-id="group-1">(</span><span class="s">&quot;web.game.started&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;game&quot;</span><span class="p" data-group-id="group-1">)</span><span class="w">
 </span><span class="c1">#=&gt; [%{value: &quot;hangman&quot;, people: 41, events: 212}, …]</span></code></pre>
   </section>
 </section>
@@ -1002,7 +1052,7 @@ feature has are the keys of its family's <code class="inline">dims</code> (<a hr
       <h1 class="signature" translate="no">recent_events(limit \\ 50)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L558" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L576" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1032,7 +1082,7 @@ feature has are the keys of its family's <code class="inline">dims</code> (<a hr
       <h1 class="signature" translate="no">record_activity(user_id, now \\ DateTime.utc_now())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L635" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L653" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1053,6 +1103,62 @@ a missing user (deleted mid-request) is a silent no-op, like the
 <code class="inline">last_seen_at</code> touch this rides along with.</p>
   </section>
 </section>
+<section class="detail" id="segment/1">
+
+  <div class="detail-header">
+    <a href="#segment/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">segment(param)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L709" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> segment(<a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()) :: <a href="Gamend.Analytics.Segment.html#t:t/0">Gamend.Analytics.Segment.t</a>()</pre>
+
+      </div>
+
+<p>A segment from a request parameter; anything unknown is <code class="inline">:all</code>.</p>
+  </section>
+</section>
+<section class="detail" id="segments/0">
+
+  <div class="detail-header">
+    <a href="#segments/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">segments()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L705" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> segments() :: [<a href="Gamend.Analytics.Segment.html#t:t/0">Gamend.Analytics.Segment.t</a>()]</pre>
+
+      </div>
+
+<p>Every segment the people numbers split by (<a href="Gamend.Analytics.Segment.html"><code class="inline">Gamend.Analytics.Segment</code></a>).</p>
+  </section>
+</section>
 <section class="detail" id="snapshot/0">
 
   <div class="detail-header">
@@ -1063,7 +1169,7 @@ a missing user (deleted mid-request) is a silent no-op, like the
       <h1 class="signature" translate="no">snapshot()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L90" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L91" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1093,19 +1199,21 @@ read this rather than calling the contexts, so the same number cannot
 drift between two pages.</p>
   </section>
 </section>
-<section class="detail" id="summary/1">
+<section class="detail" id="summary/2">
 
     <span id="summary/0"></span>
 
+    <span id="summary/1"></span>
+
   <div class="detail-header">
-    <a href="#summary/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#summary/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">summary(today \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">summary(today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L744" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L836" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1116,7 +1224,7 @@ drift between two pages.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> summary(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> summary(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()</pre>
 
       </div>
 
@@ -1124,7 +1232,7 @@ drift between two pages.</p>
 new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
 of the last 60 days that is old enough to have reached
 the horizon, and payer conversion (distinct users with a completed purchase
-in the last 30 days ÷ MAU).</p>
+in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
   </section>
 </section>
 <section class="detail" id="track/3">
@@ -1141,7 +1249,7 @@ in the last 30 days ÷ MAU).</p>
       <h1 class="signature" translate="no">track(name, dims \\ %{}, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L259" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L265" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1157,32 +1265,37 @@ in the last 30 days ÷ MAU).</p>
       </div>
 
 <p>Records that something happened: <code class="inline">name</code> is counted for the day (<a href="#count/3"><code class="inline">count/3</code></a>),
-once more per DIMENSION (<code class="inline">name.lang:ro</code>), and the whole event —
-<code class="inline">dims</code>, <code class="inline">user_id</code>, the moment — is kept as a row in <code class="inline">analytics_events</code>.
-One call, so a counter and its event can never disagree.</p><p><code class="inline">name</code> is dotted <code class="inline">[a-z0-9_]</code>, up to 64 chars (<code class="inline">&quot;web.game.finished&quot;</code>).
+once more per DIMENSION (<code class="inline">name.lang:ro</code>), and, when it has a user, the
+whole event — <code class="inline">dims</code>, <code class="inline">user_id</code>, the moment — is kept as a row in
+<code class="inline">analytics_events</code>. One call, so a counter and its event can never
+disagree.</p><p>An event with no user (a visitor, a webhook) is counted and never kept: a
+row is there to say WHO, and a visitor has no id to say it with. On a site
+crawlers read, they were nearly every row.</p><p><code class="inline">name</code> is dotted <code class="inline">[a-z0-9_]</code>, up to 64 chars (<code class="inline">&quot;web.game.finished&quot;</code>).
 <code class="inline">dims</code> is a map of the event's fields, atom or string keys of <code class="inline">[a-z0-9_]</code>:</p><ul><li>a string, atom or boolean value is a <strong>dimension</strong>: a closed set the
 caller owns (a language code, a game, <code class="inline">practice | daily</code>), counted as
 its own key, so keep free text out of it;</li><li>an integer or float is a <strong>measure</strong> (a score, seconds): kept in the
-row, never counted;</li><li><code class="inline">nil</code> is dropped.</li></ul><p>Options: <code class="inline">user_id:</code> (nil for a visitor; nulled when the account is
-deleted), <code class="inline">at:</code> (default now). Buffered like <a href="#count/3"><code class="inline">count/3</code></a>. Never raises: a bad
+row, never counted;</li><li><code class="inline">nil</code> is dropped.</li></ul><p>Options: <code class="inline">user_id:</code> (nil for a visitor: counted only; nulled on the kept
+row when the account is deleted), <code class="inline">at:</code> (default now). Buffered like <a href="#count/3"><code class="inline">count/3</code></a>. Never raises: a bad
 name or field is dropped with a warning, the rest is kept.</p><pre><code class="makeup elixir" translate="no"><span class="nc">Analytics</span><span class="o">.</span><span class="n">track</span><span class="p" data-group-id="group-1">(</span><span class="s">&quot;web.game.finished&quot;</span><span class="p">,</span><span class="w">
   </span><span class="p" data-group-id="group-2">%{</span><span class="ss">game</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hangman&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">lang</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ro&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">mode</span><span class="p">:</span><span class="w"> </span><span class="ss">:daily</span><span class="p">,</span><span class="w"> </span><span class="ss">score</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="ss">total</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p" data-group-id="group-2">}</span><span class="p">,</span><span class="w">
   </span><span class="ss">user_id</span><span class="p">:</span><span class="w"> </span><span class="n">user_id</span><span class="p" data-group-id="group-1">)</span></code></pre>
   </section>
 </section>
-<section class="detail" id="wau/1">
+<section class="detail" id="wau/2">
 
     <span id="wau/0"></span>
 
+    <span id="wau/1"></span>
+
   <div class="detail-header">
-    <a href="#wau/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#wau/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">wau(day \\ Date.utc_today())</h1>
+      <h1 class="signature" translate="no">wau(day \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L701" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L735" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1193,7 +1306,7 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> wau(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> wau(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
 
       </div>
 
@@ -1209,9 +1322,9 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1319">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1320">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1319">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1320">Hex Preview</a>
 
             </span>
 
