@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1318">
+    <meta name="project" content="gamend_core v1.1.1319">
 
 
-    <title>Gamend.Reports — gamend_core v1.1.1318</title>
+    <title>Gamend.Reports — gamend_core v1.1.1319</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-51B18B47.js"></script>
+    <script defer src="dist/sidebar_items-B354AAC7.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1318
+          v1.1.1319
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Reports</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1318)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1319)</small>
 
     </h1>
 
@@ -128,7 +128,11 @@ beyond what they typed and, when signed in, their user id.</p><h2 id="module-hoo
 or not), <code class="inline">{:error, reason}</code> to refuse it.</li><li><code class="inline">after_report_created/1</code> — fire-and-forget.</li><li><code class="inline">after_report_resolved/1</code> — fire-and-forget, each time an open report
 is closed (fixed, wontfix, duplicate). A report reopened and closed
 again fires it again, so anything it pays should carry an idempotency
-key on the report id.</li></ul><h2 id="module-attachments" class="section-heading"><a href="#module-attachments" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Attachments</span></h2><p>Images only (PNG, JPEG, WebP), checked by their bytes, stored under
+key on the report id.</li></ul><h2 id="module-rewards" class="section-heading"><a href="#module-rewards" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Rewards</span></h2><p>Core pays nothing for a report. A host that pays from
+<code class="inline">after_report_resolved/1</code> says so in its own words with
+<code class="inline">config :gamend_core, :report_reward, {MyGame.Reports, :reward_text}</code>
+(<a href="#reward_text/1"><code class="inline">reward_text/1</code></a> below): the report page shows the promise to a signed-in
+reader, and the reply to a fixed report's reporter ends on the payment.</p><h2 id="module-attachments" class="section-heading"><a href="#module-attachments" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Attachments</span></h2><p>Images only (PNG, JPEG, WebP), checked by their bytes, stored under
 <code class="inline">reports/&lt;id&gt;/</code>. That prefix is never in <a href="Gamend.Storage.html"><code class="inline">Gamend.Storage</code></a>'s public list:
 a screenshot can show anything, so only an admin reads it, through
 <a href="#attachment/2"><code class="inline">attachment/2</code></a>.</p>
@@ -349,6 +353,16 @@ closed, images included. Answers how many were deleted.</p></div>
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#reward_text/1" data-no-tooltip="" translate="no">reward_text(which)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>What the host says a fixed report earns, or nil when it says nothing.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#ui/1" data-no-tooltip="" translate="no">ui(kind)</a>
 
       </div>
@@ -381,7 +395,7 @@ closed, images included. Answers how many were deleted.</p></div>
       <h1 class="signature" translate="no">attachment(report, index)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L430" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L455" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -412,7 +426,7 @@ closed, images included. Answers how many were deleted.</p></div>
       <h1 class="signature" translate="no">count(filters \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L388" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L413" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -440,7 +454,7 @@ closed, images included. Answers how many were deleted.</p></div>
       <h1 class="signature" translate="no">count_by_status()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L396" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L421" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -468,7 +482,7 @@ closed, images included. Answers how many were deleted.</p></div>
       <h1 class="signature" translate="no">count_open()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L392" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L417" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -498,7 +512,7 @@ closed, images included. Answers how many were deleted.</p></div>
       <h1 class="signature" translate="no">create(params, context \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L154" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L179" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -533,7 +547,7 @@ changeset.</p>
       <h1 class="signature" translate="no">delete(report)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L532" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L557" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -562,7 +576,7 @@ changeset.</p>
       <h1 class="signature" translate="no">description_required?(kind, topic)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L121" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L129" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -590,7 +604,7 @@ changeset.</p>
       <h1 class="signature" translate="no">enabled?()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L95" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L103" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -618,7 +632,7 @@ changeset.</p>
       <h1 class="signature" translate="no">forget_user(user_id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L546" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L571" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -648,7 +662,7 @@ and an erased account must not leave either behind.</p>
       <h1 class="signature" translate="no">get(id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L363" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L388" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -676,7 +690,7 @@ and an erased account must not leave either behind.</p>
       <h1 class="signature" translate="no">group_counts(reports)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L408" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L433" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -708,7 +722,7 @@ subject key are not grouped.</p>
       <h1 class="signature" translate="no">group_key(report)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L426" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L451" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -736,7 +750,7 @@ subject key are not grouped.</p>
       <h1 class="signature" translate="no">image_types()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L129" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L137" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -764,7 +778,7 @@ subject key are not grouped.</p>
       <h1 class="signature" translate="no">kind(key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L110" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L118" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -792,7 +806,7 @@ subject key are not grouped.</p>
       <h1 class="signature" translate="no">kinds()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L99" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L107" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -824,7 +838,7 @@ subject key are not grouped.</p>
       <h1 class="signature" translate="no">list(filters \\ %{}, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L377" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L402" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -855,7 +869,7 @@ key). Opts: <code class="inline">:page</code> and <code class="inline">:page_siz
       <h1 class="signature" translate="no">prune()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L555" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L580" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -886,7 +900,7 @@ closed, images included. Answers how many were deleted.</p>
       <h1 class="signature" translate="no">resolve(report, status, attrs \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L486" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L511" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -918,7 +932,7 @@ when they had an account; nothing is sent when blank).</p><p>Closing an open rep
       <h1 class="signature" translate="no">resolved_config(key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L133" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L158" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -936,6 +950,38 @@ when they had an account; nothing is sent when blank).</p><p>Closing an open rep
 <p>The resolved value of a setting, for the web layer and tests.</p>
   </section>
 </section>
+<section class="detail" id="reward_text/1">
+
+  <div class="detail-header">
+    <a href="#reward_text/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">reward_text(which)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L149" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> reward_text(:promise | :paid) :: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil</pre>
+
+      </div>
+
+<p>What the host says a fixed report earns, or nil when it says nothing.</p><p><code class="inline">:promise</code> is the line the report page shows a signed-in reader, in the
+reader's locale (&quot;When we fix it, you get 25 coins.&quot;); <code class="inline">:paid</code> is the
+sentence the reply to a fixed report ends on (&quot;You got 25 coins.&quot;). Both
+come from <code class="inline">config :gamend_core, :report_reward, {module, fun}</code>, called as
+<code class="inline">fun.(which)</code>; a blank answer is nil.</p>
+  </section>
+</section>
 <section class="detail" id="ui/1">
 
   <div class="detail-header">
@@ -946,7 +992,7 @@ when they had an account; nothing is sent when blank).</p><p>Closing an open rep
       <h1 class="signature" translate="no">ui(kind)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L115" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/reports.ex#L123" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -973,9 +1019,9 @@ when they had an account; nothing is sent when blank).</p><p>Closing an open rep
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1318">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1319">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1318">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1319">Hex Preview</a>
 
             </span>
 

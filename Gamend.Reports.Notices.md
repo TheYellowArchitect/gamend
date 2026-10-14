@@ -24,6 +24,7 @@ Title of the admin alert (constant, so alerts collapse into one).
 ```
 
 A starting point for the reply, by the status the report was closed with.
+A fixed one ends on what the host pays for it (`Gamend.Reports.reward_text/1`).
 
 # `notify_admins`
 
