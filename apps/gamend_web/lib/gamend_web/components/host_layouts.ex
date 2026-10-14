@@ -586,22 +586,26 @@ defmodule GamendWeb.HostLayouts do
   # function component, so it only ever sees the attrs a template passes it —
   # a conn assign set by the PageMeta plug would never arrive. Deriving from
   # `current_path` means every page gets a trail without touching a single
-  # template, LiveViews included.
+  # template, LiveViews included. An admin page the provider has no trail for
+  # gets core's (`GamendWeb.AdminBreadcrumbs`).
   defp breadcrumbs_for(current_path, locale) do
-    case Application.get_env(:gamend_web, :page_meta_provider) do
-      nil ->
-        []
+    path = breadcrumb_path(current_path)
 
-      module ->
-        if Code.ensure_loaded?(module) and function_exported?(module, :breadcrumbs, 1) do
-          current_path
-          |> breadcrumb_path()
-          |> module.breadcrumbs()
-          |> Enum.map(fn {label, path} -> {label, localized_href(path, locale)} end)
-        else
-          []
-        end
-    end
+    trail =
+      case provider_breadcrumbs(path) do
+        [] -> GamendWeb.AdminBreadcrumbs.trail(path)
+        trail -> trail
+      end
+
+    Enum.map(trail, fn {label, href} -> {label, localized_href(href, locale)} end)
+  end
+
+  defp provider_breadcrumbs(path) do
+    module = Application.get_env(:gamend_web, :page_meta_provider)
+
+    if module && Code.ensure_loaded?(module) && function_exported?(module, :breadcrumbs, 1),
+      do: module.breadcrumbs(path),
+      else: []
   end
 
   # The plug's path is authoritative: it is already locale-stripped, and it is

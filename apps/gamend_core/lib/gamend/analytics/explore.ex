@@ -205,15 +205,15 @@ defmodule Gamend.Analytics.Explore do
   """
   @spec rows(filter(), keyword()) :: %{rows: [Event.t()], total: non_neg_integer()}
   def rows(filter, opts \\ []) do
-    page = max(Keyword.get(opts, :page, 1), 1)
-    size = Keyword.get(opts, :page_size, 50)
     query = base(filter)
 
     rows =
       query
       |> order_by([e], desc: e.inserted_at, desc: e.id)
-      |> limit(^size)
-      |> offset(^((page - 1) * size))
+      |> Gamend.Query.page(
+        page: Keyword.get(opts, :page, 1),
+        page_size: Keyword.get(opts, :page_size, 50)
+      )
       |> preload(:user)
       |> Repo.all()
 

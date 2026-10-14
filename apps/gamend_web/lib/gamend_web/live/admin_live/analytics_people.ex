@@ -327,7 +327,7 @@ defmodule GamendWeb.AdminLive.AnalyticsPeople do
   end
 
   defp name(%User{} = user),
-    do: user.display_name || user.username || user.email || short_id(user.id)
+    do: Accounts.display_label(user)
 
   defp kind(%User{} = user), do: if(User.anonymous?(user), do: "guest", else: "registered")
 

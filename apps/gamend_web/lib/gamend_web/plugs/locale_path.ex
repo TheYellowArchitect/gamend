@@ -53,7 +53,7 @@ defmodule GamendWeb.Plugs.LocalePath do
   # is not — the post bodies are English-only markdown, and advertising
   # translations that do not exist invites duplicate-content penalties.
   @default_localized_paths ~w(
-    / /about /contact /credits /screenshots /translators
+    / /about /contact
     /blog /changelog /roadmap /privacy /terms /data_deletion /ui
   )
 

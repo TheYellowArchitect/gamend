@@ -34,6 +34,12 @@ defmodule Gamend.Quests do
   Quests with `auto_claim` grant immediately on completion (skipping the
   `before_quest_claim` hook — there is no player request to veto).
 
+  **A finished run never expires.** A completed row waits for its claim
+  whatever period it finished in: `claim/2` pays the oldest one first, the list
+  shows that one until it is claimed and then the next, and the retention
+  prune keeps completed rows. A daily finished three days running and never
+  claimed is three claims, one after another.
+
   ## Resets
 
   `period_key` is derived from **UTC time** by the quest's reset (daily →
@@ -47,6 +53,11 @@ defmodule Gamend.Quests do
   as often as the player can finish it — for an endless objective, a calendar
   reset would cap the payout at once per period. It reuses `"static"` as its
   period and counts claims on the row instead (see `claim_count`).
+
+  A `repeat` row also **banks**: it keeps counting while it waits for its
+  claim (its objective counts pass the target), and each target's worth is
+  one claim. A claim takes one run's worth off every objective; the row stays
+  completed while another run is left, so the next claim is ready at once.
 
   UTC means one global rollover instant rather than one per player: a daily
   turns over at noon in New Zealand and mid-afternoon the day before on the US
@@ -229,7 +240,8 @@ defmodule Gamend.Quests do
   end
 
   @doc ~S"""
-    Claim a completed quest's rewards for the current period.
+    Claim a completed quest's rewards: its oldest finished run still waiting,
+    whatever period it finished in, so claiming again pays the next one.
     
     Runs the `before_quest_claim` pipeline hook (veto), then transitions
     `completed → claimed` atomically — only the winner grants rewards.
@@ -268,7 +280,10 @@ defmodule Gamend.Quests do
   end
 
   @doc ~S"""
-    Number of completed-but-unclaimed quests for a user (badge count).
+    Claims waiting for a user (badge count): every finished run of an active
+    quest not yet claimed, whatever period it finished in, and each run a
+    `repeat` row banked.
+    
   """
   @spec claimable_count(user_id()) :: non_neg_integer()
   def claimable_count(_user_id) do
@@ -796,6 +811,7 @@ defmodule Gamend.Quests do
   @doc ~S"""
     Deletes daily/weekly progress rows whose period ended more than
     `max_quest_period_history` days ago (called from `Gamend.Retention`).
+    A completed row stays until it is claimed: a finished run never expires.
     
   """
   @spec prune_old_periods() :: non_neg_integer()

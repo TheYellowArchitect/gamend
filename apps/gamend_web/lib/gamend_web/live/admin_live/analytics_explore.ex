@@ -529,5 +529,5 @@ defmodule GamendWeb.AdminLive.AnalyticsExplore do
   defp ceil_div(n, d), do: div(n + d - 1, d)
 
   defp account_name(%User{} = user),
-    do: user.username || user.display_name || user.email || short_id(user.id)
+    do: Gamend.Accounts.display_label(user)
 end

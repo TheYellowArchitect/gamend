@@ -19,8 +19,8 @@ defmodule Gamend.Analytics do
     by empty hearts). The game picks the keys; the engine sums them.
     `families/3` reads them back grouped: a base key with its dimensions.
   * **Events** — `track/3`: one call that counts (the name, and the name per
-    dimension) AND keeps the row — who, when, every field — in
-    `analytics_events`. The counters answer "how many" forever; the rows
+    dimension) AND, for an account, keeps the row — who, when, every field —
+    in `analytics_events`. A visitor's event is counted only. The counters answer "how many" forever; the rows
     answer what a sum cannot: how many distinct people did a thing
     (`feature_summary/1`: DAU / WAU / MAU, first-timers and D1 / D7 / D30
     per feature), in what order, with what else. Writes are gathered by
@@ -45,15 +45,17 @@ defmodule Gamend.Analytics do
 
   @doc ~S"""
     Distinct users seen on any day in `from..to` (inclusive, UTC dates).
+    Options: `segment:` (`segments/0`).
+    
   """
-  @spec active_users(Date.t(), Date.t()) :: non_neg_integer()
-  def active_users(_from, _to) do
+  @spec active_users(Date.t(), Date.t(), keyword()) :: non_neg_integer()
+  def active_users(_from, _to, _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         0
 
       _ ->
-        raise "Gamend.Analytics.active_users/2 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.active_users/3 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -115,18 +117,22 @@ defmodule Gamend.Analytics do
 
   @doc ~S"""
     One row per UTC day for the last `days` days ending on `today`, oldest
-    first: `%{day, active, new_users, d1, d7, d30}`. A retention rate is `nil`
-    when the cohort is empty or the horizon day has not happened yet.
+    first: `%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}`.
+    `wau` / `mau` are the distinct users of the 7 / 30 days ending on that day,
+    and `stickiness` is `active ÷ mau` of that day, so each row reads as the
+    headline would have on it. A retention rate is `nil` when the cohort is
+    empty or the horizon day has not happened yet. Options: `segment:`
+    (`segments/0`).
     
   """
-  @spec daily_series(pos_integer(), Date.t()) :: [map()]
-  def daily_series(_days \\ 30, _today \\ Date.utc_today()) do
+  @spec daily_series(pos_integer(), Date.t(), keyword()) :: [map()]
+  def daily_series(_days \\ 30, _today \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         []
 
       _ ->
-        raise "Gamend.Analytics.daily_series/2 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.daily_series/3 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -147,14 +153,17 @@ defmodule Gamend.Analytics do
   @doc ~S"""
     Daily active users on `day` (default: today, UTC).
   """
-  @spec dau(Date.t()) :: non_neg_integer()
-  def dau(_day \\ Date.utc_today()) do
+  @spec dau(
+          Date.t(),
+          keyword()
+        ) :: non_neg_integer()
+  def dau(_day \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         0
 
       _ ->
-        raise "Gamend.Analytics.dau/1 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.dau/2 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -223,21 +232,26 @@ defmodule Gamend.Analytics do
     with what `summary/1` says of the whole site: `[%{name, dau, wau, mau,
     stickiness, events_7d, new_7d, new_30d, d1, d7, d30}]`, largest MAU first.
     
-    Active = at least one event of that name that day, signed-in users only
-    (a visitor has no id to count once). "New" = first event of the name in
-    the window (a player back after 60 quiet days reads as
-    new). D1 / D7 / D30 are pooled over the first-day cohorts old enough to
-    have reached the horizon, as `summary/1` pools sign-up cohorts.
+    Active = at least one event of that name that day (only an account's
+    events are kept as rows). "New" = first event of the name in the window (a
+    player back after 60 quiet days reads as new). D1 / D7
+    / D30 are pooled over the first-day cohorts old enough to have reached the
+    horizon, as `summary/1` pools sign-up cohorts.
+    
+    Options: `segment:` (`segments/0`, default `:all`).
     
   """
-  @spec feature_summary(Date.t()) :: [map()]
-  def feature_summary(_today \\ Date.utc_today()) do
+  @spec feature_summary(
+          Date.t(),
+          keyword()
+        ) :: [map()]
+  def feature_summary(_today \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         []
 
       _ ->
-        raise "Gamend.Analytics.feature_summary/1 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.feature_summary/2 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -258,14 +272,17 @@ defmodule Gamend.Analytics do
   @doc ~S"""
     Monthly active users: distinct users seen in the 30 days ending on `day`.
   """
-  @spec mau(Date.t()) :: non_neg_integer()
-  def mau(_day \\ Date.utc_today()) do
+  @spec mau(
+          Date.t(),
+          keyword()
+        ) :: non_neg_integer()
+  def mau(_day \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         0
 
       _ ->
-        raise "Gamend.Analytics.mau/1 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.mau/2 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -285,15 +302,20 @@ defmodule Gamend.Analytics do
 
   @doc ~S"""
     Distinct users with a completed purchase since `from` (UTC date, inclusive).
+    Options: `segment:` (`segments/0`).
+    
   """
-  @spec payers_since(Date.t()) :: non_neg_integer()
-  def payers_since(_from) do
+  @spec payers_since(
+          Date.t(),
+          keyword()
+        ) :: non_neg_integer()
+  def payers_since(_from, _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         0
 
       _ ->
-        raise "Gamend.Analytics.payers_since/1 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.payers_since/2 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -301,20 +323,21 @@ defmodule Gamend.Analytics do
     One feature broken down by one of its dimensions over the last `days`
     days: `[%{value, people, events}]`, people = distinct signed-in users,
     largest first; a row without the dimension is `"none"`. The dimensions a
-    feature has are the keys of its family's `dims` (`families/3`).
+    feature has are the keys of its family's `dims` (`families/3`). Options:
+    `segment:` (`segments/0`).
     
         people_by_dimension("web.game.started", "game")
         #=> [%{value: "hangman", people: 41, events: 212}, …]
     
   """
-  @spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t()) :: [map()]
-  def people_by_dimension(_name, _dim, _days \\ 30, _today \\ Date.utc_today()) do
+  @spec people_by_dimension(String.t(), String.t(), pos_integer(), Date.t(), keyword()) :: [map()]
+  def people_by_dimension(_name, _dim, _days \\ 30, _today \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         []
 
       _ ->
-        raise "Gamend.Analytics.people_by_dimension/4 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.people_by_dimension/5 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -347,6 +370,34 @@ defmodule Gamend.Analytics do
 
       _ ->
         raise "Gamend.Analytics.record_activity/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    A segment from a request parameter; anything unknown is `:all`.
+  """
+  @spec segment(term()) :: Gamend.Analytics.Segment.t()
+  def segment(_param) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        nil
+
+      _ ->
+        raise "Gamend.Analytics.segment/1 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    Every segment the people numbers split by (`Gamend.Analytics.Segment`).
+  """
+  @spec segments() :: [Gamend.Analytics.Segment.t()]
+  def segments() do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        []
+
+      _ ->
+        raise "Gamend.Analytics.segments/0 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -386,25 +437,33 @@ defmodule Gamend.Analytics do
     new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
     of the last 60 days that is old enough to have reached
     the horizon, and payer conversion (distinct users with a completed purchase
-    in the last 30 days ÷ MAU).
+    in the last 30 days ÷ MAU). Options: `segment:` (`segments/0`).
     
   """
-  @spec summary(Date.t()) :: map()
-  def summary(_today \\ Date.utc_today()) do
+  @spec summary(
+          Date.t(),
+          keyword()
+        ) :: map()
+  def summary(_today \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         %{}
 
       _ ->
-        raise "Gamend.Analytics.summary/1 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.summary/2 is a stub - only available at runtime on Gamend"
     end
   end
 
   @doc ~S"""
     Records that something happened: `name` is counted for the day (`count/3`),
-    once more per DIMENSION (`name.lang:ro`), and the whole event —
-    `dims`, `user_id`, the moment — is kept as a row in `analytics_events`.
-    One call, so a counter and its event can never disagree.
+    once more per DIMENSION (`name.lang:ro`), and, when it has a user, the
+    whole event — `dims`, `user_id`, the moment — is kept as a row in
+    `analytics_events`. One call, so a counter and its event can never
+    disagree.
+    
+    An event with no user (a visitor, a webhook) is counted and never kept: a
+    row is there to say WHO, and a visitor has no id to say it with. On a site
+    crawlers read, they were nearly every row.
     
     `name` is dotted `[a-z0-9_]`, up to 64 chars (`"web.game.finished"`).
     `dims` is a map of the event's fields, atom or string keys of `[a-z0-9_]`:
@@ -416,8 +475,8 @@ defmodule Gamend.Analytics do
         row, never counted;
       * `nil` is dropped.
     
-    Options: `user_id:` (nil for a visitor; nulled when the account is
-    deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
+    Options: `user_id:` (nil for a visitor: counted only; nulled on the kept
+    row when the account is deleted), `at:` (default now). Buffered like `count/3`. Never raises: a bad
     name or field is dropped with a warning, the rest is kept.
     
         Analytics.track("web.game.finished",
@@ -439,14 +498,17 @@ defmodule Gamend.Analytics do
   @doc ~S"""
     Weekly active users: distinct users seen in the 7 days ending on `day`.
   """
-  @spec wau(Date.t()) :: non_neg_integer()
-  def wau(_day \\ Date.utc_today()) do
+  @spec wau(
+          Date.t(),
+          keyword()
+        ) :: non_neg_integer()
+  def wau(_day \\ Date.utc_today(), _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         0
 
       _ ->
-        raise "Gamend.Analytics.wau/1 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Analytics.wau/2 is a stub - only available at runtime on Gamend"
     end
   end
 end
