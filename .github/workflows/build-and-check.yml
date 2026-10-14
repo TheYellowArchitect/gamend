@@ -16,8 +16,8 @@ permissions:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
-  ELIXIR_VERSION: "1.20.1"
-  OTP_VERSION: "29.0.2"
+  ELIXIR_VERSION: "1.20.4"
+  OTP_VERSION: "29.1.1"
   # Linked statically into the server binaries (rel/scripts/static-deps.sh).
   OPENSSL_VERSION: "3.5.8"
   LIBSRTP_VERSION: "2.7.0"
@@ -257,7 +257,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     steps:
       - name: Checkout
@@ -334,7 +334,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     steps:
       - name: Checkout
@@ -407,7 +407,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     steps:
       - name: Checkout
@@ -456,7 +456,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     steps:
       - name: Checkout
@@ -524,7 +524,7 @@ jobs:
           --health-retries 5
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     # config/test.exs switches to Postgres on GAMEND_DB_POSTGRES_*; the old
     # POSTGRES_* names matched nothing, so this job silently tested SQLite.
@@ -577,7 +577,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     steps:
       - name: Checkout
@@ -957,7 +957,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: elixir:1.20.1-otp-29
+      image: elixir:1.20.4-otp-29
 
     # For every step, not only the server's: bench mode is compile-time
     # config, so the deps have to be built under it too.
