@@ -5,10 +5,10 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1321">
+    <meta name="project" content="gamend_core v1.1.1322">
 
 
-    <title>Gamend.ClientLogs — gamend_core v1.1.1321</title>
+    <title>Gamend.ClientLogs — gamend_core v1.1.1322</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1321
+          v1.1.1322
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />ClientLogs</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1321)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1322)</small>
 
     </h1>
 
@@ -125,7 +125,7 @@ systems, forever. Putting them in the same stream means answering it with one
 query, and a log aggregator indexes and compresses them for a fraction of
 what a Postgres row each would cost.</p><p>So the only durable rows here are per <em>session</em>, which is a few per player
 per day rather than a few hundred.</p><h2 id="module-the-correlation-key" class="section-heading"><a href="#module-the-correlation-key" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">The correlation key</span></h2><p>Every emitted line carries a logfmt prefix naming its session, user, lobby
-and screen:</p><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="group-1">[</span><span class="n">client</span><span class="p" data-group-id="group-1">]</span><span class="w"> </span><span class="n">session</span><span class="o">=</span><span class="mi">0</span><span class="n">f1e</span><span class="err">…</span><span class="w"> </span><span class="n">user</span><span class="o">=</span><span class="mi">9</span><span class="n">ab3</span><span class="err">…</span><span class="w"> </span><span class="n">level</span><span class="o">=</span><span class="n">info</span><span class="w"> </span><span class="n">cat</span><span class="o">=</span><span class="n">game</span><span class="w"> </span><span class="n">lobby</span><span class="o">=</span><span class="mi">77</span><span class="n">c1</span><span class="err">…</span><span class="w"> </span><span class="n">screen</span><span class="o">=</span><span class="n">boat</span><span class="w"> </span><span class="n">seq</span><span class="o">=</span><span class="mi">42</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nc">Game</span><span class="w"> </span><span class="n">starting</span></code></pre><p>In the <em>message</em>, deliberately, not only in <a href="https://logger.hexdocs.pm/Logger.html"><code class="inline">Logger</code></a> metadata. Metadata reaches
+and screen:</p><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="group-1">[</span><span class="n">client</span><span class="p" data-group-id="group-1">]</span><span class="w"> </span><span class="n">session</span><span class="o">=</span><span class="mi">0</span><span class="n">f1e</span><span class="err">…</span><span class="w"> </span><span class="n">user</span><span class="o">=</span><span class="mi">9</span><span class="n">ab3</span><span class="err">…</span><span class="w"> </span><span class="n">level</span><span class="o">=</span><span class="n">info</span><span class="w"> </span><span class="n">cat</span><span class="o">=</span><span class="n">game</span><span class="w"> </span><span class="n">lobby</span><span class="o">=</span><span class="mi">77</span><span class="n">c1</span><span class="err">…</span><span class="w"> </span><span class="n">screen</span><span class="o">=</span><span class="n">race</span><span class="w"> </span><span class="n">seq</span><span class="o">=</span><span class="mi">42</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nc">Game</span><span class="w"> </span><span class="n">starting</span></code></pre><p>In the <em>message</em>, deliberately, not only in <a href="https://logger.hexdocs.pm/Logger.html"><code class="inline">Logger</code></a> metadata. Metadata reaches
 stdout only for the keys a host lists in its <code class="inline">:default_formatter</code> config, and
 a feature that silently stops correlating because a host never copied a config
 line is worse than a slightly longer line. Metadata is set as well, for the
@@ -589,9 +589,9 @@ retention window.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1321">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1322">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1321">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1322">Hex Preview</a>
 
             </span>
 

@@ -5,10 +5,10 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1321">
+    <meta name="project" content="gamend_core v1.1.1322">
 
 
-    <title>Gamend.LobbySnapshots — gamend_core v1.1.1321</title>
+    <title>Gamend.LobbySnapshots — gamend_core v1.1.1322</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1321
+          v1.1.1322
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />LobbySnapshots</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1321)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1322)</small>
 
     </h1>
 
@@ -392,8 +392,8 @@ spawn when it is on.</p>
 
       </div>
 
-<p>Capture the current state of a lobby, attributing it to <code class="inline">trigger</code>.</p><p><code class="inline">trigger</code> names what caused the mutation — <code class="inline">&quot;hook:finish_boat_game&quot;</code>,
-<code class="inline">&quot;timer:scheduled_collision&quot;</code>, <code class="inline">&quot;lobby:deleted&quot;</code>. Options:</p><ul><li><code class="inline">:sync</code> — gather inline instead of off the caller's process. Required when
+<p>Capture the current state of a lobby, attributing it to <code class="inline">trigger</code>.</p><p><code class="inline">trigger</code> names what caused the mutation — <code class="inline">&quot;hook:finish_race&quot;</code>,
+<code class="inline">&quot;timer:obstacle&quot;</code>, <code class="inline">&quot;lobby:deleted&quot;</code>. Options:</p><ul><li><code class="inline">:sync</code> — gather inline instead of off the caller's process. Required when
 the state is about to disappear (lobby teardown), where an async gather
 would race the delete and capture nothing.</li><li><code class="inline">:flagged</code> — mark the run as anomalous, exempting it from the default
 retention sweep. Set this when the mutation errored.</li><li><code class="inline">:user_id</code> — attribution for the mutation.</li></ul><p>Returns <code class="inline">:ok</code> regardless; capture must never fail a caller's real work.</p>
@@ -457,7 +457,7 @@ retention sweep. Set this when the mutation errored.</li><li><code class="inline
 
 <p>Field-level differences between two snapshots' state.</p><p>Returns <code class="inline">%{section =&gt; [%{path: [&quot;a&quot;, &quot;b&quot;], from: term, to: term}]}</code>, with
 unchanged sections omitted entirely. Paths are flattened, so a field buried in
-nested maps reads as <code class="inline">[&quot;boat_adventure&quot;, &quot;effects&quot;, &quot;speed_reduced&quot;]</code> rather
+nested maps reads as <code class="inline">[&quot;race&quot;, &quot;effects&quot;, &quot;speed_reduced&quot;]</code> rather
 than requiring the reader to walk two nested objects to spot it.</p><p>This is the point of the whole system: a value that reverts between snapshots
 should be visible at a glance rather than reconstructed by hand.</p>
   </section>
@@ -898,9 +898,9 @@ has to hand out sequence numbers at write time for this to be stable.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1321">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1322">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1321">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1322">Hex Preview</a>
 
             </span>
 
