@@ -6,7 +6,8 @@ reset period.
 
 ## Fields
 
-- `period_key` — reset bucket: a UTC date (`"2026-07-22"`) for a daily,
+- `period_key` — reset bucket: a date (`"2026-07-22"`, UTC or the
+  player's own, `:quest_clock`) for a daily,
   an ISO week (`"2026-W30"`) for a weekly, `"static"` otherwise. Rolling
   the period is what "resets" a quest — a new period means a fresh row.
 - `objective_progress` — map of objective index (as a string) to count
