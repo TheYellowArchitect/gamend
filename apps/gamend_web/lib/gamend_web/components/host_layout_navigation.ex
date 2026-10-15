@@ -613,6 +613,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       :for={link <- @links}
       href={if(inert?(link), do: nil, else: link["href"])}
       aria-disabled={if(inert?(link), do: "true")}
+      data-motion-text={if(readonly?(link), do: "pop")}
       class={
         cond do
           readonly?(link) ->
@@ -784,6 +785,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         target={if(@link["external"], do: "_blank", else: nil)}
         rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
         aria-disabled={if(inert?(@link), do: "true")}
+        data-motion-text={if(readonly?(@link), do: "pop")}
         class={
           cond do
             readonly?(@link) ->
@@ -853,6 +855,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         target={if(@link["external"], do: "_blank", else: nil)}
         rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
         aria-disabled={if(inert?(@link), do: "true")}
+        data-motion-text={if(readonly?(@link), do: "pop")}
         class={
           cond do
             readonly?(@link) ->
@@ -1066,7 +1069,10 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp valid_link?(_link), do: false
 
   # A display-only item ("readonly": true) renders as a non-interactive badge
-  # (icon + label, no href/click) — e.g. a live status/value indicator.
+  # (icon + label, no href/click) — e.g. a live status/value indicator. It
+  # carries `data-motion-text="pop"`: a host's motion script plays a pop when
+  # its value changes on the page (a coin balance a claim or a purchase
+  # moved); without one the attribute does nothing.
   defp readonly?(entry), do: Map.get(entry, "readonly") == true
 
   # A link to something announced and not there yet ("disabled": true): drawn

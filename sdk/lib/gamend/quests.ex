@@ -61,9 +61,16 @@ defmodule Gamend.Quests do
 
   UTC means one global rollover instant rather than one per player: a daily
   turns over at noon in New Zealand and mid-afternoon the day before on the US
-  west coast. That is deliberate — everyone races the same clock — but it is
+  west coast. That is the default — everyone races the same clock — but it is
   why the API exposes the *remaining time* on a period and never a reset
   timestamp, and why clients should show a countdown rather than an hour.
+
+  `config :gamend_core, :quest_clock, :player` reads each player's periods on
+  their own clock instead: a daily turns over at their midnight, a weekly at
+  their Monday's, from the time zone in their preferences
+  (`Gamend.Accounts.TimeZone`; UTC when unknown). Only the period moves:
+  windows and every timestamp stay UTC. A player whose zone changes mid-day
+  may land on a period already played or one not yet started, once.
 
 
   **Note:** This is an SDK stub. Calling these functions will raise an error.
@@ -620,6 +627,31 @@ defmodule Gamend.Quests do
   end
 
   @doc ~S"""
+    Where this viewer goes to work on this quest, as a path on this site — or
+    `nil`. Set `config :gamend_core, :quest_action, {Module, :function}`; it is
+    called as `function(user_id | nil, Quest.t())`.
+    
+    The quests page makes the whole card a link to it whenever there is nothing
+    to claim: before the quest is done, the way to do it, and after it is
+    claimed, the way back to more of it. A quest only says what to do ("Visit
+    20 cities"), never where, and only the host knows its own pages.
+    
+    A path starts with one `/` (`"/games"`); a URL or `"//…"` is dropped. The
+    page keeps the reader's locale prefix on it.
+    
+  """
+  @spec host_action(Gamend.Quests.Quest.t(), user_id() | nil) :: String.t() | nil
+  def host_action(_quest, _user_id) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        nil
+
+      _ ->
+        raise "Gamend.Quests.host_action/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     Why this viewer cannot claim this quest yet, as a short label to draw — or
     `nil` when they can. Set `config :gamend_core, :quest_lock_filter,
     {Module, :function}`; it is called as `function(user_id | nil, Quest.t())`.
@@ -775,7 +807,8 @@ defmodule Gamend.Quests do
   end
 
   @doc ~S"""
-    The reset bucket a quest is in at `now` (UTC).
+    The reset bucket a quest is in at `now`, on the date `now` carries (UTC,
+    or a player's own zone with `:quest_clock` `:player`; see "Resets").
     
     `"static"` when it never resets, else the current day (`"2026-07-22"`),
     ISO week (`"2026-W30"`), month (`"2026-07"`), or interval bucket

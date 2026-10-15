@@ -3211,12 +3211,6 @@ msgstr "친구에게만 메시지를 보낼 수 있습니다."
 msgid "You cannot do that to yourself."
 msgstr "자기 자신에게는 할 수 없습니다."
 
-#: lib/gamend_web/live/quests_live.ex:647
-#, elixir-autogen, elixir-format
-msgid "You have %{count} quest ready to claim!"
-msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "받을 수 있는 퀘스트가 %{count}개 있습니다!"
-
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."

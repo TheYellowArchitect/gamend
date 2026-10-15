@@ -61,9 +61,16 @@ defmodule Gamend.Quests do
 
   UTC means one global rollover instant rather than one per player: a daily
   turns over at noon in New Zealand and mid-afternoon the day before on the US
-  west coast. That is deliberate — everyone races the same clock — but it is
+  west coast. That is the default — everyone races the same clock — but it is
   why the API exposes the *remaining time* on a period and never a reset
   timestamp, and why clients should show a countdown rather than an hour.
+
+  `config :gamend_core, :quest_clock, :player` reads each player's periods on
+  their own clock instead: a daily turns over at their midnight, a weekly at
+  their Monday's, from the time zone in their preferences
+  (`Gamend.Accounts.TimeZone`; UTC when unknown). Only the period moves:
+  windows and every timestamp stay UTC. A player whose zone changes mid-day
+  may land on a period already played or one not yet started, once.
   """
 
   import Ecto.Query, warn: false
@@ -71,6 +78,8 @@ defmodule Gamend.Quests do
 
   require Logger
 
+  alias Gamend.Accounts
+  alias Gamend.Accounts.TimeZone
   alias Gamend.Quests.Quest
   alias Gamend.Quests.QuestProgress
   alias Gamend.Repo
@@ -420,7 +429,7 @@ defmodule Gamend.Quests do
   @done_marker_ttl_ms :timer.hours(1)
 
   defp done_marker_key(user_id, quest, now) do
-    {:quests, :done, quests_version(), user_id, quest.key, period_key(quest, now)}
+    {:quests, :done, quests_version(), user_id, quest.key, period_key(quest, clock(user_id, now))}
   end
 
   defp done_cached?(user_id, quest, now) do
@@ -505,7 +514,7 @@ defmodule Gamend.Quests do
   end
 
   defp do_advance(user_id, quest, event, amount, meta, now, attempts_left) do
-    period_key = period_key(quest, now)
+    period_key = period_key(quest, clock(user_id, now))
 
     progress =
       Repo.get_by(QuestProgress,
@@ -754,7 +763,7 @@ defmodule Gamend.Quests do
   defp under_user_cap?(user_id, now) do
     max = Gamend.Limits.get(:max_active_quests_per_user)
 
-    periods = current_period_keys(now)
+    periods = current_period_keys(clock(user_id, now))
 
     count =
       from(p in QuestProgress,
@@ -888,7 +897,7 @@ defmodule Gamend.Quests do
         Repo.get_by(QuestProgress,
           user_id: user_id,
           quest_key: quest.key,
-          period_key: period_key(quest, now)
+          period_key: period_key(quest, clock(user_id, now))
         )
 
       progress ->
@@ -1295,7 +1304,7 @@ defmodule Gamend.Quests do
       members
       |> Enum.with_index(1)
       |> Enum.map(fn {quest, tier} ->
-        progress = card_progress(waiting, rows, quest, now)
+        progress = card_progress(waiting, rows, quest, clock(user_id, now))
         prereq = quest.prerequisite_quest_key
 
         %{
@@ -1341,7 +1350,7 @@ defmodule Gamend.Quests do
     members
     |> Enum.filter(&visible_to_user?(&1, nil, done_prereqs))
     |> Enum.map(fn quest ->
-      progress = card_progress(waiting, rows, quest, now)
+      progress = card_progress(waiting, rows, quest, clock(user_id, now))
 
       %{
         quest: resolve_counter(quest, progress),
@@ -1586,6 +1595,38 @@ defmodule Gamend.Quests do
 
   defp normalize_lock_label(_label), do: nil
 
+  @doc """
+  Where this viewer goes to work on this quest, as a path on this site — or
+  `nil`. Set `config :gamend_core, :quest_action, {Module, :function}`; it is
+  called as `function(user_id | nil, Quest.t())`.
+
+  The quests page makes the whole card a link to it whenever there is nothing
+  to claim: before the quest is done, the way to do it, and after it is
+  claimed, the way back to more of it. A quest only says what to do ("Visit
+  20 cities"), never where, and only the host knows its own pages.
+
+  A path starts with one `/` (`"/games"`); a URL or `"//…"` is dropped. The
+  page keeps the reader's locale prefix on it.
+  """
+  @spec host_action(Quest.t(), user_id() | nil) :: String.t() | nil
+  def host_action(quest, user_id) do
+    case Application.get_env(:gamend_core, :quest_action) do
+      {mod, fun} when is_atom(mod) and is_atom(fun) ->
+        normalize_action(apply(mod, fun, [user_id, quest]))
+
+      _ ->
+        nil
+    end
+  end
+
+  # Same leniency as the lock label: a host answering nonsense means "no
+  # link", never a broken one or one off the site.
+  defp normalize_action("/" <> rest = path) do
+    if String.starts_with?(rest, ["/", "\\"]), do: nil, else: path
+  end
+
+  defp normalize_action(_action), do: nil
+
   # Definitions are few (capped by max_quests) and cached, so visibility and
   # pagination are resolved in memory; the user's rows come from one query.
   defp visible_quests(user_id, now, opts) do
@@ -1605,7 +1646,8 @@ defmodule Gamend.Quests do
     # after the read, which fetches those runs too.
     candidates = host_visible(active_quests(), user_id)
     candidate_keys = Enum.map(candidates, & &1.key)
-    periods = current_period_keys(now)
+    clock = clock(user_id, now)
+    periods = current_period_keys(clock)
 
     prereq_keys =
       candidates
@@ -1636,6 +1678,7 @@ defmodule Gamend.Quests do
     %{
       quests: quests,
       now: now,
+      clock: clock,
       waiting: waiting,
       rows:
         for(
@@ -1666,7 +1709,7 @@ defmodule Gamend.Quests do
   end
 
   defp visible_entries(
-         %{quests: quests, now: now, rows: rows, waiting: waiting, done_prereqs: done},
+         %{quests: quests, clock: clock, rows: rows, waiting: waiting, done_prereqs: done},
          opts
        ) do
     category = Keyword.get(opts, :category)
@@ -1678,7 +1721,7 @@ defmodule Gamend.Quests do
 
     quests
     |> Enum.map(fn quest ->
-      progress = card_progress(waiting, rows, quest, now)
+      progress = card_progress(waiting, rows, quest, clock)
 
       %{
         quest: resolve_counter(quest, progress),
@@ -1740,11 +1783,17 @@ defmodule Gamend.Quests do
 
   defp objective_total(_progress), do: 0
 
-  # One entry per chain: the earliest tier the player can still act on — in
-  # progress or completed-but-unclaimed. Only claiming advances the card to
-  # the next tier; once every tier is claimed the final one stands for the
-  # chain. Without this, a finished tier and its unlocked successor listed
-  # side by side and the chain appeared twice.
+  # One entry per chain: the earliest tier waiting for its claim, else the
+  # earliest the player can still act on (in progress). Only claiming advances
+  # the card to the next tier; once every tier is claimed the final one stands
+  # for the chain. Without this, a finished tier and its unlocked successor
+  # listed side by side and the chain appeared twice.
+  #
+  # Claimable first because a chain can have a gap: a tier claimed out of order
+  # (a ladder re-seeded with new steps under old rows) unlocks its successor,
+  # which counts and finishes while an earlier tier is still in progress. The
+  # earliest unclaimed tier would stand for the chain, and the finished one,
+  # counted by `claimable_count/1`, could never be claimed from the list.
   defp collapse_chains(entries, prereq_by_key) do
     representatives =
       entries
@@ -1755,7 +1804,10 @@ defmodule Gamend.Quests do
             chain_hops(quest.key, prereq_by_key, 0)
           end)
 
-        representative = Enum.find(ordered, &(not claimed_entry?(&1))) || List.last(ordered)
+        representative =
+          Enum.find(ordered, & &1.claimable) ||
+            Enum.find(ordered, &(not claimed_entry?(&1))) || List.last(ordered)
+
         {root, representative.quest.key}
       end)
 
@@ -1858,7 +1910,7 @@ defmodule Gamend.Quests do
         nil
 
       quest ->
-        period_key = period_key(quest, DateTime.utc_now(:second))
+        period_key = period_key(quest, clock(user_id, DateTime.utc_now(:second)))
         Repo.get_by(QuestProgress, user_id: user_id, quest_key: quest_key, period_key: period_key)
     end
   end
@@ -1917,7 +1969,7 @@ defmodule Gamend.Quests do
 
       quest ->
         now = DateTime.utc_now(:second)
-        period_key = period_key(quest, now)
+        period_key = period_key(quest, clock(user_id, now))
 
         full =
           quest.objectives
@@ -2096,7 +2148,8 @@ defmodule Gamend.Quests do
   # ---------------------------------------------------------------------------
 
   @doc """
-  The reset bucket a quest is in at `now` (UTC).
+  The reset bucket a quest is in at `now`, on the date `now` carries (UTC,
+  or a player's own zone with `:quest_clock` `:player`; see "Resets").
 
   `"static"` when it never resets, else the current day (`"2026-07-22"`),
   ISO week (`"2026-W30"`), month (`"2026-07"`), or interval bucket
@@ -2128,6 +2181,18 @@ defmodule Gamend.Quests do
   end
 
   def period_key(_reset, _now), do: "static"
+
+  # The clock a player's periods are read on (see "Resets"): `now` itself, or
+  # with `:quest_clock` `:player` `now` in the player's own time zone, so
+  # `period_key/2` takes their date. Never a timestamp: those stay on `now`.
+  defp clock(nil, now), do: now
+
+  defp clock(user_id, now) do
+    case Application.get_env(:gamend_core, :quest_clock, :utc) do
+      :player -> user_id |> Accounts.get_user() |> TimeZone.local(now)
+      _utc -> now
+    end
+  end
 
   # Every bucket the currently-active definitions can be in right now — used
   # to scope per-user progress queries without enumerating all resets.

@@ -647,6 +647,7 @@ defmodule Gamend.GDScript.API do
       "get_quest_by_key" => [1],
       "count_user_completions" => [1, 2],
       "get_progress" => [2],
+      "host_action" => [2],
       "claim" => [2, 3],
       "change_quest" => [1, 2],
       "chain" => [2],

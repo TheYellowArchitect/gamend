@@ -1008,7 +1008,15 @@ defmodule GamendWeb.CoreComponents do
 
   With `navigate` the card is a `<.link>`; without it a `<div>`, and any
   `phx-click`/`title` in `rest` lands on it. `class` appends to the wrapper —
-  state borders (`border-success`), `cursor-pointer`, and the like.
+  state borders (`border-success`) and the like.
+
+  With `href` the card is a `<div>` whose title is a link stretched over the
+  whole card (`after:inset-0`), so a click anywhere follows it while the card
+  still holds buttons of its own, which a link cannot. A button meant to be
+  pressed instead sits above the stretch with `relative z-10`.
+
+  A card that does something on a click (`navigate`, `href` or a
+  `phx-click`) rises a little on hover; one that does nothing stays still.
   """
   attr :title, :string, required: true
   attr :icon_url, :string, default: nil
@@ -1020,6 +1028,7 @@ defmodule GamendWeb.CoreComponents do
 
   attr :description, :string, default: nil
   attr :navigate, :string, default: nil
+  attr :href, :string, default: nil
   attr :class, :any, default: nil
   attr :rest, :global
 
@@ -1028,21 +1037,34 @@ defmodule GamendWeb.CoreComponents do
 
   def entity_card(%{navigate: navigate} = assigns) when is_binary(navigate) do
     ~H"""
-    <.link navigate={@navigate} class={[card_classes(), "cursor-pointer", @class]} {@rest}>
+    <.link navigate={@navigate} class={[card_classes(), clickable_classes(), @class]} {@rest}>
       {render_slot_card_body(assigns)}
     </.link>
     """
   end
 
   def entity_card(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :clickable?,
+        is_binary(assigns.href) or assigns.rest[:"phx-click"] not in [nil, false]
+      )
+
     ~H"""
-    <div class={[card_classes(), @class]} {@rest}>
+    <div
+      class={[card_classes(), @href && "relative", @clickable? && clickable_classes(), @class]}
+      {@rest}
+    >
       {render_slot_card_body(assigns)}
     </div>
     """
   end
 
-  defp card_classes, do: "card bg-base-200 hover:bg-base-300 transition-colors"
+  defp card_classes, do: "card bg-base-200 transition"
+
+  defp clickable_classes,
+    do: "cursor-pointer hover:bg-base-300 hover:shadow-md motion-safe:hover:-translate-y-0.5"
 
   defp render_slot_card_body(assigns) do
     ~H"""
@@ -1058,7 +1080,16 @@ defmodule GamendWeb.CoreComponents do
             type={@type}
             class="w-6 h-6 shrink-0 text-muted"
           />
-          {@title}
+          <.link
+            :if={@href}
+            href={@href}
+            class="after:absolute after:inset-0 after:rounded-box focus:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
+          >
+            {@title}
+          </.link>
+          <%= if !@href do %>
+            {@title}
+          <% end %>
         </h2>
         <div :if={@badges != []} class="flex flex-col items-end gap-1 shrink-0">
           {render_slot(@badges)}

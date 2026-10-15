@@ -3258,13 +3258,6 @@ msgstr "Du kan bare sende meldinger til venner."
 msgid "You cannot do that to yourself."
 msgstr "Du kan ikke gjøre det mot deg selv."
 
-#: lib/gamend_web/live/quests_live.ex:647
-#, elixir-autogen, elixir-format
-msgid "You have %{count} quest ready to claim!"
-msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "Du har %{count} oppdrag klart til innløsing!"
-msgstr[1] "Du har %{count} oppdrag klare til innløsing!"
-
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."

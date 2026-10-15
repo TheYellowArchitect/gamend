@@ -3211,12 +3211,6 @@ msgstr "你只能给好友发消息。"
 msgid "You cannot do that to yourself."
 msgstr "你不能对自己执行此操作。"
 
-#: lib/gamend_web/live/quests_live.ex:647
-#, elixir-autogen, elixir-format
-msgid "You have %{count} quest ready to claim!"
-msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "你有 %{count} 个任务可领取！"
-
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."

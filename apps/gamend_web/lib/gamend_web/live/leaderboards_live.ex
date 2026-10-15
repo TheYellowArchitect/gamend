@@ -13,6 +13,7 @@ defmodule GamendWeb.LeaderboardsLive do
   alias Gamend.Leaderboards.Leaderboard
   alias GamendWeb.ContentText
   alias GamendWeb.LiveHelpers
+  alias GamendWeb.OnMount.SeoTitle
   alias GamendWeb.Plugs.FeatureGate
 
   @impl true
@@ -90,6 +91,7 @@ defmodule GamendWeb.LeaderboardsLive do
   def handle_params(_params, _uri, socket) do
     {:noreply,
      socket
+     |> SeoTitle.assign_page_title(gettext("Leaderboards"))
      |> assign(:selected_leaderboard, nil)
      |> assign(:slug_leaderboards, [])
      |> assign(:current_season_index, 0)
@@ -101,7 +103,8 @@ defmodule GamendWeb.LeaderboardsLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div class="space-y-6">
-        <%!-- Back: from a board to the list, from the list home. --%>
+        <%!-- One title: a board's own (its icon and name), else the list's.
+              Back: from a board to the list, from the list home. --%>
         <div class="flex items-center gap-3">
           <.back_link
             :if={@selected_leaderboard}
@@ -113,10 +116,18 @@ defmodule GamendWeb.LeaderboardsLive do
             }
           />
           <.back_link :if={!@selected_leaderboard} href={home_path()} />
-          <h1 class="text-4xl font-black text-base-content">
+          <.page_title :if={@selected_leaderboard} class="flex min-w-0 items-center gap-3">
+            <.entity_icon
+              icon_url={@selected_leaderboard.icon_url}
+              type={:leaderboard}
+              class="size-8 shrink-0 text-muted sm:size-9"
+            />
+            <span class="min-w-0 break-words">{@selected_leaderboard.title}</span>
+          </.page_title>
+          <.page_title :if={!@selected_leaderboard}>
             {gettext("Leaderboards")}
             <span class="text-muted font-normal">({@count})</span>
-          </h1>
+          </.page_title>
         </div>
 
         <%= if @selected_leaderboard do %>
@@ -198,42 +209,27 @@ defmodule GamendWeb.LeaderboardsLive do
   defp render_leaderboard_detail(assigns) do
     ~H"""
     <div class="flex flex-col gap-4 mb-6">
-      <%!-- Back button and title --%>
-      <div class="flex items-center gap-4">
-        <.link navigate={~p"/leaderboards"} class="btn btn-surface btn-sm">
-          {gettext("Back")}
-        </.link>
-        <div>
-          <h2 class="text-2xl font-bold flex items-center gap-2">
-            <.entity_icon
-              icon_url={@leaderboard.icon_url}
-              type={:leaderboard}
-              class="w-7 h-7 text-muted"
-            />
-            {@leaderboard.title}
-          </h2>
-          <div class="flex items-center gap-2 mt-1">
-            <%= if Leaderboard.active?(@leaderboard) do %>
-              <span class="badge badge-success">{gettext("Active")}</span>
-            <% else %>
-              <span class="badge badge-neutral">{gettext("Ended")}</span>
+      <%!-- The title row (Back, icon, name) is the page's; this is the board's state. --%>
+      <div class="flex flex-wrap items-center gap-2">
+        <%= if Leaderboard.active?(@leaderboard) do %>
+          <span class="badge badge-success">{gettext("Active")}</span>
+        <% else %>
+          <span class="badge badge-neutral">{gettext("Ended")}</span>
+        <% end %>
+        <%= if @leaderboard.starts_at || @leaderboard.ends_at do %>
+          <span class="text-sm text-muted">
+            <%= cond do %>
+              <% @leaderboard.starts_at && @leaderboard.ends_at -> %>
+                <.timestamp at={@leaderboard.starts_at} format="date" /> —
+                <.timestamp at={@leaderboard.ends_at} format="date" />
+              <% @leaderboard.ends_at -> %>
+                <.timestamp at={@leaderboard.ends_at} format="date" />
+              <% @leaderboard.starts_at -> %>
+                <.timestamp at={@leaderboard.starts_at} format="date" />
+              <% true -> %>
             <% end %>
-            <%= if @leaderboard.starts_at || @leaderboard.ends_at do %>
-              <span class="text-sm text-muted">
-                <%= cond do %>
-                  <% @leaderboard.starts_at && @leaderboard.ends_at -> %>
-                    <.timestamp at={@leaderboard.starts_at} format="date" /> —
-                    <.timestamp at={@leaderboard.ends_at} format="date" />
-                  <% @leaderboard.ends_at -> %>
-                    <.timestamp at={@leaderboard.ends_at} format="date" />
-                  <% @leaderboard.starts_at -> %>
-                    <.timestamp at={@leaderboard.starts_at} format="date" />
-                  <% true -> %>
-                <% end %>
-              </span>
-            <% end %>
-          </div>
-        </div>
+          </span>
+        <% end %>
       </div>
 
       <%!-- Season navigation --%>
@@ -492,10 +488,12 @@ defmodule GamendWeb.LeaderboardsLive do
     slug_leaderboards = Leaderboards.list_leaderboards_by_slug(leaderboard.slug)
     current_index = Enum.find_index(slug_leaderboards, &(&1.id == leaderboard.id)) || 0
     user_record = get_user_record(socket, leaderboard.id)
+    leaderboard = ContentText.translate(leaderboard)
 
     {:noreply,
      socket
-     |> assign(:selected_leaderboard, ContentText.translate(leaderboard))
+     |> SeoTitle.assign_page_title(leaderboard.title)
+     |> assign(:selected_leaderboard, leaderboard)
      |> assign(:slug_leaderboards, ContentText.translate(slug_leaderboards))
      |> assign(:current_season_index, current_index)
      |> assign(:user_record, user_record)

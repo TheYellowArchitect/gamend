@@ -3446,17 +3446,6 @@ msgstr "يمكنك مراسلة الأصدقاء فقط."
 msgid "You cannot do that to yourself."
 msgstr "لا يمكنك فعل ذلك مع نفسك."
 
-#: lib/gamend_web/live/quests_live.ex:647
-#, elixir-autogen, elixir-format
-msgid "You have %{count} quest ready to claim!"
-msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "لديك %{count} مهمة جاهزة للاستلام!"
-msgstr[1] "لديك مهمة واحدة جاهزة للاستلام!"
-msgstr[2] "لديك مهمتان جاهزتان للاستلام!"
-msgstr[3] "لديك %{count} مهام جاهزة للاستلام!"
-msgstr[4] "لديك %{count} مهمة جاهزة للاستلام!"
-msgstr[5] "لديك %{count} مهمة جاهزة للاستلام!"
-
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."

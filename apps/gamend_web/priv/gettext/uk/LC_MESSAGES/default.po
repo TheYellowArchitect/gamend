@@ -3305,14 +3305,6 @@ msgstr "Писати можна лише друзям."
 msgid "You cannot do that to yourself."
 msgstr "З собою так не можна."
 
-#: lib/gamend_web/live/quests_live.ex:647
-#, elixir-autogen, elixir-format
-msgid "You have %{count} quest ready to claim!"
-msgid_plural "You have %{count} quests ready to claim!"
-msgstr[0] "У тебе %{count} завдання готове до отримання!"
-msgstr[1] "У тебе %{count} завдання готові до отримання!"
-msgstr[2] "У тебе %{count} завдань готові до отримання!"
-
 #: lib/gamend_web/live_helpers.ex:286
 #, elixir-autogen, elixir-format
 msgid "You have created too many groups."

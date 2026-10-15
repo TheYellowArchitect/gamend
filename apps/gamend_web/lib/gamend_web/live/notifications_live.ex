@@ -81,7 +81,10 @@ defmodule GamendWeb.NotificationsLive do
                     <td class="flex gap-1 flex-wrap">
                       <%= if action = notification_action(n) do %>
                         <% {label, path} = action %>
-                        <.link navigate={path} class="btn btn-sm btn-outline btn-primary">
+                        <%!-- `href`, not `navigate`: a notice leads anywhere
+                        (`/admin/reports` is another live_session), and
+                        `live_nav.js` makes a same-session link live. --%>
+                        <.link href={path} class="btn btn-sm btn-outline btn-primary">
                           {label}
                         </.link>
                       <% end %>

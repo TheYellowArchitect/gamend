@@ -2,7 +2,7 @@ defmodule GamendWeb.UserLive.Login do
   use GamendWeb, :live_view
 
   alias Gamend.Accounts
-  alias Gamend.Accounts.Scope
+  alias Gamend.Accounts.{Scope, User}
   require Logger
 
   @impl true
@@ -178,8 +178,18 @@ defmodule GamendWeb.UserLive.Login do
   def handle_event("submit_magic", %{"user" => %{"email" => email}} = params, socket) do
     with :ok <- GamendWeb.LiveHelpers.check_rate_limit(socket.assigns.client_ip, :auth),
          :ok <- GamendWeb.LiveHelpers.check_captcha(socket, params) do
-      if user = Accounts.get_user_by_email(email) do
-        deliver_magic_link(user)
+      case Accounts.get_user_by_email(email) do
+        # Not confirmed yet: no login link. The confirmation email goes out
+        # again instead, at most once a minute, so asking right after
+        # registering sends nothing new.
+        %User{confirmed_at: nil} ->
+          Accounts.resend_confirmation(email, &url(~p"/users/confirm/#{&1}"), notifier())
+
+        %User{} = user ->
+          deliver_magic_link(user)
+
+        nil ->
+          :ok
       end
 
       info =
@@ -217,6 +227,10 @@ defmodule GamendWeb.UserLive.Login do
       Logger.error("magic link delivery crashed user=#{user.id}: #{Exception.message(e)}")
       :error
   end
+
+  # The notifier the sign-up reads, so a resend is the same email.
+  defp notifier,
+    do: Application.get_env(:gamend_web, :user_notifier, Gamend.Accounts.UserNotifier)
 
   # Only show the local-mailbox helper in development builds.
   # In production we may use Swoosh.Local when no SMTP is configured, but we

@@ -165,10 +165,6 @@ defmodule GamendWeb.GroupsLive do
     {:noreply, push_patch(socket, to: ~p"/groups/#{id}")}
   end
 
-  def handle_event("back_to_list", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/groups")}
-  end
-
   def handle_event("join_group", %{"id" => id}, socket) do
     group_id = id
 
@@ -395,7 +391,8 @@ defmodule GamendWeb.GroupsLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div class="space-y-6">
-        <%!-- Back: from a group to the list, from the list home. --%>
+        <%!-- One title: a group's own (its icon and name), else the list's.
+              Back: from a group to the list, from the list home. --%>
         <div class="flex items-center gap-3">
           <.back_link
             :if={@selected_group}
@@ -407,7 +404,15 @@ defmodule GamendWeb.GroupsLive do
             }
           />
           <.back_link :if={!@selected_group} href={home_path()} />
-          <h1 class="text-4xl font-black text-base-content">{gettext("Groups")}</h1>
+          <.page_title :if={@selected_group} class="flex min-w-0 items-center gap-3">
+            <.entity_icon
+              icon_url={@selected_group.icon_url}
+              type={:group}
+              class="size-8 shrink-0 text-muted sm:size-9"
+            />
+            <span class="min-w-0 break-words">{@selected_group.title}</span>
+          </.page_title>
+          <.page_title :if={!@selected_group}>{gettext("Groups")}</.page_title>
         </div>
 
         <%= if @selected_group do %>
@@ -570,32 +575,16 @@ defmodule GamendWeb.GroupsLive do
 
   defp render_group_detail(assigns) do
     ~H"""
-    <div class="flex flex-col gap-4 mb-6">
-      <div class="flex items-center gap-4">
-        <button phx-click="back_to_list" class="btn btn-surface btn-sm" id="groups-back-btn">
-          ← {gettext("Back")}
-        </button>
-        <div>
-          <h2 class="text-2xl font-bold flex items-center gap-2">
-            <.entity_icon
-              icon_url={@selected_group.icon_url}
-              type={:group}
-              class="w-7 h-7 text-muted"
-            />
-            {@selected_group.title}
-          </h2>
-          <div class="flex items-center gap-2 mt-1">
-            <%= if @selected_group.type == "public" do %>
-              <span class="badge badge-success">{gettext("Public")}</span>
-            <% else %>
-              <span class="badge badge-warning">{gettext("Private")}</span>
-            <% end %>
-            <span class="text-sm text-muted">
-              <.timestamp at={@selected_group.inserted_at} format="date" />
-            </span>
-          </div>
-        </div>
-      </div>
+    <%!-- The title row (Back, icon, name) is the page's; this is the group's state. --%>
+    <div class="flex flex-wrap items-center gap-2 mb-6">
+      <%= if @selected_group.type == "public" do %>
+        <span class="badge badge-success">{gettext("Public")}</span>
+      <% else %>
+        <span class="badge badge-warning">{gettext("Private")}</span>
+      <% end %>
+      <span class="text-sm text-muted">
+        <.timestamp at={@selected_group.inserted_at} format="date" />
+      </span>
     </div>
 
     <%= if @selected_group.description && @selected_group.description != "" do %>

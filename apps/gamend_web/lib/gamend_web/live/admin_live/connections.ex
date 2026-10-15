@@ -15,7 +15,7 @@ defmodule GamendWeb.AdminLive.Connections do
         <.link navigate={~p"/admin"} class="btn btn-surface mb-4">&larr; Back to Admin</.link>
 
         <%!-- Summary cards --%>
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <div class="bg-base-100 rounded-lg shadow-sm p-4">
             <div class="text-xs text-muted">Total Connections</div>
             <div class="text-2xl font-bold">{@conn_stats.total_connections}</div>
@@ -27,6 +27,11 @@ defmodule GamendWeb.AdminLive.Connections do
           <div class="bg-base-100 rounded-lg shadow-sm p-4">
             <div class="text-xs text-muted">LiveViews</div>
             <div class="text-2xl font-bold">{@conn_stats.live_views}</div>
+          </div>
+          <div class="bg-base-100 rounded-lg shadow-sm p-4">
+            <div class="text-xs text-muted">Anonymous</div>
+            <div class="text-2xl font-bold">{@anonymous_live_views}</div>
+            <div class="text-xs text-muted truncate">LiveViews, no account</div>
           </div>
           <div class="bg-base-100 rounded-lg shadow-sm p-4">
             <div class="text-xs text-muted">WebRTC</div>
@@ -214,6 +219,7 @@ defmodule GamendWeb.AdminLive.Connections do
             </h2>
             <p class="text-sm text-muted mb-4">
               All users with active connections (WebSocket channels, LiveView, or WebRTC).
+              The rest are anonymous: {@anonymous_live_views} LiveViews with no account (visitors, or crawlers that run JavaScript).
             </p>
 
             <%!-- Filter buttons --%>
@@ -394,6 +400,7 @@ defmodule GamendWeb.AdminLive.Connections do
       conn_total_pages: total_pages,
       conn_page: page,
       live_view_pages: build_live_view_pages(all),
+      anonymous_live_views: count_anonymous(all),
       webrtc_users: webrtc,
       user_names: Accounts.users_by_ids(Enum.map(paged ++ webrtc, & &1.user_id)),
       cluster_size: 1 + length(Node.list())
@@ -480,6 +487,14 @@ defmodule GamendWeb.AdminLive.Connections do
     |> Enum.map(fn {_pid, meta} -> Map.get(meta, :module, "unknown") end)
     |> Enum.frequencies()
     |> Enum.sort_by(fn {_, count} -> count end, :desc)
+  end
+
+  # LiveViews with no account: the user list cannot show them, so the page
+  # counts them instead.
+  defp count_anonymous(all) do
+    all
+    |> Map.get(:live_view, [])
+    |> Enum.count(fn {_pid, meta} -> is_nil(Map.get(meta, :user_id)) end)
   end
 
   defp build_webrtc_users(all) do

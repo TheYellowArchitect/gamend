@@ -108,10 +108,10 @@ defmodule GamendWeb.QuestsLive do
 
       user ->
         case Quests.claim(user.id, key) do
-          {:ok, _} ->
+          {:ok, %{rewards: rewards}} ->
             {:noreply,
              socket
-             |> put_flash(:info, gettext("Rewards claimed!"))
+             |> put_flash(:info, claimed_flash(rewards))
              |> load_quests()}
 
           {:error, :already_claimed} ->
@@ -182,6 +182,16 @@ defmodule GamendWeb.QuestsLive do
 
   defp get_user(socket), do: Scope.user(socket.assigns[:current_scope])
 
+  # What the claim paid, "Rewards claimed! +50 coins", so the reader knows
+  # what moved in the wallet: the reward badges' amount and code after the
+  # sentence, which keeps it one msgid.
+  defp claimed_flash(rewards) do
+    Enum.join(
+      [gettext("Rewards claimed!") | Enum.map(rewards, &"+#{&1.amount} #{&1.code}")],
+      " "
+    )
+  end
+
   defp load_quests(socket) do
     user = get_user(socket)
     page = socket.assigns.page
@@ -211,7 +221,7 @@ defmodule GamendWeb.QuestsLive do
         {catalog_entries, total, 0, Quests.visible_categories(nil)}
       end
 
-    entries = entries |> ContentText.translate() |> lock_labels(user)
+    entries = entries |> ContentText.translate() |> lock_labels(user) |> actions(user)
 
     socket
     |> assign(:groups, selectable)
@@ -289,7 +299,15 @@ defmodule GamendWeb.QuestsLive do
     Enum.map(entries, &Map.put(&1, :lock_label, Quests.host_lock_label(&1.quest, user.id)))
   end
 
-  # "N quests ready to claim" must mean N buttons: a locked quest is finished
+  # Where each quest is done, from the host (`Quests.host_action/2`), for
+  # everyone: a visitor reading the catalog wants the way in as much as a
+  # player does. The card links there only when there is nothing to claim.
+  defp actions(entries, user) do
+    user_id = user && user.id
+    Enum.map(entries, &Map.put(&1, :action, Quests.host_action(&1.quest, user_id)))
+  end
+
+  # The Claimable chip's N must mean N buttons: a locked quest is finished
   # and offers nothing, so counting it sends the reader hunting for a button
   # that is deliberately not there.
   defp locked_claimable(entries) do
@@ -646,20 +664,6 @@ defmodule GamendWeb.QuestsLive do
           <.group_selector :if={@groups != []} groups={@groups} selected={@selected_group} />
         </div>
 
-        <%!-- Claimable banner --%>
-        <%= if @claimable_count > 0 do %>
-          <div class="alert alert-success">
-            <.icon name="hero-gift" class="w-5 h-5" />
-            <span>
-              {ngettext(
-                "You have %{count} quest ready to claim!",
-                "You have %{count} quests ready to claim!",
-                @claimable_count
-              )}
-            </span>
-          </div>
-        <% end %>
-
         <%!-- Quest grid --%>
         <%= if @entries == [] do %>
           <div class="text-center py-16 text-muted">
@@ -909,6 +913,40 @@ defmodule GamendWeb.QuestsLive do
   # Components
   # ---------------------------------------------------------------------------
 
+  # A chain's or a group's badge. When the card's own click opens it, the
+  # badge is only a label; otherwise (the card claims, or goes where the quest
+  # is done) it is a button of its own, above the card's stretched link
+  # (`relative z-10`).
+  attr :event, :any,
+    required: true,
+    doc: "the event it sends, or false when the card's click does"
+
+  attr :title, :string, required: true
+  attr :rest, :global, include: ~w(phx-value-key phx-value-group)
+  slot :inner_block, required: true
+
+  defp opener(%{event: event} = assigns) when is_binary(event) do
+    ~H"""
+    <button
+      type="button"
+      phx-click={@event}
+      title={@title}
+      class="badge badge-ghost badge-sm gap-0.5 text-nowrap relative z-10 cursor-pointer hover:badge-neutral"
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </button>
+    """
+  end
+
+  defp opener(assigns) do
+    ~H"""
+    <span title={@title} class="badge badge-ghost badge-sm gap-0.5 text-nowrap">
+      {render_slot(@inner_block)}
+    </span>
+    """
+  end
+
   defp quest_card(assigns) do
     quest = assigns.entry.quest
     progress = assigns.entry.progress
@@ -924,9 +962,25 @@ defmodule GamendWeb.QuestsLive do
     # the collapsed entry stands for the group: a member listed because its
     # group was picked carries the same `group_size` and is itself.
     grouped? = Map.get(assigns.entry, :collapsed, false) and assigns.group_size > 1
+    lock_label = Map.get(assigns.entry, :lock_label)
+
+    # A click anywhere on the card does the one thing it is for (user,
+    # 2026-10-15): claims it when it waits for its claim, else goes where the
+    # quest is done (`Quests.host_action/2`), else opens its chain or group.
+    # The chain and group badges open theirs as buttons of their own whenever
+    # the card's click does something else.
+    click =
+      cond do
+        assigns.logged_in and claimable and is_nil(lock_label) -> :claim
+        is_binary(assigns.entry[:action]) and not claimable and is_nil(lock_label) -> :go
+        grouped? -> :show_group
+        assigns.chain_position -> :show_chain
+        true -> nil
+      end
 
     assigns =
       assigns
+      |> assign(:click, click)
       |> assign(:quest, quest)
       |> assign(:progress, progress)
       |> assign(:claimable, claimable)
@@ -934,7 +988,8 @@ defmodule GamendWeb.QuestsLive do
       |> assign(:claimed?, claimed?)
       |> assign(:left, left)
       |> assign(:secret?, secret?)
-      |> assign(:lock_label, Map.get(assigns.entry, :lock_label))
+      |> assign(:lock_label, lock_label)
+      |> assign(:action, Map.get(assigns.entry, :action))
       |> assign(:objective_rows, if(secret?, do: [], else: objective_rows(quest, progress)))
       |> assign(:grouped?, grouped?)
       |> assign(
@@ -956,17 +1011,17 @@ defmodule GamendWeb.QuestsLive do
       icon_url={@quest.icon_url}
       type={:quest}
       description={@localized_desc}
-      class={[
-        (@chain_position || @grouped?) && "cursor-pointer",
+      href={@click == :go && GamendWeb.HostLayouts.localized_href(@action, @locale)}
+      class={
         cond do
           @claimable -> "border border-success"
           @done? -> "border border-success/30"
           true -> ""
         end
-      ]}
-      phx-click={(@grouped? && "show_group") || (@chain_position && "show_chain")}
-      phx-value-group={@grouped? && @quest.group_key}
-      phx-value-key={not @grouped? && @chain_position && @quest.key}
+      }
+      phx-click={@click in [:claim, :show_group, :show_chain] && Atom.to_string(@click)}
+      phx-value-group={@click == :show_group && @quest.group_key}
+      phx-value-key={@click in [:claim, :show_chain] && @quest.key}
     >
       <:badges>
         <%!-- Progress is a property of the viewer, not the quest, so a
@@ -990,22 +1045,24 @@ defmodule GamendWeb.QuestsLive do
         >
           {reset_label(@quest)}
         </span>
-        <span
+        <.opener
           :if={@chain_position && not @grouped?}
-          class="badge badge-ghost badge-sm gap-0.5 text-nowrap"
+          event={@click != :show_chain && "show_chain"}
+          phx-value-key={@quest.key}
           title={gettext("View quest chain")}
         >
           <.icon name="hero-link" class="w-3 h-3" />
           {elem(@chain_position, 0)}/{elem(@chain_position, 1)}
-        </span>
-        <span
+        </.opener>
+        <.opener
           :if={@grouped?}
-          class="badge badge-ghost badge-sm gap-0.5 text-nowrap"
+          event={@click != :show_group && "show_group"}
+          phx-value-group={@quest.group_key}
           title={gettext("View every quest in this group")}
         >
           <.icon name="hero-rectangle-stack" class="w-3 h-3" />
           {@group_size}
-        </span>
+        </.opener>
       </:badges>
 
       <%!-- Rewards --%>

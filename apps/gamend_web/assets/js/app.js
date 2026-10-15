@@ -457,6 +457,12 @@ function createLiveSocket(extraHooks) {
     // so "today" and "this evening" are theirs, not UTC's.
     params: {_csrf_token: csrfToken, timezone: browserTimeZone()},
     hooks: {...colocatedHooks, ...Hooks, ...extraHooks},
+    // A `phx-remove` plays when a patch takes its element away, never when
+    // the page is left. LiveView 1.2 defaults this to true: on a live
+    // navigation every `phx-remove` in the old page played at the click, so
+    // a list item faded out (a hub's Continue card, a pinned tile) and a
+    // panel folded shut, and the page sat that way until the next one came.
+    cascadePhxRemoveOnNavigation: false,
   })
 }
 
