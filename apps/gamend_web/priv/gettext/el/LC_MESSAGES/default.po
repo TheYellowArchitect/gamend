@@ -3604,3 +3604,18 @@ msgstr[1] "Ο λογαριασμός σου θα διαγραφεί σε %{count
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "π.χ. σενάριο έκδοσης"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Εγγράψου για να το παραλάβεις"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Εγγράψου για να παραλάβεις την ανταμοιβή σου."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Μόνο εσύ βλέπεις αυτή τη θέση. Εγγράψου για να εμφανιστείς στον πίνακα."

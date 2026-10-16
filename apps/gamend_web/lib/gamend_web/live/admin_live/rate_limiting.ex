@@ -310,7 +310,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
                     </tr>
                   </thead>
                   <tbody>
-                    <tr :for={entry <- @ban_log} id={"log-#{entry.ip}-#{entry.action}"}>
+                    <tr :for={entry <- @ban_log} id={"log-#{entry.seq}"}>
                       <td>
                         <%= if entry.action == :ban do %>
                           <span class="badge badge-error badge-xs">BAN</span>

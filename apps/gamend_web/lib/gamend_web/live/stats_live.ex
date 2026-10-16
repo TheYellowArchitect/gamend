@@ -74,7 +74,9 @@ defmodule GamendWeb.StatsLive do
       <div class="space-y-6">
         <div class="flex items-center gap-3">
           <.back_link href={home_path()} />
-          <h1 class="text-4xl font-black text-base-content">{gettext("Server stats")}</h1>
+          <.page_title icon={GamendWeb.HostLayouts.nav_icon("/stats", "hero-chart-pie-solid")}>
+            {gettext("Server stats")}
+          </.page_title>
         </div>
 
         <.section title={gettext("Players")} icon="hero-users-solid">

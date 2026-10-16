@@ -3551,3 +3551,18 @@ msgstr[0] "Tài khoản của bạn sẽ bị xóa sau %{count} ngày. Hãy đă
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "vd: script phát hành"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Đăng ký để nhận"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Đăng ký để nhận phần thưởng của bạn."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Chỉ bạn thấy thứ hạng này. Đăng ký để xuất hiện trên bảng xếp hạng."

@@ -3816,3 +3816,18 @@ msgstr[5] "سيُحذف حسابك خلال %{count} يوم. سجّل الدخو
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "مثال: سكربت الإصدار"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "سجّل لتستلم"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "سجّل لتستلم مكافأتك."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "أنت وحدك ترى هذا الترتيب. سجّل لتظهر في اللوحة."

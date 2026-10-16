@@ -13,7 +13,7 @@ defmodule GamendWeb.UserLive.Login do
         <div class="text-center">
           <div class="flex items-center justify-center gap-3">
             <.back_link href={home_path()} />
-            <h1 class="text-4xl font-black text-base-content">{gettext("Log in")}</h1>
+            <.page_title icon="hero-arrow-right-on-rectangle-solid">{gettext("Log in")}</.page_title>
           </div>
           <p class="text-sm text-muted mt-2">
             <%= if @reauth? do %>

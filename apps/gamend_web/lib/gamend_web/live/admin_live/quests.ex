@@ -3,6 +3,7 @@ defmodule GamendWeb.AdminLive.Quests do
 
   alias Gamend.Quests
   alias Gamend.Quests.Quest
+  alias GamendWeb.AdminLive.Shared
   alias GamendWeb.LiveHelpers
 
   @resets Quest.resets()
@@ -445,14 +446,14 @@ defmodule GamendWeb.AdminLive.Quests do
   end
 
   def handle_event("edit_quest", %{"id" => id}, socket) do
-    quest = Quests.get_quest(id)
-
-    {:noreply,
-     socket
-     |> assign(:selected_quest, quest)
-     |> assign(:objectives_json, Jason.encode!(quest.objectives))
-     |> assign(:rewards_json, Jason.encode!(quest.rewards))
-     |> assign(:form, to_form(Quests.change_quest(quest), as: "quest"))}
+    Shared.with_record(socket, Quests.get_quest(id), fn quest ->
+      {:noreply,
+       socket
+       |> assign(:selected_quest, quest)
+       |> assign(:objectives_json, Jason.encode!(quest.objectives))
+       |> assign(:rewards_json, Jason.encode!(quest.rewards))
+       |> assign(:form, to_form(Quests.change_quest(quest), as: "quest"))}
+    end)
   end
 
   def handle_event("cancel_edit", _, socket) do
@@ -517,10 +518,12 @@ defmodule GamendWeb.AdminLive.Quests do
   end
 
   def handle_event("grant_form", %{"id" => id}, socket) do
-    {:noreply,
-     socket
-     |> assign(:selected_quest, Quests.get_quest(id))
-     |> assign(:grant_form, to_form(%{"user_id" => ""}, as: "grant"))}
+    Shared.with_record(socket, Quests.get_quest(id), fn quest ->
+      {:noreply,
+       socket
+       |> assign(:selected_quest, quest)
+       |> assign(:grant_form, to_form(%{"user_id" => ""}, as: "grant"))}
+    end)
   end
 
   def handle_event("cancel_grant", _, socket) do

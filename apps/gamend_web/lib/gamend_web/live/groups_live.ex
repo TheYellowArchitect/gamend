@@ -412,7 +412,12 @@ defmodule GamendWeb.GroupsLive do
             />
             <span class="min-w-0 break-words">{@selected_group.title}</span>
           </.page_title>
-          <.page_title :if={!@selected_group}>{gettext("Groups")}</.page_title>
+          <.page_title
+            :if={!@selected_group}
+            icon={GamendWeb.HostLayouts.nav_icon("/groups", "hero-user-group-solid")}
+          >
+            {gettext("Groups")}
+          </.page_title>
         </div>
 
         <%= if @selected_group do %>

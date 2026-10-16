@@ -107,7 +107,9 @@ defmodule GamendWeb.ChatLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div>
-        <h1 class="mb-4 text-4xl font-black text-base-content">{gettext("Chat")}</h1>
+        <.page_title class="mb-4" icon="hero-chat-bubble-left-right-solid">
+          {gettext("Chat")}
+        </.page_title>
       </div>
       <div class="flex gap-4 h-[calc(100vh-12rem)]">
         <%!-- Sidebar: contacts list --%>

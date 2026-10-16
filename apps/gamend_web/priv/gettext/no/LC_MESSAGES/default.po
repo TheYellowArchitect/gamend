@@ -3604,3 +3604,18 @@ msgstr[1] "Kontoen din slettes om %{count} dager. Logg inn før det for å behol
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "f.eks. utgivelsesskript"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Registrer deg for å hente"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Registrer deg for å hente belønningen din."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Bare du ser denne plasseringen. Registrer deg for å komme på listen."

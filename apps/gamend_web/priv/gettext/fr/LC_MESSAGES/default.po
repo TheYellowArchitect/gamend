@@ -3604,3 +3604,18 @@ msgstr[1] "Ton compte sera supprimé dans %{count} jours. Connecte-toi d'ici là
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "ex. : script de publication"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Inscris-toi pour récupérer"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Inscris-toi pour récupérer ta récompense."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Ce rang n'est visible que par toi. Inscris-toi pour apparaître au classement."

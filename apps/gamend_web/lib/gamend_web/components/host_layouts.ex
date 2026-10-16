@@ -708,6 +708,24 @@ defmodule GamendWeb.HostLayouts do
     navigation_config(resolve_theme(locale), resolve_theme("en"))
   end
 
+  @doc """
+  The navbar's icon for the link to `href` (a primary, signed-in or account
+  link, or one in a group), else `fallback`: the mark a page's title wears
+  (`page_title/1`'s `icon`), so `/quests` is drawn with the icon its link
+  has in this host's navbar. `href` is the configured one, with no locale
+  prefix.
+  """
+  @spec nav_icon(String.t(), String.t() | nil) :: String.t() | nil
+  def nav_icon(href, fallback \\ nil) when is_binary(href) do
+    navigation()
+    |> Map.values()
+    |> Enum.concat()
+    |> Enum.flat_map(&[&1 | List.wrap(&1["items"])])
+    |> Enum.find_value(fallback, fn link ->
+      link["href"] == href and is_binary(link["icon"]) and link["icon"]
+    end)
+  end
+
   defp navigation_config(provider_theme, en_theme) do
     provider_navigation = Map.get(provider_theme, "navigation") || %{}
     en_navigation = Map.get(en_theme, "navigation") || %{}

@@ -4,7 +4,9 @@ defmodule GamendWeb.QuestsLive do
 
   Anonymous users browse the catalog (hidden quests appear as teasers).
   Logged-in users see their progress per reset period, can filter by category
-  and status, and claim completed quests.
+  and status, and claim completed quests. A guest whose claim needs an
+  account (`Gamend.AccountRequired`, `:quest_claims`) sees Register to claim
+  instead of Claim: the quest stays done and pays once they register.
 
   ## The group selector
 
@@ -24,6 +26,7 @@ defmodule GamendWeb.QuestsLive do
   """
   use GamendWeb, :live_view
 
+  alias Gamend.AccountRequired
   alias Gamend.Accounts.Scope
   alias Gamend.Quests
   alias Gamend.Quests.Quest
@@ -116,6 +119,9 @@ defmodule GamendWeb.QuestsLive do
 
           {:error, :already_claimed} ->
             {:noreply, socket |> put_flash(:error, gettext("Already claimed.")) |> load_quests()}
+
+          {:error, :account_required} ->
+            {:noreply, put_flash(socket, :error, gettext("Register to claim your reward."))}
 
           {:error, _reason} ->
             {:noreply, put_flash(socket, :error, gettext("Could not claim this quest."))}
@@ -233,6 +239,7 @@ defmodule GamendWeb.QuestsLive do
     |> assign(:total_count, total_count)
     |> assign(:total_pages, max(ceil(total_count / page_size), 1))
     |> assign(:claimable_count, claimable - locked_claimable(entries))
+    |> assign(:must_register, user != nil and not AccountRequired.allowed?(user, :quest_claims))
     |> assign(:chain_positions, chain_positions(active))
     |> assign(:now, DateTime.utc_now(:second))
     |> refresh_chain()
@@ -315,6 +322,11 @@ defmodule GamendWeb.QuestsLive do
   end
 
   defp locked?(entry), do: is_binary(Map.get(entry, :lock_label))
+
+  # Registering keeps the guest's account and everything on it
+  # (`Gamend.Accounts.upgrade_anonymous_user_and_deliver/4`), this quest too.
+  defp register_href(locale),
+    do: GamendWeb.HostLayouts.localized_href(~p"/users/register", locale)
 
   # Keep an open chain modal current when quest data changes underneath it
   # (a claim, a PubSub progress event). Closes it if the chain dissolved.
@@ -620,10 +632,10 @@ defmodule GamendWeb.QuestsLive do
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div class="flex items-center gap-3">
             <.back_link href={home_path()} />
-            <h1 class="text-4xl font-black text-base-content">
+            <.page_title icon={GamendWeb.HostLayouts.nav_icon("/quests", "hero-trophy-solid")}>
               {gettext("Quests")}
               <span class="text-muted font-normal">({@total_count})</span>
-            </h1>
+            </.page_title>
           </div>
 
           <%= if @current_scope && Scope.user(@current_scope) do %>
@@ -678,6 +690,7 @@ defmodule GamendWeb.QuestsLive do
               :for={entry <- @entries}
               entry={entry}
               logged_in={@current_scope != nil && Scope.user(@current_scope) != nil}
+              must_register={@must_register}
               locale={@locale}
               now={@now}
               chain_position={@chain_positions[entry.quest.key]}
@@ -861,18 +874,21 @@ defmodule GamendWeb.QuestsLive do
 
   # "12 / 250" for the one objective these carry. A member with several would
   # need the card's own breakdown, so it gets no summary rather than a wrong one.
-  defp group_member_counts(%{quest: %Quest{objectives: [objective]}, progress: progress} = entry) do
+  defp group_member_counts(
+         %{quest: %Quest{objectives: [%{target: target}]}, progress: progress} = entry
+       )
+       when is_integer(target) do
     if entry_secret?(entry) do
       ""
     else
       done =
         case progress do
-          %{objective_progress: counts} when is_map(counts) -> Map.get(counts, "0", 0)
+          %{objective_progress: %{"0" => count}} when is_integer(count) -> count
           _ -> 0
         end
 
       # A repeat row banks past its target; the card shows the run at hand.
-      "#{min(done, objective.target)} / #{objective.target}"
+      "#{min(done, target)} / #{target}"
     end
   end
 
@@ -971,11 +987,23 @@ defmodule GamendWeb.QuestsLive do
     # the card's click does something else.
     click =
       cond do
-        assigns.logged_in and claimable and is_nil(lock_label) -> :claim
-        is_binary(assigns.entry[:action]) and not claimable and is_nil(lock_label) -> :go
-        grouped? -> :show_group
-        assigns.chain_position -> :show_chain
-        true -> nil
+        assigns.logged_in and claimable and is_nil(lock_label) and assigns.must_register ->
+          :register
+
+        assigns.logged_in and claimable and is_nil(lock_label) ->
+          :claim
+
+        is_binary(assigns.entry[:action]) and not claimable and is_nil(lock_label) ->
+          :go
+
+        grouped? ->
+          :show_group
+
+        assigns.chain_position ->
+          :show_chain
+
+        true ->
+          nil
       end
 
     assigns =
@@ -1011,7 +1039,13 @@ defmodule GamendWeb.QuestsLive do
       icon_url={@quest.icon_url}
       type={:quest}
       description={@localized_desc}
-      href={@click == :go && GamendWeb.HostLayouts.localized_href(@action, @locale)}
+      href={
+        case @click do
+          :go -> GamendWeb.HostLayouts.localized_href(@action, @locale)
+          :register -> register_href(@locale)
+          _ -> false
+        end
+      }
       class={
         cond do
           @claimable -> "border border-success"
@@ -1109,6 +1143,13 @@ defmodule GamendWeb.QuestsLive do
                 <.icon name="hero-lock-closed-solid" class="w-4 h-4" />
                 <span class="text-xs font-medium">{@lock_label}</span>
               </div>
+              <%!-- A guest's reward waits for an account (`Gamend.AccountRequired`):
+                  the whole card leads to registration, which keeps the quest. --%>
+            <% @claimable and @must_register -> %>
+              <span class="btn btn-primary btn-sm w-full">
+                <.icon name="hero-user-plus" class="w-4 h-4" />
+                {gettext("Register to claim")}
+              </span>
             <% @claimable -> %>
               <button
                 phx-click="claim"

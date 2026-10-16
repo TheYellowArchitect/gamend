@@ -65,14 +65,16 @@ defmodule GamendWeb.Api.V1.QuestController do
       "Claim the rewards of a completed quest for the current reset period. " <>
         "Claiming is exactly-once: a repeated or concurrent claim answers 409 " <>
         "`already_claimed` and never double-pays. A quest not yet completed answers " <>
-        "403 `not_completed`; a `before_quest_claim` hook's veto 403 `rejected`, its " <>
+        "403 `not_completed`; a guest, where the server requires an account to claim, " <>
+        "403 `account_required` (the quest stays completed and pays once they " <>
+        "register); a `before_quest_claim` hook's veto 403 `rejected`, its " <>
         "reason in `message`.",
     parameters: [
       key: [in: :path, schema: %Schema{type: :string}, required: true]
     ],
     responses: [
       ok: {"Claimed", "application/json", QuestClaimResponse},
-      forbidden: Schemas.error("Not completed, or vetoed by a hook"),
+      forbidden: Schemas.error("Not completed, a guest that must register, or vetoed by a hook"),
       not_found: Schemas.error("No quest with that key"),
       conflict: Schemas.error("Already claimed"),
       unauthorized: Schemas.error("Not authenticated")
@@ -94,6 +96,9 @@ defmodule GamendWeb.Api.V1.QuestController do
 
           {:error, :not_completed} ->
             reply_error(conn, :forbidden, "not_completed")
+
+          {:error, :account_required} ->
+            reply_error(conn, :forbidden, "account_required")
 
           {:error, :already_claimed} ->
             reply_error(conn, :conflict, "already_claimed")

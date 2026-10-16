@@ -128,7 +128,7 @@ defmodule GamendWeb.HostLayoutShell do
         <%!-- The language picker sits outside both navs: one button in the bar
               at every width, rather than a dropdown up here and a different
               control buried in the phone menu. --%>
-        <div class="flex-none flex items-center gap-2">
+        <div class="flex-none flex items-center gap-1 xl:gap-2">
           <GamendWeb.HostLayoutNavigation.desktop_nav
             current_scope={@current_scope}
             current_path={@current_path}
@@ -157,13 +157,21 @@ defmodule GamendWeb.HostLayoutShell do
             <.icon name="hero-magnifying-glass-solid" class="w-5 h-5" />
           </button>
 
-          <GamendWeb.HostLayoutNavigation.language_dropdown
-            :if={length(@known_locales) > 1}
-            locale={@locale}
-            current_path={@current_path}
-            current_query={@current_query}
-            known_locales={@known_locales}
-          />
+          <%!-- From `xl`, last in the bar, after the nav. Below it the phone
+                bar's items join this row (`mobile_nav/1` is `contents`
+                there) and the picker sits between its icons and the menu
+                (2026-10-16, user: rightmost, but left of the menu). One
+                picker in the page: its list of locales is not drawn twice.
+                The order goes on the picker's button and dropdown, two
+                levels down: both wrappers are `contents`. --%>
+          <div :if={length(@known_locales) > 1} class="contents max-xl:[&>*>*]:order-1">
+            <GamendWeb.HostLayoutNavigation.language_dropdown
+              locale={@locale}
+              current_path={@current_path}
+              current_query={@current_query}
+              known_locales={@known_locales}
+            />
+          </div>
 
           <GamendWeb.HostLayoutNavigation.mobile_nav
             current_scope={@current_scope}

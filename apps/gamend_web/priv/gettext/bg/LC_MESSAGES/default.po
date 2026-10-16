@@ -3604,3 +3604,18 @@ msgstr[1] "Акаунтът ти ще бъде изтрит след %{count} д
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "напр. скрипт за издаване"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Регистрирай се, за да вземеш"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Регистрирай се, за да вземеш наградата си."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Само ти виждаш това място. Регистрирай се, за да се появиш в класацията."

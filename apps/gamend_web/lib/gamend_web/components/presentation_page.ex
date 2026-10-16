@@ -92,30 +92,84 @@ defmodule GamendWeb.PresentationPage do
 
     key = {__MODULE__, :body, locale, path}
 
-    case :persistent_term.get(key, :miss) do
-      {^fingerprint, html} ->
-        html
+    html =
+      case :persistent_term.get(key, :miss) do
+        {^fingerprint, html} ->
+          html
 
-      _ ->
-        html =
-          %{
-            __changed__: nil,
-            page: page_map,
-            background_icons: background_icons,
-            full_bleed_hero: true
-          }
-          |> page()
-          |> Safe.to_iodata()
-          |> IO.iodata_to_binary()
+        _ ->
+          html =
+            with_csrf_placeholder(fn ->
+              %{
+                __changed__: nil,
+                page: page_map,
+                background_icons: background_icons,
+                full_bleed_hero: true
+              }
+              |> page()
+              |> Safe.to_iodata()
+              |> IO.iodata_to_binary()
+            end)
 
-        :persistent_term.put(key, {fingerprint, html})
-        html
+          :persistent_term.put(key, {fingerprint, html})
+          html
+      end
+
+    put_csrf_token(html)
+  end
+
+  # A form on a memoised page (a host component's: the home's language
+  # picker) would carry the CSRF token of whichever request rendered it
+  # first, and every other reader's post would be refused. The body is
+  # rendered with a placeholder in Plug's per-process token slot, so every
+  # `get_csrf_token/0` call writes the placeholder, and each request puts
+  # its own token in its place. A body with no form pays one scan.
+  @csrf_placeholder "__gamend_presentation_csrf__"
+  @csrf_key :plug_masked_csrf_token
+
+  defp with_csrf_placeholder(render) do
+    previous = Process.get(@csrf_key)
+    Process.put(@csrf_key, @csrf_placeholder)
+
+    try do
+      render.()
+    after
+      if previous, do: Process.put(@csrf_key, previous), else: Process.delete(@csrf_key)
     end
+  end
+
+  defp put_csrf_token(html) do
+    if :binary.match(html, @csrf_placeholder) == :nomatch,
+      do: html,
+      else: String.replace(html, @csrf_placeholder, Plug.CSRFProtection.get_csrf_token())
+  end
+
+  @doc """
+  A signed-in reader's body: the same page, rendered for this request with
+  the reader's scope and never memoised, so a host component may draw what
+  is theirs. A visitor, and so a crawler, gets `cached_body/4`.
+  """
+  @spec personal_body(map(), list(), map()) :: iodata()
+  def personal_body(page_map, background_icons, current_scope) do
+    %{
+      __changed__: nil,
+      page: page_map,
+      background_icons: background_icons,
+      full_bleed_hero: true,
+      current_scope: current_scope
+    }
+    |> page()
+    |> Safe.to_iodata()
+    |> IO.iodata_to_binary()
   end
 
   attr :page, :map, required: true
   attr :background_icons, :list, default: []
   attr :full_bleed_hero, :boolean, default: true
+
+  attr :current_scope, :map,
+    default: nil,
+    doc: "the reader, for a host component that draws their own things; nil in the memoised body"
 
   def page(assigns) do
     sections = sections_with_page_defaults(assigns.page)
@@ -149,8 +203,16 @@ defmodule GamendWeb.PresentationPage do
               content_width_class(),
               grid_class(@hero, "hero")
             ]}>
+              <%!-- A hero may draw a host component where its picture goes
+                    (`"component"`, the way a section does): a language
+                    picker beside the claim, say. --%>
               <div class={media_order_class(@hero)}>
-                <.media item={@hero} variant="hero" />
+                <.host_component
+                  :if={has_component?(@hero)}
+                  section={@hero}
+                  current_scope={@current_scope}
+                />
+                <.media :if={!has_component?(@hero)} item={@hero} variant="hero" />
               </div>
               <div class={[
                 "flex flex-col gap-5",
@@ -188,7 +250,11 @@ defmodule GamendWeb.PresentationPage do
           ]}
         >
           <%= for section <- @sections do %>
-            <.section section={section} columns={@sections_columns} />
+            <.section
+              section={section}
+              columns={@sections_columns}
+              current_scope={@current_scope}
+            />
           <% end %>
         </div>
       </div>
@@ -576,27 +642,33 @@ defmodule GamendWeb.PresentationPage do
   defp has_cards?(_item), do: false
 
   attr :section, :map, required: true
+  attr :current_scope, :map, default: nil
 
   @doc """
   A section's `"component"`: a block the host draws itself, by name.
 
   The name resolves through `config :gamend_web, :presentation_components,
   %{"languages" => {MyHost.HomeLanguages, :strip}}` to a function component,
-  called with `%{section: section}` and drawn between the section's text and
-  its links. For the block a config page cannot describe — a strip of every
-  language with its flag, a live count — while the page around it stays
-  config.
+  called with `%{section: section, current_scope: scope}` and drawn between
+  the section's text and its links (or in a hero's media column). For the
+  block a config page cannot describe — a strip of every language with its
+  flag, a live count — while the page around it stays config.
 
-  It renders inside `cached_body/4`'s memo, so it must depend on the config
-  and the locale only: a gettext call is fine (the memo is per locale), a
-  reader, a clock or a random source is not. A name the config does not map
-  draws nothing and is logged, so a typo shows in the logs rather than as a
-  blank nobody reports.
+  For a visitor it renders inside `cached_body/4`'s memo with a nil scope,
+  so there it must depend on the config and the locale only: a gettext call
+  is fine (the memo is per locale), a clock or a random source is not. A
+  signed-in reader's page is `personal_body/3`, rendered per request with
+  their scope, so a component may draw their own things there (the
+  languages they opened last) and nothing of it is memoised. A name the
+  config does not map draws nothing and is logged, so a typo shows in the
+  logs rather than as a blank nobody reports.
   """
   def host_component(assigns) do
     case component_for(assigns.section) do
       {module, function} ->
-        apply(module, function, [%{__changed__: nil, section: assigns.section}])
+        apply(module, function, [
+          %{__changed__: nil, section: assigns.section, current_scope: assigns.current_scope}
+        ])
 
       nil ->
         ~H""
@@ -829,6 +901,7 @@ defmodule GamendWeb.PresentationPage do
 
   attr :section, :map, required: true
   attr :columns, :integer, default: 1
+  attr :current_scope, :map, default: nil
 
   # `"media_layout": "cover"` uses the image as the section's cover: it fills
   # the whole section (object-cover behind a scrim) with the title, text and
@@ -936,7 +1009,11 @@ defmodule GamendWeb.PresentationPage do
         <div class="max-w-3xl text-base leading-relaxed text-muted">
           {rich_text(Map.get(@section, "text", ""))}
         </div>
-        <.host_component :if={has_component?(@section)} section={@section} />
+        <.host_component
+          :if={has_component?(@section)}
+          section={@section}
+          current_scope={@current_scope}
+        />
         <.link_chips :if={has_links?(@section)} links={Map.get(@section, "links")} align="center" />
         <.card_grid :if={has_cards?(@section)} cards={Map.get(@section, "cards")} />
         <.faq
@@ -975,7 +1052,11 @@ defmodule GamendWeb.PresentationPage do
         <div class="text-base leading-relaxed text-muted">
           {rich_text(Map.get(@section, "text", ""))}
         </div>
-        <.host_component :if={has_component?(@section)} section={@section} />
+        <.host_component
+          :if={has_component?(@section)}
+          section={@section}
+          current_scope={@current_scope}
+        />
         <.link_chips :if={has_links?(@section)} links={Map.get(@section, "links")} />
         <.card_grid :if={has_cards?(@section)} cards={Map.get(@section, "cards")} />
         <.faq

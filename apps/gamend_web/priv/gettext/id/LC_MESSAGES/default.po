@@ -3551,3 +3551,18 @@ msgstr[0] "Akunmu akan dihapus dalam %{count} hari. Masuk sebelum itu untuk memp
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "mis. skrip rilis"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Daftar untuk mengklaim"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Daftar untuk mengklaim hadiahmu."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Hanya kamu yang melihat peringkat ini. Daftar untuk muncul di papan peringkat."

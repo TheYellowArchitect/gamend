@@ -136,7 +136,9 @@ defmodule GamendWeb.AdminLive.Leaderboards do
                       <% end %>
                       <span :if={lb.hidden} class="badge badge-ghost badge-sm">Hidden</span>
                     </td>
-                    <td class="text-sm">{Leaderboards.count_records(lb.id, key: :all)}</td>
+                    <td class="text-sm">
+                      {Leaderboards.count_records(lb.id, key: :all, guests: true)}
+                    </td>
                     <td class="text-sm">
                       <.timestamp at={lb.inserted_at} />
                     </td>
@@ -812,8 +814,10 @@ defmodule GamendWeb.AdminLive.Leaderboards do
     page_size = 25
 
     # Every key's rows, ranked together: the admin sees what the board holds.
-    records = Leaderboards.list_records(lb.id, key: :all, page: page, page_size: page_size)
-    count = Leaderboards.count_records(lb.id, key: :all)
+    records =
+      Leaderboards.list_records(lb.id, key: :all, guests: true, page: page, page_size: page_size)
+
+    count = Leaderboards.count_records(lb.id, key: :all, guests: true)
     total_pages = LiveHelpers.total_pages(count, page_size)
 
     socket

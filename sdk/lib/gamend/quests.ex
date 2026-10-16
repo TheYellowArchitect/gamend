@@ -253,8 +253,13 @@ defmodule Gamend.Quests do
     Runs the `before_quest_claim` pipeline hook (veto), then transitions
     `completed → claimed` atomically — only the winner grants rewards.
     
+    A guest is refused with `:account_required` when the host requires an
+    account to claim (`Gamend.AccountRequired`, `:quest_claims`); the quest
+    stays completed and pays once they register.
+    
     Returns `{:ok, %{progress: progress, rewards: rewards}}` or
-    `{:error, :quest_not_found | :not_completed | :already_claimed | term()}`.
+    `{:error, :quest_not_found | :account_required | :not_completed |
+    :already_claimed | term()}`.
     
   """
   @spec claim(user_id(), String.t(), keyword()) ::

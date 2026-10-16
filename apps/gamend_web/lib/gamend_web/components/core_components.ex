@@ -324,6 +324,15 @@ defmodule GamendWeb.CoreComponents do
 
   attr :tag, :string, default: "h1"
   attr :class, :any, default: nil, doc: "layout only (`flex items-center gap-3`), never a size"
+
+  attr :icon, :string,
+    default: nil,
+    doc: "a `hero-*` mark before the words (`title_icon/1`): the page's navbar icon"
+
+  attr :icon_class, :string,
+    default: nil,
+    doc: "on the mark, layout only: `max-sm:hidden` where a switcher shares a phone's row"
+
   attr :rest, :global
   slot :inner_block, required: true
 
@@ -332,16 +341,43 @@ defmodule GamendWeb.CoreComponents do
   step smaller on a phone so a heading row with a Back button and a switcher
   still fits one line. `header/1` draws it; a page that builds its own
   heading row uses this rather than restating the classes.
+
+  `icon` is the page's mark beside its words (2026-10-16): the one its link
+  in the navbar wears (`GamendWeb.HostLayouts.nav_icon/2`), so a reader
+  sees where they are by the same picture.
   """
   def page_title(assigns) do
     ~H"""
     <.dynamic_tag
       tag_name={@tag}
-      class={["text-3xl font-black text-base-content sm:text-4xl", @class]}
+      class={[
+        "text-3xl font-black text-base-content sm:text-4xl",
+        @icon && "flex min-w-0 items-center gap-3",
+        @class
+      ]}
       {@rest}
     >
-      {render_slot(@inner_block)}
+      <%= if @icon do %>
+        <.title_icon name={@icon} class={@icon_class} />
+        <span class="min-w-0 break-words">{render_slot(@inner_block)}</span>
+      <% else %>
+        {render_slot(@inner_block)}
+      <% end %>
     </.dynamic_tag>
+    """
+  end
+
+  attr :name, :string, required: true, doc: "a `hero-*` icon"
+  attr :class, :string, default: nil, doc: "layout only"
+
+  @doc """
+  The mark beside a page's title, at the title's size and in the muted
+  text colour: `page_title/1` draws it from its `icon`; a heading whose
+  words are a switcher's button draws it beside them.
+  """
+  def title_icon(assigns) do
+    ~H"""
+    <.icon name={@name} class={"size-8 shrink-0 text-muted sm:size-9 #{@class}"} />
     """
   end
 
@@ -787,6 +823,7 @@ defmodule GamendWeb.CoreComponents do
   every page stays the same size without each caller restating it.
   """
   attr :class, :any, default: nil, doc: "extra classes on the <h1>"
+  attr :icon, :string, default: nil, doc: "the title's mark (`page_title/1`'s `icon`)"
 
   attr :back, :string,
     default: nil,
@@ -809,9 +846,9 @@ defmodule GamendWeb.CoreComponents do
               text link: one place, one shape, on every page that has a parent. --%>
         <div :if={@back || @back_href} class="flex flex-wrap items-center gap-3">
           <.back_link navigate={@back} href={@back_href} label={@back_label} />
-          <.page_title class={@class}>{render_slot(@inner_block)}</.page_title>
+          <.page_title class={@class} icon={@icon}>{render_slot(@inner_block)}</.page_title>
         </div>
-        <.page_title :if={!(@back || @back_href)} class={@class}>
+        <.page_title :if={!(@back || @back_href)} class={@class} icon={@icon}>
           {render_slot(@inner_block)}
         </.page_title>
         <p :if={@subtitle != []} class="mt-1 text-sm text-muted">

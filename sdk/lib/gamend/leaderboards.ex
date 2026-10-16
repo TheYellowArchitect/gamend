@@ -37,6 +37,15 @@ defmodule Gamend.Leaderboards do
   `list_leaderboard_groups/1` and their counts unless `include_hidden: true`
   is passed. Everything else reads it like any board.
 
+  ## Guests
+
+  When the host requires an account to be listed (`Gamend.AccountRequired`,
+  `:leaderboards`), a guest's records stay on a public board but out of every
+  read of it: lists, counts and ranks, so a guest moves nobody. The guest's
+  own `get_user_record/3` still answers, ranked where it would stand, with
+  `hidden: true`. A hidden board keeps its guests (it is no one's public
+  board), and `guests: true` reads them anyway (the admin's view).
+
       # Get user's record (use leaderboard id)
       {:ok, record} = Leaderboards.get_user_record(leaderboard.id, user_id)
 
@@ -813,6 +822,8 @@ defmodule Gamend.Leaderboards do
         position is what shows.
       * `:best_per_user` — with `key: :all`, each player's (or label's) best
         row only: one board read across keys, a player once.
+      * `:guests` — `true` lists guests' records on a public board too, when
+        the host keeps them off it (`Gamend.AccountRequired`): the admin's view.
     
   """
   @spec list_records(String.t()) :: [Gamend.Leaderboards.Record.t()]
@@ -843,6 +854,8 @@ defmodule Gamend.Leaderboards do
         position is what shows.
       * `:best_per_user` — with `key: :all`, each player's (or label's) best
         row only: one board read across keys, a player once.
+      * `:guests` — `true` lists guests' records on a public board too, when
+        the host keeps them off it (`Gamend.AccountRequired`): the admin's view.
     
   """
   @spec list_records(

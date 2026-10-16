@@ -366,12 +366,14 @@
 
     <.ui_section id="type" title="Type">
       <:intro>
-        A page has one title, <code>&lt;.page_title&gt;</code>. Every heading under it is an <code>&lt;.eyebrow&gt;</code>: a section of the page (<code>tag="h2"</code>), a panel's title (<code>&lt;.panel title=…&gt;</code>), a group inside either. A subtitle says less than the title, so it is never a size of its own.
+        A page has one title, <code>&lt;.page_title&gt;</code>, with the icon its link wears in the navbar beside the words. Every heading under it is an <code>&lt;.eyebrow&gt;</code>: a section of the page (<code>tag="h2"</code>), a panel's title (<code>&lt;.panel title=…&gt;</code>), a group inside either. A subtitle says less than the title, so it is never a size of its own.
       </:intro>
 
       <div class="space-y-4">
-        <.specimen code="<.page_title> (a page's h1)">
-          <.page_title tag="p">Explore</.page_title>
+        <.specimen code={
+          ~s|<.page_title icon="hero-trophy-solid"> (a page's h1, with its navbar icon: HostLayouts.nav_icon/2)|
+        }>
+          <.page_title tag="p" icon="hero-trophy-solid">Quests</.page_title>
         </.specimen>
         <.specimen code={~s|<.eyebrow tag="h2"> (a section's heading: "Level", "Category")|}>
           <div class="space-y-2">

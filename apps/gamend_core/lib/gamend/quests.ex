@@ -78,6 +78,7 @@ defmodule Gamend.Quests do
 
   require Logger
 
+  alias Gamend.AccountRequired
   alias Gamend.Accounts
   alias Gamend.Accounts.TimeZone
   alias Gamend.Quests.Quest
@@ -787,8 +788,10 @@ defmodule Gamend.Quests do
     end)
 
     # A run banked while the row is mid-claim is claimed by that claim's
-    # re-arm (`do_claim/3`), not here.
-    if quest.auto_claim and progress.status == "completed" do
+    # re-arm (`do_claim/3`), not here. A guest's waits for registration when
+    # claiming needs an account (`Gamend.AccountRequired`).
+    if quest.auto_claim and progress.status == "completed" and
+         AccountRequired.allowed?(user_id, :quest_claims) do
       case do_claim(user_id, quest, skip_hooks: true) do
         {:ok, _} ->
           :ok
@@ -839,16 +842,26 @@ defmodule Gamend.Quests do
   Runs the `before_quest_claim` pipeline hook (veto), then transitions
   `completed → claimed` atomically — only the winner grants rewards.
 
+  A guest is refused with `:account_required` when the host requires an
+  account to claim (`Gamend.AccountRequired`, `:quest_claims`); the quest
+  stays completed and pays once they register.
+
   Returns `{:ok, %{progress: progress, rewards: rewards}}` or
-  `{:error, :quest_not_found | :not_completed | :already_claimed | term()}`.
+  `{:error, :quest_not_found | :account_required | :not_completed |
+  :already_claimed | term()}`.
   """
   @spec claim(user_id(), String.t(), keyword()) ::
           {:ok, %{progress: QuestProgress.t(), rewards: [map()]}} | {:error, term()}
   def claim(user_id, quest_key, opts \\ [])
       when is_binary(user_id) and is_binary(quest_key) do
     case get_quest_by_key(quest_key) do
-      nil -> {:error, :quest_not_found}
-      quest -> do_claim(user_id, quest, opts)
+      nil ->
+        {:error, :quest_not_found}
+
+      quest ->
+        if AccountRequired.allowed?(user_id, :quest_claims),
+          do: do_claim(user_id, quest, opts),
+          else: {:error, :account_required}
     end
   end
 

@@ -3604,3 +3604,18 @@ msgstr[1] "Din konto bliver slettet om %{count} dage. Log ind inden da for at be
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "f.eks. udgivelsesscript"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Registrér dig for at hente"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Registrér dig for at hente din belønning."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Kun du kan se denne placering. Registrér dig for at komme på listen."

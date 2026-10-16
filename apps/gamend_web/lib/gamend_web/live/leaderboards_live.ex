@@ -5,6 +5,10 @@ defmodule GamendWeb.LeaderboardsLive do
   Users can browse active and historical leaderboards and see their rank.
   Leaderboards are grouped by slug, showing the active/latest one by default
   with navigation to previous seasons.
+
+  A board's page has a button to where it is climbed, beside its title,
+  when the host says where (`Leaderboards.host_action/2`,
+  `config :gamend_core, :leaderboard_action`).
   """
   use GamendWeb, :live_view
 
@@ -34,6 +38,7 @@ defmodule GamendWeb.LeaderboardsLive do
       |> assign(:records_page, 1)
       |> assign(:records_search, "")
       |> assign(:user_record, nil)
+      |> assign(:board_action, nil)
       |> reload_groups()
 
     {:ok, socket}
@@ -124,10 +129,19 @@ defmodule GamendWeb.LeaderboardsLive do
             />
             <span class="min-w-0 break-words">{@selected_leaderboard.title}</span>
           </.page_title>
-          <.page_title :if={!@selected_leaderboard}>
+          <.page_title
+            :if={!@selected_leaderboard}
+            icon={GamendWeb.HostLayouts.nav_icon("/leaderboards", "hero-chart-bar-solid")}
+          >
             {gettext("Leaderboards")}
             <span class="text-muted font-normal">({@count})</span>
           </.page_title>
+          <.action_button
+            :if={@selected_leaderboard && @board_action}
+            action={@board_action}
+            locale={@locale}
+            class="ms-auto shrink-0"
+          />
         </div>
 
         <%= if @selected_leaderboard do %>
@@ -208,41 +222,29 @@ defmodule GamendWeb.LeaderboardsLive do
 
   defp render_leaderboard_detail(assigns) do
     ~H"""
-    <div class="flex flex-col gap-4 mb-6">
-      <%!-- The title row (Back, icon, name) is the page's; this is the board's state. --%>
-      <div class="flex flex-wrap items-center gap-2">
-        <%= if Leaderboard.active?(@leaderboard) do %>
-          <span class="badge badge-success">{gettext("Active")}</span>
-        <% else %>
-          <span class="badge badge-neutral">{gettext("Ended")}</span>
-        <% end %>
-        <%= if @leaderboard.starts_at || @leaderboard.ends_at do %>
-          <span class="text-sm text-muted">
-            <%= cond do %>
-              <% @leaderboard.starts_at && @leaderboard.ends_at -> %>
-                <.timestamp at={@leaderboard.starts_at} format="date" /> —
-                <.timestamp at={@leaderboard.ends_at} format="date" />
-              <% @leaderboard.ends_at -> %>
-                <.timestamp at={@leaderboard.ends_at} format="date" />
-              <% @leaderboard.starts_at -> %>
-                <.timestamp at={@leaderboard.starts_at} format="date" />
-              <% true -> %>
-            <% end %>
-          </span>
-        <% end %>
-      </div>
-
-      <%!-- Season navigation --%>
-      <%= if length(@slug_leaderboards) > 1 do %>
-        <div class="flex items-center gap-3 bg-base-200 rounded-lg px-4 py-2 w-fit">
+    <%!-- The title row (Back, icon, name, the board's button) is the
+          page's. Under it: the season (Older and Newer around its number,
+          its dates beside it), then what the board counts with its state on
+          the right. --%>
+    <div class="mb-6 space-y-4">
+      <div
+        :if={(length(@slug_leaderboards) > 1 or @leaderboard.starts_at) || @leaderboard.ends_at}
+        class="flex flex-wrap items-center gap-x-4 gap-y-2"
+      >
+        <div
+          :if={length(@slug_leaderboards) > 1}
+          class="flex items-center gap-1 rounded-lg bg-base-200 px-1 py-1"
+        >
           <button
             phx-click="prev_season"
-            class="btn btn-sm btn-ghost"
+            class="btn btn-sm btn-ghost btn-square"
             disabled={@current_season_index >= length(@slug_leaderboards) - 1}
+            title={gettext("Older")}
+            aria-label={gettext("Older")}
           >
-            {gettext("Older")}
+            <.icon name="hero-chevron-left" class="size-4 rtl:-scale-x-100" />
           </button>
-          <div class="text-sm">
+          <div class="px-1 text-sm">
             <span class="font-medium">
               {"##{length(@slug_leaderboards) - @current_season_index}"}
             </span>
@@ -252,19 +254,37 @@ defmodule GamendWeb.LeaderboardsLive do
           </div>
           <button
             phx-click="next_season"
-            class="btn btn-sm btn-ghost"
+            class="btn btn-sm btn-ghost btn-square"
             disabled={@current_season_index <= 0}
+            title={gettext("Newer")}
+            aria-label={gettext("Newer")}
           >
-            {gettext("Newer")}
+            <.icon name="hero-chevron-right" class="size-4 rtl:-scale-x-100" />
           </button>
         </div>
-      <% end %>
-    </div>
+        <span :if={@leaderboard.starts_at || @leaderboard.ends_at} class="text-sm text-muted">
+          <%= cond do %>
+            <% @leaderboard.starts_at && @leaderboard.ends_at -> %>
+              <.timestamp at={@leaderboard.starts_at} format="date" /> —
+              <.timestamp at={@leaderboard.ends_at} format="date" />
+            <% @leaderboard.ends_at -> %>
+              <.timestamp at={@leaderboard.ends_at} format="date" />
+            <% @leaderboard.starts_at -> %>
+              <.timestamp at={@leaderboard.starts_at} format="date" />
+            <% true -> %>
+          <% end %>
+        </span>
+      </div>
 
-    <% localized_desc = @leaderboard.description %>
-    <%= if localized_desc do %>
-      <p class="text-muted mb-6">{localized_desc}</p>
-    <% end %>
+      <div class="flex items-start justify-between gap-3">
+        <p class="text-muted">{@leaderboard.description}</p>
+        <%= if Leaderboard.active?(@leaderboard) do %>
+          <span class="badge badge-success shrink-0">{gettext("Active")}</span>
+        <% else %>
+          <span class="badge badge-neutral shrink-0">{gettext("Ended")}</span>
+        <% end %>
+      </div>
+    </div>
 
     <%= if @user_record do %>
       <div class="card bg-primary/10 border border-primary/30 mb-6">
@@ -284,6 +304,21 @@ defmodule GamendWeb.LeaderboardsLive do
                 {format_score(@user_record.score, @leaderboard)}
               </div>
             </div>
+          </div>
+          <%!-- A guest's record: kept, but the board lists registered
+                players only (`Gamend.AccountRequired`). The rank is where
+                it would stand. --%>
+          <div
+            :if={@user_record.hidden}
+            class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-primary/20 pt-3"
+          >
+            <p class="text-sm text-muted">
+              {gettext("Only you see this rank. Register to appear on the board.")}
+            </p>
+            <.link href={register_href(@locale)} class="btn btn-primary btn-sm">
+              <.icon name="hero-user-plus" class="size-4" />
+              {gettext("Register")}
+            </.link>
           </div>
         </div>
       </div>
@@ -470,6 +505,27 @@ defmodule GamendWeb.LeaderboardsLive do
     |> assign(:records_total_pages, total_pages)
   end
 
+  attr :action, :any, required: true, doc: "`Leaderboards.host_action/2`'s `{label, path}`"
+  attr :locale, :string, required: true
+  attr :class, :any, default: nil
+
+  # Where the board is climbed: the host's page, in the reader's locale.
+  defp action_button(assigns) do
+    ~H"""
+    <.link
+      href={GamendWeb.HostLayouts.localized_href(elem(@action, 1), @locale)}
+      class={["btn btn-primary btn-sm", @class]}
+    >
+      {elem(@action, 0)}
+    </.link>
+    """
+  end
+
+  # Registering keeps the guest's account and its records, which the board
+  # then lists (`Gamend.Accounts.upgrade_anonymous_user_and_deliver/4`).
+  defp register_href(locale),
+    do: GamendWeb.HostLayouts.localized_href(~p"/users/register", locale)
+
   defp get_user_record(socket, leaderboard_id) do
     case socket.assigns[:current_scope] do
       %{user_id: user_id} when is_binary(user_id) ->
@@ -497,6 +553,13 @@ defmodule GamendWeb.LeaderboardsLive do
      |> assign(:slug_leaderboards, ContentText.translate(slug_leaderboards))
      |> assign(:current_season_index, current_index)
      |> assign(:user_record, user_record)
+     |> assign(
+       :board_action,
+       Leaderboards.host_action(
+         leaderboard.slug,
+         Scope.user_id(socket.assigns[:current_scope])
+       )
+     )
      |> assign(:records_page, 1)
      |> assign(:records_search, "")
      |> reload_records()}

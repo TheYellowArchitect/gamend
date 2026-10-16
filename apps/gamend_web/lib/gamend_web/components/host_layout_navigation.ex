@@ -264,9 +264,12 @@ defmodule GamendWeb.HostLayoutNavigation do
     assigns = assign(assigns, :menu_count, menu_count)
 
     ~H"""
-    <div class="xl:hidden flex items-center gap-1">
+    <%!-- `contents` below `xl`: its icons and its menu are items of the
+          bar's row, so the site language's picker (ordered `1`) sits
+          between them and the menu (ordered `2`). --%>
+    <div class="max-xl:contents xl:hidden">
       <.mobile_pinned_links links={@pinned_links} current_path={@current_path} />
-      <details class="dropdown dropdown-end" data-navbar-dropdown>
+      <details class="dropdown dropdown-end max-xl:order-2" data-navbar-dropdown>
         <summary
           aria-label={GamendWeb.HostLayouts.translate("Open navigation menu")}
           class="btn btn-ghost btn-circle list-none relative"
@@ -606,12 +609,16 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :current_path, :string, default: nil
 
   # Compact inline buttons for "mobile": "pinned" leaf links, shown left of the
-  # hamburger. Icon + (possibly dynamic) label, no dropdown wrapping.
+  # hamburger. Icon + (possibly dynamic) label, no dropdown wrapping. A link
+  # with an icon shows the icon alone, its label for a screen reader and on
+  # hover: five pinned sections fit a phone's bar as icons, not as words. A
+  # readonly entry (a coin balance) keeps its label: the number is the point.
   defp mobile_pinned_links(assigns) do
     ~H"""
     <a
       :for={link <- @links}
       href={if(inert?(link), do: nil, else: link["href"])}
+      title={if(icon_only?(link), do: translate_label(link["label"]))}
       aria-disabled={if(inert?(link), do: "true")}
       data-motion-text={if(readonly?(link), do: "pop")}
       class={
@@ -622,16 +629,19 @@ defmodule GamendWeb.HostLayoutNavigation do
           disabled?(link) ->
             "btn btn-ghost btn-sm gap-1 px-2 pointer-events-none cursor-default opacity-70"
 
+          # The page's own link is `btn-primary`, as on the desktop bar.
           true ->
             [
-              "btn btn-ghost btn-sm gap-1 px-2",
-              if(entry_active?(link, @current_path), do: "btn-active")
+              "btn btn-sm gap-1 px-2",
+              if(entry_active?(link, @current_path), do: "btn-primary", else: "btn-ghost")
             ]
         end
       }
     >
       <.icon :if={link["icon"]} name={link["icon"]} class={icon_class(link["color"])} />
-      <span class="text-sm font-semibold">{translate_label(link["label"])}</span>
+      <span class={["text-sm font-semibold", icon_only?(link) && "sr-only"]}>
+        {translate_label(link["label"])}
+      </span>
       <.nav_badge entry={link} />
       <.count_pill count={link["count"]} />
     </a>
@@ -642,6 +652,10 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp pinned_link?(entry) do
     Map.get(entry, "mobile") == "pinned" and not dropdown_entry?(entry)
   end
+
+  # A pinned link drawn as its icon on a phone: one with an icon that is not
+  # a readonly badge.
+  defp icon_only?(entry), do: is_binary(entry["icon"]) and not readonly?(entry)
 
   attr :current_scope, :map, required: true
   attr :current_path, :string, default: nil
@@ -948,6 +962,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       assigns.navigation
       |> section_entries(key, auth_level, default_auth, scope)
       |> Enum.map(&resolve_entry_count(&1, scope))
+      |> Enum.map(&resolve_entry_href(&1, scope, assigns[:current_path], assigns[:locale]))
     end
 
     assign(assigns,
@@ -983,6 +998,34 @@ defmodule GamendWeb.HostLayoutNavigation do
   end
 
   defp resolve_entry_count(entry, _scope), do: Map.delete(entry, "count")
+
+  # An entry's `"href"` as a `{Module.fun}` token: the function is given the
+  # scope and the current path (arity 2) and answers the path to link, which
+  # then takes the reader's locale prefix the way a configured path does. For
+  # a link whose target depends on the reader: a host's "Word games" that
+  # opens the language the reader is on, or the one they opened last. A
+  # group's items resolve too. Resolved here, beside the counts, for the
+  # same reason: a search index has no reader to resolve them for.
+  defp resolve_entry_href(%{"items" => items} = entry, scope, current_path, locale)
+       when is_list(items) do
+    Map.put(entry, "items", Enum.map(items, &resolve_entry_href(&1, scope, current_path, locale)))
+  end
+
+  defp resolve_entry_href(%{"href" => "{" <> _ = token} = entry, scope, current_path, locale) do
+    href =
+      case token
+           |> String.trim("{")
+           |> String.trim("}")
+           |> String.trim()
+           |> resolve_token([scope, current_path]) do
+        "" -> "/"
+        path -> GamendWeb.HostLayouts.localized_href(path, locale)
+      end
+
+    Map.put(entry, "href", href)
+  end
+
+  defp resolve_entry_href(entry, _scope, _current_path, _locale), do: entry
 
   defp section_entries(navigation, key, auth_level, default_auth, scope) do
     navigation
@@ -1029,11 +1072,13 @@ defmodule GamendWeb.HostLayoutNavigation do
 
   defp resolve_dynamic_tokens(label, scope) do
     Regex.replace(~r/\{([^{}]+)\}/, label, fn _match, token ->
-      resolve_token(String.trim(token), scope)
+      resolve_token(String.trim(token), [scope])
     end)
   end
 
-  defp resolve_token(token, scope) do
+  # `args` is what the provider is called with: the scope for a label or a
+  # count, the scope and the current path for an href.
+  defp resolve_token(token, args) do
     parts = String.split(token, ".")
     {fun_str, mod_parts} = List.pop_at(parts, -1)
 
@@ -1044,8 +1089,8 @@ defmodule GamendWeb.HostLayoutNavigation do
          module = Module.concat(mod_parts),
          true <- Code.ensure_loaded?(module),
          fun = String.to_atom(fun_str),
-         true <- function_exported?(module, fun, 1) do
-      module |> apply(fun, [scope]) |> to_string()
+         true <- function_exported?(module, fun, length(args)) do
+      module |> apply(fun, args) |> to_string()
     else
       _ -> ""
     end

@@ -61,7 +61,9 @@ defmodule GamendWeb.StoreLive.Index do
           <div>
             <div class="flex items-center gap-3">
               <.back_link href={home_path()} />
-              <h1 class="text-4xl font-black text-base-content">{gettext("Store")}</h1>
+              <.page_title icon={GamendWeb.HostLayouts.nav_icon("/store", "hero-shopping-bag-solid")}>
+                {gettext("Store")}
+              </.page_title>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
               <span :if={@admin?} class="badge badge-outline">{@payment_environment}</span>

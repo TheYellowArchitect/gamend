@@ -3551,3 +3551,18 @@ msgstr[0] "你的账户将在 %{count} 天后删除。在此之前登录即可�
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "例如：发布脚本"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "注册后领取"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "注册后即可领取奖励。"
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "只有你能看到这个排名。注册后即可上榜。"

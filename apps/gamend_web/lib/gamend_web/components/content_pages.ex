@@ -58,6 +58,7 @@ defmodule GamendWeb.ContentPages do
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
       <.content_page
         title={gettext("Changelog")}
+        icon="hero-document-text-solid"
         html={@html}
         sibling_path={@roadmap_available? && ~p"/roadmap"}
         sibling_icon="hero-map"
@@ -81,6 +82,7 @@ defmodule GamendWeb.ContentPages do
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
       <.content_page
         title={gettext("Roadmap")}
+        icon="hero-map-solid"
         html={@html}
         sibling_path={@changelog_available? && ~p"/changelog"}
         sibling_icon="hero-document-text"
@@ -93,6 +95,7 @@ defmodule GamendWeb.ContentPages do
   end
 
   attr :title, :string, required: true
+  attr :icon, :string, required: true, doc: "the title's mark"
   attr :html, :string, default: nil
   attr :sibling_path, :any, default: nil
   attr :sibling_icon, :string, required: true
@@ -109,7 +112,7 @@ defmodule GamendWeb.ContentPages do
       <div class="flex flex-row items-center justify-between gap-3">
         <div class="flex min-w-0 items-center gap-3">
           <.back_link href={home_path()} />
-          <h1 class="text-4xl font-black text-base-content">{@title}</h1>
+          <.page_title icon={@icon}>{@title}</.page_title>
         </div>
 
         <.link :if={@sibling_path} href={@sibling_path} class="btn btn-surface btn-sm">
@@ -166,7 +169,7 @@ defmodule GamendWeb.ContentPages do
           <div class="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
             <div class="flex min-w-0 items-center gap-3">
               <.back_link href={home_path()} />
-              <h1 class="text-3xl font-bold">{gettext("Blog")}</h1>
+              <.page_title icon="hero-newspaper-solid">{gettext("Blog")}</.page_title>
             </div>
 
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 whitespace-nowrap">

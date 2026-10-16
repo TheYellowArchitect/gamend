@@ -14,7 +14,7 @@ defmodule GamendWeb.UserLive.Registration do
         <div class="text-center">
           <div class="flex items-center justify-center gap-3">
             <.back_link href={home_path()} />
-            <h1 class="text-4xl font-black text-base-content">{gettext("Register")}</h1>
+            <.page_title icon="hero-user-plus-solid">{gettext("Register")}</.page_title>
           </div>
           <p class="text-sm text-muted mt-2">
             <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">

@@ -456,7 +456,10 @@ defmodule GamendWeb.TournamentsLive do
               </span>
             </span>
           </.page_title>
-          <.page_title :if={is_nil(@tournament)}>
+          <.page_title
+            :if={is_nil(@tournament)}
+            icon={GamendWeb.HostLayouts.nav_icon("/tournaments", "hero-bolt-solid")}
+          >
             {gettext("Tournaments")}
             <span class="text-muted font-normal">({@count})</span>
           </.page_title>

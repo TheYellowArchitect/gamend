@@ -33,6 +33,10 @@ defmodule Gamend.Leaderboards.Record do
     # Virtual field for rank (computed in queries)
     field :rank, :integer, virtual: true
 
+    # A guest's own record on a public board that lists registered players
+    # only (`Gamend.AccountRequired`): its rank is where it would stand.
+    field :hidden, :boolean, virtual: true, default: false
+
     timestamps(type: :utc_datetime)
   end
 

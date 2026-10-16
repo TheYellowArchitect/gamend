@@ -17,10 +17,10 @@ permissions:
 env:
   IMAGE: ghcr.io/${{ github.repository }}
   ELIXIR_VERSION: "1.20.4"
-  OTP_VERSION: "29.1.1"
+  OTP_VERSION: "29.1.2"
   # Linked statically into the server binaries (rel/scripts/static-deps.sh).
-  OPENSSL_VERSION: "3.5.8"
-  LIBSRTP_VERSION: "2.7.0"
+  OPENSSL_VERSION: "3.5.9"
+  LIBSRTP_VERSION: "2.8.1"
 
 jobs:
   build:
@@ -646,7 +646,7 @@ jobs:
           install-rebar: false
 
       - name: Install Java (for openapi generator)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '17'

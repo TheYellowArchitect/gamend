@@ -3605,3 +3605,18 @@ msgstr[1] "A fiókod %{count} nap múlva törlődik. Ha meg szeretnéd tartani, 
 #, elixir-autogen, elixir-format
 msgid "e.g. release script"
 msgstr "pl. kiadási szkript"
+
+#: lib/gamend_web/live/quests_live.ex:1139
+#, elixir-autogen, elixir-format
+msgid "Register to claim"
+msgstr "Regisztrálj a beváltáshoz"
+
+#: lib/gamend_web/live/quests_live.ex:124
+#, elixir-autogen, elixir-format
+msgid "Register to claim your reward."
+msgstr "Regisztrálj, hogy átvehesd a jutalmad."
+
+#: lib/gamend_web/live/leaderboards_live.ex:296
+#, elixir-autogen, elixir-format
+msgid "Only you see this rank. Register to appear on the board."
+msgstr "Ezt a helyezést csak te látod. Regisztrálj, hogy megjelenj a ranglistán."

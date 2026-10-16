@@ -12,11 +12,13 @@ defmodule GamendWeb.NotificationsLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <%!-- Wraps: on a 360 px phone the title and Delete all overran the
+              screen by 10 px. --%>
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div class="flex items-center gap-3">
               <.back_link href={home_path()} />
-              <h1 class="text-4xl font-black text-base-content">{gettext("Notifications")}</h1>
+              <.page_title icon="hero-bell-solid">{gettext("Notifications")}</.page_title>
             </div>
             <p class="text-muted mt-1">
               {@notif_count} / {@notif_unread_count}
