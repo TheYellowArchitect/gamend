@@ -19,6 +19,7 @@ with one ranking. The record's metadata says what its key stands for.
 ```elixir
 @type t() :: %Gamend.Leaderboards.Record{
   __meta__: term(),
+  hidden: term(),
   id: term(),
   inserted_at: term(),
   key: term(),

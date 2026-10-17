@@ -38,6 +38,15 @@ parts; `list_records/2` with `key: :all` and `meta:` reads across keys
 `list_leaderboard_groups/1` and their counts unless `include_hidden: true`
 is passed. Everything else reads it like any board.
 
+## Guests
+
+When the host requires an account to be listed (`Gamend.AccountRequired`,
+`:leaderboards`), a guest's records stay on a public board but out of every
+read of it: lists, counts and ranks, so a guest moves nobody. The guest's
+own `get_user_record/3` still answers, ranked where it would stand, with
+`hidden: true`. A hidden board keeps its guests (it is no one's public
+board), and `guests: true` reads them anyway (the admin's view).
+
     # Get user's record (use leaderboard id)
     {:ok, record} = Leaderboards.get_user_record(leaderboard.id, user_id)
 
@@ -239,6 +248,22 @@ Like `get_record/1`, but raises `Ecto.NoResultsError` when there is none.
 Gets a user's record with their rank (within its key: `key:`, default `""`).
 Returns `{:ok, record_with_rank}` or `{:error, :not_found}`.
 
+# `host_action`
+
+```elixir
+@spec host_action(String.t(), Ecto.UUID.t() | nil) :: {String.t(), String.t()} | nil
+```
+
+Where a board is climbed, for the button on its page and its card:
+`{label, path}`, or nil. Set `config :gamend_core, :leaderboard_action,
+{Module, :function}`; it is called as `function(user_id | nil, slug)` and
+answers `{label, path}` (the label already in the reader's language) or nil.
+
+A board only says what it counts ("Most kilometers sailed"), never where
+that is done, and only the host knows its own pages, as with a quest
+(`Gamend.Quests.host_action/2`). A path starts with one `/` (`"/games"`); a
+URL or `"//…"` is dropped. The page keeps the reader's locale prefix on it.
+
 # `invalidate_cache`
 
 ```elixir
@@ -334,6 +359,8 @@ See `t:Gamend.Types.pagination_opts/0` for available options, plus:
     position is what shows.
   * `:best_per_user` — with `key: :all`, each player's (or label's) best
     row only: one board read across keys, a player once.
+  * `:guests` — `true` lists guests' records on a public board too, when
+    the host keeps them off it (`Gamend.AccountRequired`): the admin's view.
 
 # `list_records_around_user`
 

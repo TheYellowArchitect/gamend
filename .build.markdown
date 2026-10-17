@@ -1,3 +1,4 @@
+Gamend.AccountRequired.md
 Gamend.Accounts.AgePolicy.md
 Gamend.Accounts.ApiToken.md
 Gamend.Accounts.ApiTokens.md

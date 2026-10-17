@@ -1,9 +1,12 @@
-# gamend_core v1.1.1323 - API Reference
+# gamend_core v1.1.1324 - API Reference
 
 ## Modules
 
 - [Gamend](Gamend.md): Gamend keeps the contexts that define your domain
 and business logic.
+- [Gamend.AccountRequired](Gamend.AccountRequired.md): What a guest may not do until it registers. A guest is an account with no
+email and no sign-in provider, only a device or a browser
+(`Gamend.Accounts.User.anonymous?/1`). The host picks the features
 - [Gamend.AfterCommit](Gamend.AfterCommit.md): Side effects that wait for the enclosing transaction to commit.
 - [Gamend.Analytics](Gamend.Analytics.md): The one place aggregate numbers come from. Four families
 - [Gamend.Analytics.ActivityDay](Gamend.Analytics.ActivityDay.md): A user was seen on a UTC day. One row per `(user_id, day)`; written once by
