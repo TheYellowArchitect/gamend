@@ -5,6 +5,7 @@ defmodule GamendWeb.AdminLive.RateLimitingTest do
 
   alias Gamend.Accounts.User
   alias Gamend.AccountsFixtures
+  alias Gamend.Bans
   alias Gamend.Repo
   alias GamendWeb.Plugs.IpBan
 
@@ -12,8 +13,8 @@ defmodule GamendWeb.AdminLive.RateLimitingTest do
   @ip "203.0.113.77"
 
   setup do
-    IpBan.init_table()
-    on_exit(fn -> IpBan.unban(@ip) end)
+    Bans.Cache.init_table()
+    on_exit(fn -> :ets.delete_all_objects(:bans) end)
 
     admin = AccountsFixtures.user_fixture()
     {:ok, admin} = admin |> User.admin_changeset(%{"is_admin" => true}) |> Repo.update()
@@ -31,8 +32,13 @@ defmodule GamendWeb.AdminLive.RateLimitingTest do
   } do
     view = page(conn, admin)
 
-    view |> form("#ban-ip-form", %{"ip" => " #{@ip} ", "duration" => "1h"}) |> render_submit()
+    view
+    |> form("#ban-ip-form", %{"ip" => " #{@ip} ", "duration" => "1h", "reason" => "Scraping"})
+    |> render_submit()
+
     assert IpBan.banned?(@ip)
+    assert %{reason: "Scraping", banned_by: banned_by} = Bans.active(:ip, @ip)
+    assert banned_by == admin.id
     assert has_element?(view, ~s([phx-click="unban_ip"][phx-value-ip="#{@ip}"]))
 
     view |> element(~s([phx-click="unban_ip"][phx-value-ip="#{@ip}"])) |> render_click()
@@ -52,14 +58,14 @@ defmodule GamendWeb.AdminLive.RateLimitingTest do
 
   test "an empty IP is refused, nothing banned", %{conn: conn, admin: admin} do
     view = page(conn, admin)
-    before = IpBan.list_bans()
+    before = Bans.list_active(:ip)
     render_submit(view, "ban_ip", %{"ip" => "  ", "duration" => "1h"})
-    assert IpBan.list_bans() == before
+    assert Bans.list_active(:ip) == before
   end
 
   test "the page refreshes its tables on its timer", %{conn: conn, admin: admin} do
     view = page(conn, admin)
-    IpBan.ban(@ip, :timer.hours(1))
+    IpBan.ban(@ip, expires_at: Bans.expires_after(:timer.hours(1)))
     send(view.pid, :refresh)
     assert has_element?(view, ~s([phx-click="unban_ip"][phx-value-ip="#{@ip}"]))
     send(view.pid, :something_else)

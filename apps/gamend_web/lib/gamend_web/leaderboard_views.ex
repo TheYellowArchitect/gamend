@@ -29,7 +29,8 @@ defmodule GamendWeb.LeaderboardViews do
 
   Core knows keys and fields, not what they mean. A host names them with a
   module of these callbacks, every one optional, each answering nil to keep
-  core's default (the raw key, value or field):
+  core's default (the raw key, value or field; no badge). A row's badge
+  marks a row for what it is (`row_badge/2`: a made-up runner, say):
 
       config :gamend_web, :leaderboard_views, MyHost.LeaderboardViews
 
@@ -49,8 +50,10 @@ defmodule GamendWeb.LeaderboardViews do
   @doc "A filter value's name (`\"Spanish\"` for `es_es`)."
   @callback value_label(Leaderboard.t(), field :: String.t(), value :: String.t()) ::
               String.t() | nil
+  @doc "A badge beside a row's name (`\"Crew ghost\"` for a made-up runner), or nil."
+  @callback row_badge(Leaderboard.t(), Gamend.Leaderboards.Record.t()) :: String.t() | nil
 
-  @optional_callbacks tab_label: 2, tab_icon: 2, filter_label: 2, value_label: 3
+  @optional_callbacks tab_label: 2, tab_icon: 2, filter_label: 2, value_label: 3, row_badge: 2
 
   @typedoc "A board's declared views: its tabs (keys) and its key filters' fields."
   @type t :: %{tabs: [String.t()], filters: [String.t()]}
@@ -128,6 +131,10 @@ defmodule GamendWeb.LeaderboardViews do
   @doc "A filter's name: the host's, else the field."
   @spec filter_label(Leaderboard.t(), String.t()) :: String.t()
   def filter_label(board, field), do: ask(:filter_label, [board, field]) || field
+
+  @doc "A row's badge: the host's, else none."
+  @spec row_badge(Leaderboard.t(), map()) :: String.t() | nil
+  def row_badge(board, record), do: ask(:row_badge, [board, record])
 
   @doc "A value's name: the host's, else the value."
   @spec value_label(Leaderboard.t(), String.t(), String.t()) :: String.t()

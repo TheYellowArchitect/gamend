@@ -7,6 +7,7 @@ defmodule GamendWeb.AdminLive.Config do
   alias Gamend.Accounts.Scope
   alias Gamend.Accounts.User
   alias Gamend.Accounts.UserNotifier
+  alias Gamend.Bans.Cache, as: BanCache
   alias Gamend.Content
   alias Gamend.Hooks.HookSchemas
   alias Gamend.Hooks.KvSchemas
@@ -17,7 +18,6 @@ defmodule GamendWeb.AdminLive.Config do
   alias Gamend.Theme.JSONConfig
   alias GamendWeb.AdminLive.ConfigDiagnostics
   alias GamendWeb.Plugs.GeoCountry
-  alias GamendWeb.Plugs.IpBan
 
   @impl true
   def render(assigns) do
@@ -283,7 +283,7 @@ defmodule GamendWeb.AdminLive.Config do
     socket =
       assign(socket,
         config: config,
-        ip_bans: IpBan.list_bans(),
+        ip_bans: BanCache.list(:ip),
         limits_grouped: ConfigDiagnostics.limits_grouped(),
         scheduled_jobs: Schedule.list(),
         hooks_plugin_prefill: %{value: "", seq: 0},

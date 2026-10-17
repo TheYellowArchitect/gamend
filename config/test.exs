@@ -103,9 +103,11 @@ config :gamend_core, Gamend.Matchmaking.Worker, enabled: false
 # Gamend.Chat.Moderation.Cache.load_persisted/0 directly.
 config :gamend_core, Gamend.Chat.Moderation.Sync, enabled: false
 
-# And for the IP-ban boot load. Tests drive GamendWeb.Plugs.IpBan.load_persisted/0
+# And for the ban boot load. Tests drive Gamend.Bans.Cache.load_persisted/0
 # directly.
-config :gamend_web, GamendWeb.IpBanSync, enabled: false
+config :gamend_core, Gamend.Bans.Sync, enabled: false
+# The ban kick reads session tokens outside the sandbox; tests call kick/1.
+config :gamend_web, GamendWeb.AccountBanKicks, enabled: false
 
 # Disable app-level caching in tests to avoid stale reads across assertions.
 # Still provide the multilevel configuration so the cache can start.

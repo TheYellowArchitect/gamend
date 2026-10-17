@@ -1,6 +1,9 @@
 defmodule GamendWeb.AdminLive.RateLimiting do
   use GamendWeb, :live_view
 
+  alias Gamend.Accounts.Scope
+  alias Gamend.Bans
+  alias GamendWeb.AdminLive.Shared
   alias GamendWeb.Plugs.IpBan
 
   @refresh_interval 5_000
@@ -239,12 +242,24 @@ defmodule GamendWeb.AdminLive.RateLimiting do
                 <div>
                   <label class="label text-xs">Duration</label>
                   <select name="duration" class="select select-bordered select-sm">
-                    <option value="permanent">Permanent</option>
-                    <option value="1h">1 hour</option>
-                    <option value="24h">24 hours</option>
-                    <option value="7d">7 days</option>
-                    <option value="30d">30 days</option>
+                    <option
+                      :for={{value, label} <- Shared.duration_options()}
+                      value={value}
+                      selected={value == "permanent"}
+                    >
+                      {label}
+                    </option>
                   </select>
+                </div>
+                <div class="grow">
+                  <label class="label text-xs">Reason</label>
+                  <input
+                    type="text"
+                    name="reason"
+                    placeholder="Optional"
+                    maxlength={Gamend.Limits.get(:max_ban_reason)}
+                    class="input input-bordered input-sm w-full"
+                  />
                 </div>
                 <button type="submit" class="btn btn-warning btn-sm">
                   <.icon name="hero-no-symbol" class="w-4 h-4" /> Ban IP
@@ -257,25 +272,27 @@ defmodule GamendWeb.AdminLive.RateLimiting do
                   <thead>
                     <tr>
                       <th>Banned IP</th>
+                      <th>Reason</th>
                       <th class="text-right">Expires</th>
                       <th class="text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr :for={{ip, expires} <- @ip_bans} id={"ban-#{ip}"}>
-                      <td class="font-mono text-xs font-bold text-error">{ip}</td>
+                    <tr :for={ban <- @ip_bans} id={"ban-#{ban.id}"}>
+                      <td class="font-mono text-xs font-bold text-error">{ban.subject}</td>
+                      <td class="text-xs">{ban.reason}</td>
                       <td class="text-right text-xs">
-                        <%= if expires == :infinity do %>
+                        <%= if is_nil(ban.expires_at) do %>
                           <span class="badge badge-error badge-xs">Permanent</span>
                         <% else %>
-                          <span class="font-mono">{format_ban_ttl(expires)}</span>
+                          <span class="font-mono">{format_ban_ttl(ban.expires_at)}</span>
                         <% end %>
                       </td>
                       <td class="text-right">
                         <button
                           type="button"
                           phx-click="unban_ip"
-                          phx-value-ip={ip}
+                          phx-value-ip={ban.subject}
                           class="btn btn-ghost btn-xs text-success"
                         >
                           Unban
@@ -283,7 +300,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
                       </td>
                     </tr>
                     <tr :if={@ip_bans == []}>
-                      <td colspan="3" class="text-center text-xs text-muted py-4 italic">
+                      <td colspan="4" class="text-center text-xs text-muted py-4 italic">
                         No active IP bans.
                       </td>
                     </tr>
@@ -297,34 +314,41 @@ defmodule GamendWeb.AdminLive.RateLimiting do
           <div class="card bg-base-200 shadow">
             <div class="card-body">
               <h2 class="card-title text-lg">
-                Ban History <span class="text-xs font-normal text-muted">(in-memory, last 100)</span>
+                Ban History <span class="text-xs font-normal text-muted">(last 100)</span>
               </h2>
 
               <div class="overflow-x-auto max-h-80 overflow-y-auto">
                 <table class="table table-sm table-pin-rows">
                   <thead>
                     <tr>
-                      <th>Action</th>
+                      <th>Placed</th>
                       <th>IP</th>
+                      <th>Reason</th>
                       <th class="text-right">Duration</th>
+                      <th class="text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr :for={entry <- @ban_log} id={"log-#{entry.seq}"}>
-                      <td>
-                        <%= if entry.action == :ban do %>
-                          <span class="badge badge-error badge-xs">BAN</span>
-                        <% else %>
-                          <span class="badge badge-success badge-xs">UNBAN</span>
-                        <% end %>
+                    <tr :for={ban <- @ban_log} id={"log-#{ban.id}"}>
+                      <td class="text-xs whitespace-nowrap">
+                        {Calendar.strftime(ban.inserted_at, "%Y-%m-%d %H:%M")}
                       </td>
-                      <td class="font-mono text-xs">{entry.ip}</td>
-                      <td class="text-right text-xs">
-                        {format_log_ttl(entry.ttl)}
+                      <td class="font-mono text-xs">{ban.subject}</td>
+                      <td class="text-xs">{ban.reason}</td>
+                      <td class="text-right text-xs">{format_ban_duration(ban)}</td>
+                      <td class="text-right">
+                        <%= cond do %>
+                          <% Bans.active?(ban) -> %>
+                            <span class="badge badge-error badge-xs">ACTIVE</span>
+                          <% ban.lifted_at -> %>
+                            <span class="badge badge-success badge-xs">LIFTED</span>
+                          <% true -> %>
+                            <span class="badge badge-ghost badge-xs">EXPIRED</span>
+                        <% end %>
                       </td>
                     </tr>
                     <tr :if={@ban_log == []}>
-                      <td colspan="3" class="text-center text-xs text-muted py-4 italic">
+                      <td colspan="5" class="text-center text-xs text-muted py-4 italic">
                         No ban history yet.
                       </td>
                     </tr>
@@ -364,8 +388,8 @@ defmodule GamendWeb.AdminLive.RateLimiting do
      assign(socket,
        config: config,
        ets_backend?: GamendWeb.RateLimit.backend() == GamendWeb.RateLimit.ETS,
-       ip_bans: IpBan.list_bans(),
-       ban_log: IpBan.list_log(),
+       ip_bans: Bans.list_active(:ip),
+       ban_log: Bans.history(:ip),
        rate_stats: build_rate_limit_stats()
      )}
   end
@@ -376,8 +400,8 @@ defmodule GamendWeb.AdminLive.RateLimiting do
 
     {:noreply,
      assign(socket,
-       ip_bans: IpBan.list_bans(),
-       ban_log: IpBan.list_log(),
+       ip_bans: Bans.list_active(:ip),
+       ban_log: Bans.history(:ip),
        rate_stats: build_rate_limit_stats()
      )}
   end
@@ -386,45 +410,49 @@ defmodule GamendWeb.AdminLive.RateLimiting do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
-  def handle_event("ban_ip", %{"ip" => ip_str, "duration" => duration}, socket) do
+  def handle_event("ban_ip", %{"ip" => ip_str, "duration" => duration} = params, socket) do
     ip_str = String.trim(ip_str)
 
     if ip_str == "" do
       {:noreply, put_flash(socket, :error, "IP address is required")}
     else
-      ttl =
-        case duration do
-          "1h" -> :timer.hours(1)
-          "24h" -> :timer.hours(24)
-          "7d" -> :timer.hours(24 * 7)
-          "30d" -> :timer.hours(24 * 30)
-          _ -> :infinity
-        end
+      opts = [
+        expires_at: Shared.expires_at(duration),
+        reason: Gamend.Parse.blank_to_nil(String.trim(params["reason"] || "")),
+        by: Scope.user_id(socket.assigns.current_scope)
+      ]
 
-      IpBan.ban(ip_str, ttl)
+      case IpBan.ban(ip_str, opts) do
+        {:ok, ban} ->
+          {:noreply,
+           socket
+           |> reload_bans()
+           |> put_flash(:info, "Banned #{ban.subject}")}
 
-      {:noreply,
-       socket
-       |> assign(:ip_bans, IpBan.list_bans())
-       |> assign(:ban_log, IpBan.list_log())
-       |> put_flash(:info, "Banned #{GamendWeb.RateLimit.ip_key(ip_str)}")}
+        {:error, changeset} ->
+          {:noreply,
+           put_flash(socket, :error, "Could not ban: #{Shared.error_summary(changeset)}")}
+      end
     end
   end
 
   @impl true
   def handle_event("unban_ip", %{"ip" => ip_str}, socket) do
-    IpBan.unban(ip_str)
+    IpBan.unban(ip_str, by: Scope.user_id(socket.assigns.current_scope))
 
     {:noreply,
      socket
-     |> assign(:ip_bans, IpBan.list_bans())
-     |> assign(:ban_log, IpBan.list_log())
+     |> reload_bans()
      |> put_flash(:info, "Unbanned IP #{ip_str}")}
   end
 
   # ── Private helpers ─────────────────────────────────────────────────────
 
   defp schedule_refresh, do: Process.send_after(self(), :refresh, @refresh_interval)
+
+  defp reload_bans(socket) do
+    assign(socket, ip_bans: Bans.list_active(:ip), ban_log: Bans.history(:ip))
+  end
 
   @empty_stats %{limited: 0, usage: [], by_type: %{}}
 
@@ -560,21 +588,16 @@ defmodule GamendWeb.AdminLive.RateLimiting do
   defp type_label("chatrep"), do: "Reports/day"
   defp type_label(_), do: "HTTP"
 
-  defp format_ban_ttl(expires_mono) do
-    remaining_ms = max(expires_mono - System.monotonic_time(:millisecond), 0)
-
-    cond do
-      remaining_ms >= 86_400_000 -> "#{div(remaining_ms, 86_400_000)}d"
-      remaining_ms >= 3_600_000 -> "#{div(remaining_ms, 3_600_000)}h"
-      remaining_ms >= 60_000 -> "#{div(remaining_ms, 60_000)}m"
-      true -> "#{div(remaining_ms, 1000)}s"
-    end
+  defp format_ban_ttl(%DateTime{} = expires_at) do
+    expires_at |> DateTime.diff(DateTime.utc_now(), :millisecond) |> max(0) |> format_ms()
   end
 
-  defp format_log_ttl(:infinity), do: "permanent"
-  defp format_log_ttl(nil), do: "—"
+  defp format_ban_duration(%{expires_at: nil}), do: "permanent"
 
-  defp format_log_ttl(ms) when is_integer(ms) do
+  defp format_ban_duration(%{expires_at: expires_at, inserted_at: inserted_at}),
+    do: expires_at |> DateTime.diff(inserted_at, :millisecond) |> max(0) |> format_ms()
+
+  defp format_ms(ms) when is_integer(ms) do
     cond do
       ms >= 86_400_000 -> "#{div(ms, 86_400_000)}d"
       ms >= 3_600_000 -> "#{div(ms, 3_600_000)}h"

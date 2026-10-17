@@ -12,6 +12,7 @@ defmodule GamendWeb.Serializers do
 
   alias Gamend.Accounts
   alias Gamend.Accounts.User
+  alias Gamend.Bans
   alias Gamend.Groups
   alias Gamend.Leaderboards.Leaderboard
   alias Gamend.Lobbies
@@ -136,9 +137,20 @@ defmodule GamendWeb.Serializers do
       is_online: user.is_online || false,
       last_seen_at: User.last_seen_at_or_fallback(user),
       linked_providers: Accounts.get_linked_providers(user),
-      has_password: Accounts.has_password?(user)
+      has_password: Accounts.has_password?(user),
+      ban: user.id |> Bans.account_ban() |> serialize_account_ban()
     }
   end
+
+  @doc """
+  An account's ban as the API sends it (`GamendWeb.Schemas.AccountBan`): when
+  it ends (nil for permanent) and why. nil when the account is not banned.
+  """
+  @spec serialize_account_ban(Bans.Ban.t() | nil) :: map() | nil
+  def serialize_account_ban(nil), do: nil
+
+  def serialize_account_ban(%Bans.Ban{} = ban),
+    do: %{expires_at: ban.expires_at, reason: ban.reason || ""}
 
   @spec serialize_chat_message(term(), keyword()) :: map()
   def serialize_chat_message(message, opts \\ []) do

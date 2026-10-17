@@ -421,6 +421,16 @@
   },
   {
     "channel": "user",
+    "event": "account_banned",
+    "signal": "account_banned"
+  },
+  {
+    "channel": "user",
+    "event": "account_unbanned",
+    "signal": "account_unbanned"
+  },
+  {
+    "channel": "user",
     "event": "tournament_updated",
     "signal": "tournament_updated"
   },

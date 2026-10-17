@@ -10,11 +10,20 @@ defmodule GamendWeb.AdminLive.Shared do
 
   use Gettext, backend: GamendWeb.Gettext
 
+  @durations %{
+    "10m" => 600,
+    "1h" => 3_600,
+    "24h" => 86_400,
+    "7d" => 604_800,
+    "30d" => 2_592_000
+  }
+
   @doc """
   The mute/ban durations the console offers, as `{value, label}` pairs.
 
-  Shared by the chat-mutes and chat-reports pages, which offered the same list
-  and would have drifted the first time one of them gained an option.
+  Shared by the chat-mutes, chat-reports and rate-limiting (IP ban) pages,
+  which offered their own lists and would have drifted the first time one of
+  them gained an option. `expires_at/1` reads a value back.
   """
   @spec duration_options() :: [{String.t(), String.t()}]
   def duration_options do
@@ -23,8 +32,29 @@ defmodule GamendWeb.AdminLive.Shared do
       {"1h", gettext("1 hour")},
       {"24h", gettext("24 hours")},
       {"7d", gettext("7 days")},
+      {"30d", gettext("30 days")},
       {"permanent", gettext("Permanent")}
     ]
+  end
+
+  @doc """
+  The `expires_at` a `duration_options/0` value sets, from now: nil for
+  `"permanent"` (and anything the list does not offer).
+  """
+  @spec expires_at(String.t() | nil) :: DateTime.t() | nil
+  def expires_at(duration) do
+    case Map.fetch(@durations, duration) do
+      {:ok, seconds} -> DateTime.add(DateTime.utc_now(:second), seconds, :second)
+      :error -> nil
+    end
+  end
+
+  @doc "A changeset's errors as one line, `field message; field message`."
+  @spec error_summary(Ecto.Changeset.t()) :: String.t()
+  def error_summary(changeset) do
+    changeset
+    |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
+    |> Enum.map_join("; ", fn {field, messages} -> "#{field} #{Enum.join(messages, ", ")}" end)
   end
 
   @doc """

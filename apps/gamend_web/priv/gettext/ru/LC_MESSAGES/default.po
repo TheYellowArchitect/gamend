@@ -1711,10 +1711,15 @@ msgstr "10 минут"
 msgid "24 hours"
 msgstr "24 часа"
 
-#: lib/gamend_web/live/admin_live/shared.ex:25
+#: lib/gamend_web/live/admin_live/shared.ex:34
 #, elixir-autogen, elixir-format
 msgid "7 days"
 msgstr "7 дней"
+
+#: lib/gamend_web/live/admin_live/shared.ex:35
+#, elixir-autogen, elixir-format
+msgid "30 days"
+msgstr "30 дней"
 
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:350
 #, elixir-autogen, elixir-format
@@ -3672,3 +3677,18 @@ msgstr "Зарегистрируйся, чтобы забрать награду
 #, elixir-autogen, elixir-format
 msgid "Only you see this rank. Register to appear on the board."
 msgstr "Это место видишь только ты. Зарегистрируйся, чтобы попасть в таблицу."
+
+#: lib/gamend_web/live/suspended_live.ex:24
+#, elixir-autogen, elixir-format
+msgid "Account suspended"
+msgstr "Аккаунт приостановлен"
+
+#: lib/gamend_web/live/suspended_live.ex:37
+#, elixir-autogen, elixir-format
+msgid "Suspended until"
+msgstr "Приостановлен до"
+
+#: lib/gamend_web/live/suspended_live.ex:51
+#, elixir-autogen, elixir-format
+msgid "You can still change your settings or delete your account."
+msgstr "Ты по-прежнему можешь изменить настройки или удалить аккаунт."

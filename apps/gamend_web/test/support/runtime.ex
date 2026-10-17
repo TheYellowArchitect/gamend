@@ -1,9 +1,9 @@
 defmodule GamendWeb.TestSupport.Runtime do
   @moduledoc false
 
+  alias Gamend.Bans.Cache, as: BanCache
   alias Gamend.TestSupport.Runtime, as: CoreRuntime
   alias GamendWeb.Plugs.GeoCountry
-  alias GamendWeb.Plugs.IpBan
 
   @doc "The core test runtime, plus the web app's processes."
   def start_suite do
@@ -22,7 +22,7 @@ defmodule GamendWeb.TestSupport.Runtime do
     ensure_host_code_path()
     maybe_configure_host_router()
     maybe_register_content_paths()
-    IpBan.init_table()
+    BanCache.init_table()
     GeoCountry.init_table()
   end
 

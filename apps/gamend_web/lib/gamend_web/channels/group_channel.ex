@@ -35,8 +35,14 @@ defmodule GamendWeb.GroupChannel do
   alias GamendWeb.ChannelUpdates
   alias GamendWeb.Serializers
 
+  # A banned account joins no channel but its own user channel.
   @impl true
-  def join("group:" <> group_id_str, _payload, socket) do
+  def join(topic, payload, socket) do
+    with :ok <- GamendWeb.UserSocket.refuse_banned(socket),
+         do: join_topic(topic, payload, socket)
+  end
+
+  defp join_topic("group:" <> group_id_str, _payload, socket) do
     current_scope = Map.get(socket.assigns, :current_scope)
 
     # The group is read after the membership check: deleted in between, the

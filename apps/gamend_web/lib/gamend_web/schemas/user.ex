@@ -20,6 +20,29 @@ defmodule GamendWeb.Schemas.LinkedProviders do
   })
 end
 
+defmodule GamendWeb.Schemas.AccountBan do
+  @moduledoc "A ban on the signed-in account, as `GET /me` sends it."
+  require OpenApiSpex
+  alias OpenApiSpex.Schema
+
+  OpenApiSpex.schema(%{
+    title: "AccountBan",
+    description:
+      "The account is banned: it can read and delete itself, every other call answers 403 `account_banned`",
+    type: :object,
+    properties: %{
+      expires_at: %Schema{
+        type: :string,
+        format: :"date-time",
+        nullable: true,
+        description: "When the ban ends; null for a permanent ban"
+      },
+      reason: %Schema{type: :string, description: "Why, for the player; may be empty"}
+    },
+    required: [:expires_at, :reason]
+  })
+end
+
 defmodule GamendWeb.Schemas.CurrentUser do
   @moduledoc "The signed-in user, as `GET /me` sends it: the only user shape carrying email."
   require OpenApiSpex
@@ -42,7 +65,12 @@ defmodule GamendWeb.Schemas.CurrentUser do
       is_online: %Schema{type: :boolean},
       last_seen_at: %Schema{type: :string, format: :"date-time"},
       linked_providers: LinkedProviders,
-      has_password: %Schema{type: :boolean, description: "Whether a password is set"}
+      has_password: %Schema{type: :boolean, description: "Whether a password is set"},
+      ban: %Schema{
+        allOf: [GamendWeb.Schemas.AccountBan],
+        nullable: true,
+        description: "The account's ban while it is banned, else null"
+      }
     },
     required: [
       :id,
@@ -56,7 +84,8 @@ defmodule GamendWeb.Schemas.CurrentUser do
       :is_online,
       :last_seen_at,
       :linked_providers,
-      :has_password
+      :has_password,
+      :ban
     ]
   })
 end

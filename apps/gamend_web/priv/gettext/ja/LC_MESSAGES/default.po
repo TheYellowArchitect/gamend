@@ -1711,10 +1711,15 @@ msgstr "10分"
 msgid "24 hours"
 msgstr "24時間"
 
-#: lib/gamend_web/live/admin_live/shared.ex:25
+#: lib/gamend_web/live/admin_live/shared.ex:34
 #, elixir-autogen, elixir-format
 msgid "7 days"
 msgstr "7日間"
+
+#: lib/gamend_web/live/admin_live/shared.ex:35
+#, elixir-autogen, elixir-format
+msgid "30 days"
+msgstr "30日間"
 
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:350
 #, elixir-autogen, elixir-format
@@ -3566,3 +3571,18 @@ msgstr "登録して報酬を受け取ろう。"
 #, elixir-autogen, elixir-format
 msgid "Only you see this rank. Register to appear on the board."
 msgstr "この順位はあなたにしか見えません。登録するとランキングに載ります。"
+
+#: lib/gamend_web/live/suspended_live.ex:24
+#, elixir-autogen, elixir-format
+msgid "Account suspended"
+msgstr "アカウント停止中"
+
+#: lib/gamend_web/live/suspended_live.ex:37
+#, elixir-autogen, elixir-format
+msgid "Suspended until"
+msgstr "停止期限"
+
+#: lib/gamend_web/live/suspended_live.ex:51
+#, elixir-autogen, elixir-format
+msgid "You can still change your settings or delete your account."
+msgstr "設定の変更やアカウントの削除は引き続きできます。"

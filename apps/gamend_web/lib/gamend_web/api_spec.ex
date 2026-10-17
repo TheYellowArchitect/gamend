@@ -47,6 +47,9 @@ defmodule GamendWeb.ApiSpec do
         ### **1.3 Refreshing Tokens**
         When your access token expires, use POST `/api/v1/refresh` with your refresh token to get a new access token.
 
+        ### **1.4 Banned Accounts**
+        An admin or the game can ban an account for a while or for good. A banned account still signs in, refreshes and signs out, `GET /api/v1/me` answers with its `ban` (`expires_at`, null when permanent, and `reason`), and `DELETE /api/v1/me` deletes it. Every other authenticated call answers 403 `account_banned`. On the socket it joins only its own user channel, where `account_banned` and `account_unbanned` arrive, and a ban placed while it is connected closes the socket.
+
         ## **2. Users**
         Users endpoints cover the user lifecycle and profile features. Key highlights:
 
@@ -192,7 +195,7 @@ defmodule GamendWeb.ApiSpec do
         ```
 
         ### **15.2 Available Channels**
-        - **User channel** (`user:<user_id>`): notifications, friend events, quest progress/completions/claims, party/group invites, tournament events, chat mutes (`chat_muted` / `chat_unmuted`), KV subscriptions
+        - **User channel** (`user:<user_id>`): notifications, friend events, quest progress/completions/claims, party/group invites, tournament events, chat mutes (`chat_muted` / `chat_unmuted`), account bans (`account_banned` / `account_unbanned`), KV subscriptions
         - **Lobby channel** (`lobby:<lobby_id>`): lobby member joins/leaves, lobby updates, lobby chat
         - **Lobbies channel** (`lobbies`): global lobby list changes (created, updated, deleted)
         - **Group channel** (`group:<group_id>`): group member changes, group updates, group chat

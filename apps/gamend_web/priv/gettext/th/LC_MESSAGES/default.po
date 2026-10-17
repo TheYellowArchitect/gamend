@@ -1711,10 +1711,15 @@ msgstr "10 นาที"
 msgid "24 hours"
 msgstr "24 ชั่วโมง"
 
-#: lib/gamend_web/live/admin_live/shared.ex:25
+#: lib/gamend_web/live/admin_live/shared.ex:34
 #, elixir-autogen, elixir-format
 msgid "7 days"
 msgstr "7 วัน"
+
+#: lib/gamend_web/live/admin_live/shared.ex:35
+#, elixir-autogen, elixir-format
+msgid "30 days"
+msgstr "30 วัน"
 
 #: lib/gamend_web/live/admin_live/chat_mutes.ex:350
 #, elixir-autogen, elixir-format
@@ -3566,3 +3571,18 @@ msgstr "สมัครเพื่อรับรางวัลของคุ
 #, elixir-autogen, elixir-format
 msgid "Only you see this rank. Register to appear on the board."
 msgstr "มีแค่คุณที่เห็นอันดับนี้ สมัครเพื่อขึ้นตารางอันดับ"
+
+#: lib/gamend_web/live/suspended_live.ex:24
+#, elixir-autogen, elixir-format
+msgid "Account suspended"
+msgstr "บัญชีถูกระงับ"
+
+#: lib/gamend_web/live/suspended_live.ex:37
+#, elixir-autogen, elixir-format
+msgid "Suspended until"
+msgstr "ระงับจนถึง"
+
+#: lib/gamend_web/live/suspended_live.ex:51
+#, elixir-autogen, elixir-format
+msgid "You can still change your settings or delete your account."
+msgstr "คุณยังเปลี่ยนการตั้งค่าหรือลบบัญชีได้"

@@ -312,7 +312,7 @@ ledger is the audit trail; the balance is a cache of it.
 | `users_tokens` | Session, magic-link and email-change tokens, pruned on their own expiry | Authentication |
 | `oauth_sessions` | In-flight OAuth handshakes, pruned daily | Authentication |
 | `login_lockouts` | Failed passwords per email address (a SHA-256 of it, never the address) and the lock they set, pruned once both run out | Authentication |
-| `ip_bans` | Address bans, with optional expiry | — |
+| `bans` | IP address and account bans: end, reason, who placed and lifted them; kept as history after they end, pruned by retention | Security |
 | `matchmaking_tickets` | Queue state, one per user or party | Matchmaking |
 | `ready_checks`, `ready_check_participants` | "Everyone must answer" boards on a lobby or party, one row per participant | Matchmaking |
 | `tournaments`, `tournament_entries`, `tournament_matches`, `tournament_brackets` | Bracket state per occurrence | Tournaments |

@@ -229,6 +229,19 @@ defmodule Gamend.Accounts.Sessions do
   end
 
   @doc """
+  A user's browser session tokens, as `[%{token: binary}]`: what
+  `GamendWeb.UserAuth.disconnect_sessions/1` takes to close their open pages.
+  """
+  @spec session_tokens(Ecto.UUID.t()) :: [%{token: binary()}]
+  def session_tokens(user_id) when is_binary(user_id) do
+    from(t in UserToken,
+      where: t.user_id == ^user_id and t.context == "session",
+      select: %{token: t.token}
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Revokes all session tokens for a user (mass logout).
   """
   @spec revoke_all_user_sessions(Ecto.UUID.t()) :: {non_neg_integer(), nil}

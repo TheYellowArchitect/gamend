@@ -12,6 +12,7 @@ defmodule GamendWeb.AdminLive.ChatReports do
   alias Gamend.Chat.Moderation.Notices
   alias Gamend.Chat.Mute
   alias Gamend.Chat.Report
+  alias GamendWeb.AdminLive.Shared
   alias GamendWeb.LiveHelpers
 
   @form_keys ~w(duration scope scope_ref_id reason message notify_user notify_reporter
@@ -186,7 +187,7 @@ defmodule GamendWeb.AdminLive.ChatReports do
 
   defp mute(socket, report, form, scope, scope_ref_id) do
     attrs = %{
-      "expires_at" => expires_at(form["duration"]),
+      "expires_at" => Shared.expires_at(form["duration"]),
       "reason" => Gamend.Parse.blank_to_nil(String.trim(form["reason"] || "")),
       "muted_by" => admin_id(socket)
     }
@@ -291,14 +292,6 @@ defmodule GamendWeb.AdminLive.ChatReports do
   defp action_title("warn"), do: gettext("Warn player")
   defp action_title("dismiss"), do: gettext("Dismiss report")
   defp action_title(_delete_message), do: gettext("Delete message")
-
-  defp expires_at("10m"), do: from_now(600)
-  defp expires_at("1h"), do: from_now(3_600)
-  defp expires_at("24h"), do: from_now(86_400)
-  defp expires_at("7d"), do: from_now(604_800)
-  defp expires_at(_permanent), do: nil
-
-  defp from_now(seconds), do: DateTime.add(DateTime.utc_now(:second), seconds, :second)
 
   # ── data ──────────────────────────────────────────────────────────────────
 
@@ -538,7 +531,7 @@ defmodule GamendWeb.AdminLive.ChatReports do
                 <label class="label text-xs">{gettext("Duration")}</label>
                 <select name="duration" class="select select-bordered select-sm">
                   <option
-                    :for={{value, label} <- GamendWeb.AdminLive.Shared.duration_options()}
+                    :for={{value, label} <- Shared.duration_options()}
                     value={value}
                     selected={@form["duration"] == value}
                   >

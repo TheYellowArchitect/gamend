@@ -23,8 +23,14 @@ defmodule GamendWeb.GroupsChannel do
   alias GamendWeb.Plugs.FeatureGate
   alias GamendWeb.Serializers
 
+  # A banned account joins no channel but its own user channel.
   @impl true
-  def join("groups", _payload, socket) do
+  def join(topic, payload, socket) do
+    with :ok <- GamendWeb.UserSocket.refuse_banned(socket),
+         do: join_topic(topic, payload, socket)
+  end
+
+  defp join_topic("groups", _payload, socket) do
     # Same flag as GET /api/v1/groups — the feed must not outlive the API.
     if FeatureGate.enabled?(:list_groups) do
       GamendWeb.ConnectionTracker.register(:groups_channel)

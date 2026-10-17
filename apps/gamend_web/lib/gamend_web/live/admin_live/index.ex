@@ -3,6 +3,7 @@ defmodule GamendWeb.AdminLive.Index do
 
   alias Gamend.Accounts
   alias Gamend.Accounts.UserToken
+  alias Gamend.Bans.Cache, as: BanCache
   alias Gamend.Chat.Reports
   alias Gamend.Groups
   alias Gamend.KV
@@ -14,7 +15,6 @@ defmodule GamendWeb.AdminLive.Index do
   alias GamendWeb.ConnectionTracker
   alias GamendWeb.Gettext.Stats, as: TranslationStats
   alias GamendWeb.Plugs.GeoCountry
-  alias GamendWeb.Plugs.IpBan
 
   require Ecto.Query
 
@@ -946,7 +946,7 @@ defmodule GamendWeb.AdminLive.Index do
        conn_stats: conn_stats,
        sys_stats: sys_stats,
        rate_stats: rate_stats,
-       ip_ban_count: length(IpBan.list_bans()),
+       ip_ban_count: length(BanCache.list(:ip)),
        geo_stats: geo.stats_all,
        geo_total: geo.total_all,
        geo_total_1h: geo.total_1h,
@@ -978,7 +978,7 @@ defmodule GamendWeb.AdminLive.Index do
        conn_stats: ConnectionTracker.cluster_counts(),
        sys_stats: ConnectionTracker.system_stats(),
        rate_stats: build_rate_limit_stats(),
-       ip_ban_count: length(IpBan.list_bans()),
+       ip_ban_count: length(BanCache.list(:ip)),
        geo_stats: geo.stats_all,
        geo_total: geo.total_all,
        geo_total_1h: geo.total_1h,
@@ -1003,7 +1003,7 @@ defmodule GamendWeb.AdminLive.Index do
     end
   end
 
-  # IP bans are not Hammer entries — they live in `GamendWeb.Plugs.IpBan`'s own
+  # IP bans are not Hammer entries — they live in `Gamend.Bans.Cache`'s own
   # table, counted into `ip_ban_count` — so no "ip_ban:" key ever matched here.
   defp build_rate_limit_stats(table) do
     # The limits the plug enforces, not fallbacks of 10/120.

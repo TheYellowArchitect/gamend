@@ -41,8 +41,14 @@ defmodule GamendWeb.LobbyChannel do
   alias GamendWeb.Plugs.ClientSession
   alias GamendWeb.Serializers
 
+  # A banned account joins no channel but its own user channel.
   @impl true
-  def join("lobby:" <> lobby_id_str, _payload, socket) do
+  def join(topic, payload, socket) do
+    with :ok <- GamendWeb.UserSocket.refuse_banned(socket),
+         do: join_topic(topic, payload, socket)
+  end
+
+  defp join_topic("lobby:" <> lobby_id_str, _payload, socket) do
     # This channel runs in its own process, so it stamps its own metadata;
     # the socket's connect-time call does not reach here.
     ClientSession.put_metadata(socket.assigns[:client_session_id])

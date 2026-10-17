@@ -30,6 +30,8 @@ config :gamend_web, GamendWeb.Plugs.RateLimiter, enabled: false
 # Tests that assert on the log lower it themselves.
 config :gamend_web, :slow_request_threshold_ms, 60_000.0
 
-# The IP-ban boot load holds a database connection the tests need. Tests drive
-# GamendWeb.Plugs.IpBan.load_persisted/0 directly.
-config :gamend_web, GamendWeb.IpBanSync, enabled: false
+# The ban boot load holds a database connection the tests need. Tests drive
+# Gamend.Bans.Cache.load_persisted/0 directly.
+config :gamend_core, Gamend.Bans.Sync, enabled: false
+# The ban kick reads session tokens outside the sandbox; tests call kick/1.
+config :gamend_web, GamendWeb.AccountBanKicks, enabled: false

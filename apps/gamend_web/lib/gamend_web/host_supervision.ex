@@ -32,10 +32,10 @@ defmodule GamendWeb.HostSupervision do
       end
   """
 
+  alias Gamend.Bans.Cache, as: BanCache
   alias Gamend.Chat.Moderation.Cache, as: ModerationCache
   alias Gamend.Repo.SlowLog
   alias GamendWeb.Plugs.GeoCountry
-  alias GamendWeb.Plugs.IpBan
 
   @doc """
   Set up the ETS tables and OS services children assume already exist.
@@ -82,7 +82,8 @@ defmodule GamendWeb.HostSupervision do
     # ETS owner for the Schedule registry + protected-callback set — must exist
     # before the Oban Cron tick fires.
     Gamend.Schedule.start_link()
-    IpBan.init_table()
+    # Active IP and account bans, read on every request.
+    BanCache.init_table()
     GeoCountry.init_table()
     # The crawler token pattern and the DNS-check cache, read per request.
     GamendWeb.Crawlers.init()
@@ -185,8 +186,11 @@ defmodule GamendWeb.HostSupervision do
       # Apply cache invalidations broadcast by other instances
       Gamend.Cache.Sync,
       GamendWeb.ConnectionTracker,
-      # Load persisted IP bans and mirror ban events from other instances
-      GamendWeb.IpBanSync,
+      # Load active bans (IP and account) and mirror ban events from other
+      # instances
+      Gamend.Bans.Sync,
+      # Close a newly banned account's sockets and open pages
+      GamendWeb.AccountBanKicks,
       # Load the word blocklist + mutes, mirror moderation events from other
       # instances, and sweep expired mutes
       Gamend.Chat.Moderation.Sync,

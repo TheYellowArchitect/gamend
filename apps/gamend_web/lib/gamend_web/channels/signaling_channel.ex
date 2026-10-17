@@ -55,8 +55,14 @@ defmodule GamendWeb.SignalingChannel do
   # GamendWeb.Plugs.RateLimiter. ICE has its own so a flood of candidates cannot
   # starve other channel events; a typical WebRTC session sends 5–30.
 
+  # A banned account joins no channel but its own user channel.
   @impl true
-  def join("signaling:" <> room_id, _payload, socket) do
+  def join(topic, payload, socket) do
+    with :ok <- GamendWeb.UserSocket.refuse_banned(socket),
+         do: join_topic(topic, payload, socket)
+  end
+
+  defp join_topic("signaling:" <> room_id, _payload, socket) do
     user_id = socket.assigns.current_scope.user_id
 
     if is_nil(user_id) do

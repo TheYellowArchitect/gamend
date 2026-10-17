@@ -108,7 +108,8 @@ defmodule GamendWeb.UserChannel do
         socket
       )
       when is_binary(plugin) and is_binary(fn_name) do
-    with :ok <- check_ws_rate_limit(socket) do
+    with :ok <- check_ws_rate_limit(socket),
+         :ok <- refuse_banned_action(socket) do
       args = Map.get(payload, "args", [])
       args = if is_list(args), do: args, else: [args]
 
@@ -143,7 +144,8 @@ defmodule GamendWeb.UserChannel do
 
   @impl true
   def handle_in("kv:subscribe", %{"key" => key} = payload, socket) when is_binary(key) do
-    with :ok <- check_ws_rate_limit(socket) do
+    with :ok <- check_ws_rate_limit(socket),
+         :ok <- refuse_banned_action(socket) do
       user_id = parse_optional_id(Map.get(payload, "user_id"))
       lobby_id = parse_optional_id(Map.get(payload, "lobby_id"))
 
@@ -200,6 +202,7 @@ defmodule GamendWeb.UserChannel do
   @impl true
   def handle_in("webrtc:offer", %{"sdp" => _} = offer_json, socket) do
     with :ok <- check_ws_rate_limit(socket),
+         :ok <- refuse_banned_action(socket),
          :ok <- check_webrtc_enabled(),
          :ok <- validate_offer(offer_json) do
       stop_existing_peer(socket)
@@ -221,6 +224,7 @@ defmodule GamendWeb.UserChannel do
   @impl true
   def handle_in("webrtc:ice", %{"candidate" => _} = candidate_json, socket) do
     with :ok <- check_ws_rate_limit(socket),
+         :ok <- refuse_banned_action(socket),
          :ok <- check_ice_rate_limit(socket),
          :ok <- validate_ice_candidate(candidate_json) do
       case Map.get(socket.assigns, :webrtc_peer) do
@@ -449,6 +453,20 @@ defmodule GamendWeb.UserChannel do
   @impl true
   def handle_info({:chat_unmuted, %{scope: scope, scope_ref_id: scope_ref_id}}, socket) do
     push_event(socket, "chat_unmuted", %{scope: scope, scope_ref_id: scope_ref_id || ""})
+    {:noreply, socket}
+  end
+
+  # `Gamend.Bans` tells the account; `GamendWeb.AccountBanKicks` closes the
+  # socket a moment later, once this event is on its way.
+  @impl true
+  def handle_info({:account_banned, ban}, socket) do
+    push_event(socket, "account_banned", Serializers.serialize_account_ban(ban))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:account_unbanned, _user_id}, socket) do
+    push_event(socket, "account_unbanned", %{})
     {:noreply, socket}
   end
 
@@ -804,6 +822,15 @@ defmodule GamendWeb.UserChannel do
   end
 
   # ── WebSocket rate limiting ────────────────────────────────────────────────
+
+  # A banned account keeps its user channel for the ban's own events; it calls
+  # no hook, subscribes to no key and opens no WebRTC session.
+  defp refuse_banned_action(socket) do
+    case GamendWeb.UserSocket.refuse_banned(socket) do
+      :ok -> :ok
+      {:error, %{reason: reason}} -> {:reply, {:error, %{error: reason}}, socket}
+    end
+  end
 
   defp check_ws_rate_limit(socket) do
     if Gamend.Settings.get(GamendWeb.Plugs.RateLimiter, :enabled) do

@@ -117,12 +117,20 @@ defmodule GamendWeb.Router.Shared do
         plug GamendWeb.Plugs.ColorMode
       end
 
+      # A banned account (`Gamend.Bans`) is refused on both: 403 `account_banned`.
       pipeline :api_auth do
         plug GamendWeb.Auth.Pipeline
+        plug GamendWeb.Plugs.AccountBan
       end
 
       pipeline :api_optional_auth do
         plug GamendWeb.Auth.OptionalPipeline
+        plug GamendWeb.Plugs.AccountBan
+      end
+
+      # Signed in, banned or not: what a banned account may still do.
+      pipeline :api_auth_while_banned do
+        plug GamendWeb.Auth.Pipeline
       end
 
       pipeline :api_admin do
@@ -528,11 +536,18 @@ defmodule GamendWeb.Router.Shared do
         post "/payments/checkout/stripe", PaymentController, :stripe_checkout
       end
 
+      # A banned account reads itself (the ban is in the answer) and may delete
+      # itself; every other authenticated route refuses it.
       scope "/api/v1", GamendWeb.Api.V1, as: :api_v1 do
-        pipe_through [:api, :api_auth]
+        pipe_through [:api, :api_auth_while_banned]
 
         get "/me", MeController, :show
         delete "/me", MeController, :delete
+      end
+
+      scope "/api/v1", GamendWeb.Api.V1, as: :api_v1 do
+        pipe_through [:api, :api_auth]
+
         # Before "/lobbies/:id", which would otherwise capture it.
         get "/lobbies/mutes", ChatMuteController, :list_lobby_mutes
         get "/lobbies/:id", LobbyController, :show
@@ -979,6 +994,7 @@ defmodule GamendWeb.Router.Shared do
 
           live "/users/settings", UserLive.Settings, :edit
           live "/users/settings/confirm_email/:token", UserLive.Settings, :confirm_email
+          live "/suspended", SuspendedLive, :index
           live "/store", StoreLive.Index, :index
           live "/store/success", StoreLive.Index, :success
           live "/store/cancel", StoreLive.Index, :cancel

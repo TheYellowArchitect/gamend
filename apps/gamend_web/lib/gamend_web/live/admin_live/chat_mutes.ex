@@ -89,7 +89,7 @@ defmodule GamendWeb.AdminLive.ChatMutes do
     scope_ref_id = Gamend.Parse.blank_to_nil(String.trim(form["scope_ref_id"] || ""))
 
     attrs = %{
-      "expires_at" => expires_at(form["duration"]),
+      "expires_at" => Shared.expires_at(form["duration"]),
       "reason" => Gamend.Parse.blank_to_nil(String.trim(form["reason"] || "")),
       "muted_by" => Scope.user_id(socket.assigns.current_scope)
     }
@@ -117,7 +117,7 @@ defmodule GamendWeb.AdminLive.ChatMutes do
               |> put_flash(:info, gettext("Player muted"))
 
             {:error, changeset} ->
-              assign(socket, :form_error, changeset_error_summary(changeset))
+              assign(socket, :form_error, Shared.error_summary(changeset))
           end
       end
 
@@ -202,7 +202,7 @@ defmodule GamendWeb.AdminLive.ChatMutes do
         {:error, changeset} ->
           socket
           |> assign(:edit_form, form)
-          |> assign(:edit_error, changeset_error_summary(changeset))
+          |> assign(:edit_error, Shared.error_summary(changeset))
       end
 
     {:noreply, reload(socket)}
@@ -241,22 +241,12 @@ defmodule GamendWeb.AdminLive.ChatMutes do
     |> assign(:total_pages, LiveHelpers.total_pages(total, socket.assigns.page_size))
   end
 
-  defp expires_at("10m"), do: from_now(600)
-  defp expires_at("1h"), do: from_now(3_600)
-  defp expires_at("24h"), do: from_now(86_400)
-  defp expires_at("7d"), do: from_now(604_800)
-  defp expires_at(_permanent), do: nil
-
-  defp from_now(seconds) do
-    DateTime.add(DateTime.utc_now(:second), seconds, :second)
-  end
-
   defp edit_duration_options do
     [{"keep", gettext("Keep current expiry")} | Shared.duration_options()]
   end
 
   defp edit_expires_at("keep", mute), do: mute.expires_at
-  defp edit_expires_at(duration, _mute), do: expires_at(duration)
+  defp edit_expires_at(duration, _mute), do: Shared.expires_at(duration)
 
   defp reset_add_form(socket) do
     notice = default_notice(@empty_form)
@@ -269,7 +259,7 @@ defmodule GamendWeb.AdminLive.ChatMutes do
   defp default_notice(form) do
     Notices.default_mute_message(%Mute{
       scope: form["scope"] || "global",
-      expires_at: expires_at(form["duration"]),
+      expires_at: Shared.expires_at(form["duration"]),
       reason: Gamend.Parse.blank_to_nil(String.trim(form["reason"] || ""))
     })
   end
@@ -312,12 +302,6 @@ defmodule GamendWeb.AdminLive.ChatMutes do
 
   defp muted_by_label(%{muted_by: nil}), do: gettext("System")
   defp muted_by_label(mute), do: user_display(mute.muted_by_user)
-
-  defp changeset_error_summary(changeset) do
-    changeset
-    |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
-    |> Enum.map_join("; ", fn {field, messages} -> "#{field} #{Enum.join(messages, ", ")}" end)
-  end
 
   # ── render ────────────────────────────────────────────────────────────────
 

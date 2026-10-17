@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-330 settings across 30 groups.
+332 settings across 30 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -204,6 +204,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_LIMITS_MATCHMAKING_TIMEOUT_MS` | integer | `30000` | How long the oldest ticket waits before a below-max group still forms. |
 | `GAMEND_LIMITS_MAX_ACTIVE_QUESTS_PER_USER` | integer | `200` | Progress rows a user may hold in the current periods; excess events are ignored. |
 | `GAMEND_LIMITS_MAX_API_TOKENS_PER_USER` | integer | `10` | Personal API tokens one user may hold, revoked ones not counted. |
+| `GAMEND_LIMITS_MAX_BAN_REASON` | integer | `500` |  |
 | `GAMEND_LIMITS_MAX_CHAT_CONTENT` | integer | `4096` |  |
 | `GAMEND_LIMITS_MAX_CHAT_FILTER_WORDS` | integer | `10000` | Blocklist size cap. Sized to hold the bundled word lists for several languages. |
 | `GAMEND_LIMITS_MAX_CHAT_FILTER_WORD_LEN` | integer | `64` |  |
@@ -460,6 +461,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_RETENTION_ACTIVITY_DAYS` | integer | `0` | Delete per-user daily activity rows (DAU / D1-D7-D30 source) older than N days. 0 keeps forever. Below 60 the admin retention cohorts go blank. |
 | `GAMEND_RETENTION_ANALYTICS_EVENTS_DAYS` | integer | `365` | Delete analytics event rows (per-feature DAU, Grafana product dashboards) older than N days. 0 keeps forever. The daily counters summed from them are kept whatever this says. |
 | `GAMEND_RETENTION_ANONYMOUS_USERS_DAYS` | integer | `90` | Delete device-only accounts inactive for N days. 0 keeps forever. These accounts cost one unauthenticated request to create, so they are the tier that actually needs a sweep. |
+| `GAMEND_RETENTION_BANS_DAYS` | integer | `365` | Delete bans (IP and account) that ended, lifted or expired, more than N days ago. 0 keeps them all. An active ban is never deleted. |
 | `GAMEND_RETENTION_BATCH_SIZE` | integer | `500` | Rows deleted per statement. Lower it if a sweep stalls gameplay writes on SQLite, where each statement holds the write lock. |
 | `GAMEND_RETENTION_CHAT_MESSAGES_DAYS` | integer | `0` | Delete chat messages older than N days. 0 keeps forever. |
 | `GAMEND_RETENTION_INACTIVE_USERS_DAYS` | integer | `0` | Delete accounts with a real identity after N days of inactivity. 0 (the default) keeps forever - deleting a player who comes back is worse than the storage. 730 matches what Google and Microsoft use if you turn it on. |

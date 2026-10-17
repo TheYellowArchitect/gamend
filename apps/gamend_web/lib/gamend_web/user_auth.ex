@@ -432,14 +432,14 @@ defmodule GamendWeb.UserAuth do
       end
   """
   def on_mount(:mount_current_scope, _params, session, socket) do
-    {:cont, mount_current_scope(socket, session)}
+    socket |> mount_current_scope(session) |> refuse_banned()
   end
 
   def on_mount(:require_authenticated, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
     if Scope.user(socket.assigns.current_scope) do
-      {:cont, socket}
+      refuse_banned(socket)
     else
       socket =
         socket
@@ -463,7 +463,7 @@ defmodule GamendWeb.UserAuth do
     user = Scope.user(socket.assigns.current_scope)
 
     if user && user.is_admin do
-      {:cont, socket}
+      refuse_banned(socket)
     else
       socket =
         socket
@@ -484,7 +484,7 @@ defmodule GamendWeb.UserAuth do
          Scope.user(socket.assigns.current_scope),
          -Accounts.sudo_mode_minutes()
        ) do
-      {:cont, socket}
+      refuse_banned(socket)
     else
       socket =
         socket
@@ -496,6 +496,21 @@ defmodule GamendWeb.UserAuth do
         |> Phoenix.LiveView.redirect(external: ~p"/users/log_in")
 
       {:halt, socket}
+    end
+  end
+
+  # A banned account (`Gamend.Bans`) opens its settings, where it can delete
+  # itself, and `/suspended`, which says why and until when; every other page
+  # sends it there. Signed in, so the account is still the one it banned.
+  @banned_views [GamendWeb.UserLive.Settings, GamendWeb.SuspendedLive]
+
+  defp refuse_banned(socket) do
+    with user_id when is_binary(user_id) <- Scope.user_id(socket.assigns.current_scope),
+         false <- socket.view in @banned_views,
+         true <- Gamend.Bans.banned?(:account, user_id) do
+      {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/suspended")}
+    else
+      _ -> {:cont, socket}
     end
   end
 

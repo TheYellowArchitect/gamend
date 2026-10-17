@@ -3,6 +3,8 @@ defmodule GamendWeb.HostLayoutShell do
 
   use GamendWeb, :html
 
+  alias Gamend.Accounts.Scope
+
   attr :flash, :map, required: true
   attr :current_scope, :map, default: nil
   attr :current_path, :string, default: nil
@@ -228,6 +230,7 @@ defmodule GamendWeb.HostLayoutShell do
                   `pb-10` was on six pages and off the rest. `page-stack` is the
                   hook a host restyles; the utilities are the default. --%>
             <div class="page-stack space-y-6 pb-10">
+              <.suspended_notice :if={suspended?(@current_scope)} />
               {render_slot(@inner_block)}
             </div>
           </div>
@@ -481,6 +484,25 @@ defmodule GamendWeb.HostLayoutShell do
   # A footer link obeys the same `"auth"` rule as the nav: /store is behind
   # `require_authenticated_user`, so advertising it to a signed-out visitor
   # just sends them to an error.
+  # A banned account (`Gamend.Bans`) is sent to /suspended from every LiveView
+  # (`GamendWeb.UserAuth`); a plain page shows it this, which leads there. An
+  # ETS read, no query.
+  defp suspended?(current_scope) do
+    case Scope.user_id(current_scope) do
+      user_id when is_binary(user_id) -> Gamend.Bans.banned?(:account, user_id)
+      _ -> false
+    end
+  end
+
+  defp suspended_notice(assigns) do
+    ~H"""
+    <.link href={~p"/suspended"} id="suspended-notice" class="alert alert-warning" role="status">
+      <.icon name="hero-no-symbol" class="size-5" />
+      <span>{GamendWeb.HostLayouts.translate("Account suspended")}</span>
+    </.link>
+    """
+  end
+
   defp visible_footer_links(section, current_scope) do
     section
     |> Map.get("links", [])

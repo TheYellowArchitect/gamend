@@ -406,6 +406,15 @@ defmodule GamendWeb.LeaderboardsLive do
                       >
                         {label}
                       </span>
+                      <span
+                        :for={
+                          badge <-
+                            List.wrap(@view && LeaderboardViews.row_badge(@leaderboard, record))
+                        }
+                        class="badge badge-ghost badge-sm w-fit"
+                      >
+                        {badge}
+                      </span>
                     </div>
                     <%= if record.user_id != nil and record.user_id == @current_user_id do %>
                       <span class="badge badge-primary badge-sm">{gettext("You")}</span>

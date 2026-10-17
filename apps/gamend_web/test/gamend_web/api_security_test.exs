@@ -22,13 +22,17 @@ defmodule GamendWeb.ApiSecurityTest do
     end
   end
 
+  # `:api_auth_while_banned` is `:api_auth` without the account-ban refusal:
+  # what a banned account may still call (`GET` and `DELETE /me`).
+  defp authenticated?(pipes), do: :api_auth in pipes or :api_auth_while_banned in pipes
+
   defp bearer?(%OpenApiSpex.Operation{security: security}),
     do: Enum.any?(security || [], &Map.has_key?(&1, "authorization"))
 
   test "every operation behind :api_auth declares the bearer token" do
     missing =
       for {operation, pipes} <- operations(),
-          :api_auth in pipes,
+          authenticated?(pipes),
           not bearer?(operation),
           do: operation.operationId
 
@@ -57,7 +61,7 @@ defmodule GamendWeb.ApiSecurityTest do
   test "no operation behind :api_auth declares anonymous access" do
     wrong =
       for {operation, pipes} <- operations(),
-          :api_auth in pipes,
+          authenticated?(pipes),
           %{} in (operation.security || []),
           do: operation.operationId
 
@@ -83,7 +87,7 @@ defmodule GamendWeb.ApiSecurityTest do
   test "no operation without authentication declares the bearer token" do
     extra =
       for {operation, pipes} <- operations(),
-          :api_auth not in pipes and :api_optional_auth not in pipes,
+          not authenticated?(pipes) and :api_optional_auth not in pipes,
           bearer?(operation),
           do: operation.operationId
 

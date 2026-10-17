@@ -14,14 +14,38 @@ The headers are only parsed when the connecting peer *is* a trusted proxy (loopb
 
 ## IP bans
 
-An IP ban is checked in ETS on every request that reaches it: a banned address gets a bare `403` before any routing happens. An IPv6 address is banned by its /64 network, since one subscriber is usually given a whole /64 and can move around inside it; `ban("2001:db8::1")` is listed as `2001:db8::/64`. An IPv4 address is banned as itself. Static files are served earlier in the chain, so a ban does not cover them. Bans are persisted so they survive restarts, and broadcast over PubSub so every instance in a cluster applies them within moments of the ban being placed.
+An IP ban is checked in ETS on every request that reaches it: a banned address gets a bare `403` before any routing happens. An IPv6 address is banned by its /64 network, since one subscriber is usually given a whole /64 and can move around inside it; `ban("2001:db8::1")` is listed as `2001:db8::/64`. An IPv4 address is banned as itself. Static files are served earlier in the chain, so a ban does not cover them.
 
-Ban and unban from [/admin/rate_limiting](/admin/rate_limiting) (permanent or with a TTL), or from server code:
+IP bans are `Gamend.Bans` rows of kind `:ip`, the table every ban lives in: each has an optional end, a reason, and who placed it. A ban is broadcast over PubSub so every instance in a cluster applies it within moments, and its row is kept after it ends (lifted or expired) as history, deleted by retention after `GAMEND_RETENTION_BANS_DAYS` (365). Banning an address that is already banned replaces its ban.
+
+Ban and unban from [/admin/rate_limiting](/admin/rate_limiting) (a duration from 10 minutes to permanent, and a reason), or from server code:
 
 ```elixir
 GamendWeb.Plugs.IpBan.ban("1.2.3.4")                    # permanent
-GamendWeb.Plugs.IpBan.ban("1.2.3.4", :timer.hours(24))  # 24h
+GamendWeb.Plugs.IpBan.ban("1.2.3.4",                    # 24h
+  expires_at: Gamend.Bans.expires_after(:timer.hours(24)),
+  reason: "Scraping"
+)
 GamendWeb.Plugs.IpBan.unban("1.2.3.4")
+```
+
+## Account bans
+
+An account ban (`Gamend.Bans`, kind `:account`) keeps a player out of the game while letting them see why. A banned account still signs in, refreshes its token and signs out; `GET /api/v1/me` carries its `ban` (`expires_at`, null for permanent, and `reason`), and it can delete itself. Everything else refuses it:
+
+- **API**: every authenticated call answers 403 `account_banned` (`GamendWeb.Plugs.AccountBan`, in the `:api_auth` and `:api_optional_auth` pipelines; a personal API token too).
+- **Socket**: it connects and joins its own user channel, which carries `account_banned` and `account_unbanned`, and nothing else; the user channel refuses its hook calls, KV subscriptions and WebRTC.
+- **Website**: every LiveView sends it to `/suspended` (until when, why, a way to its settings and to log out), its settings excepted; a plain page shows a notice leading there.
+
+A ban placed while the account is connected closes its sockets and open pages within a second (`GamendWeb.AccountBanKicks`), and they reconnect into those limits. Placing one from code:
+
+```elixir
+Gamend.Bans.ban(:account, user.id,
+  expires_at: DateTime.add(DateTime.utc_now(), 7, :day),
+  reason: "Cheating",
+  source: :plugin
+)
+Gamend.Bans.lift(:account, user.id)
 ```
 
 ## Rate limiting

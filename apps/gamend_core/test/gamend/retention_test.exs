@@ -140,23 +140,29 @@ defmodule Gamend.RetentionTest do
     assert Repo.get(Gamend.Chat.Message, live.id)
   end
 
-  test "prunes expired ip bans but keeps permanent and future ones" do
+  test "prunes bans that ended past the window but keeps active and recent ones" do
+    Application.put_env(:gamend_core, Gamend.Retention, bans_days: 30)
     now = DateTime.utc_now(:second)
+    long_ago = DateTime.add(now, -40, :day)
 
-    expired =
-      Repo.insert!(%Gamend.IpBans.IpBan{ip: "10.0.0.1", expires_at: DateTime.add(now, -60)})
+    ban = fn attrs ->
+      Repo.insert!(struct(%Gamend.Bans.Ban{kind: :ip, subject: "10.0.0.#{unique()}"}, attrs))
+    end
 
-    future =
-      Repo.insert!(%Gamend.IpBans.IpBan{ip: "10.0.0.2", expires_at: DateTime.add(now, 3600)})
-
-    permanent = Repo.insert!(%Gamend.IpBans.IpBan{ip: "10.0.0.3", expires_at: nil})
+    expired = ban.(%{expires_at: long_ago})
+    lifted = ban.(%{lifted_at: long_ago})
+    recent = ban.(%{expires_at: DateTime.add(now, -1, :day)})
+    future = ban.(%{expires_at: DateTime.add(now, 3600)})
+    permanent = ban.(%{expires_at: nil})
 
     results = Retention.prune_all()
 
-    assert results.expired_ip_bans == 1
-    refute Repo.get(Gamend.IpBans.IpBan, expired.id)
-    assert Repo.get(Gamend.IpBans.IpBan, future.id)
-    assert Repo.get(Gamend.IpBans.IpBan, permanent.id)
+    assert results.bans == 2
+    refute Repo.get(Gamend.Bans.Ban, expired.id)
+    refute Repo.get(Gamend.Bans.Ban, lifted.id)
+    assert Repo.get(Gamend.Bans.Ban, recent.id)
+    assert Repo.get(Gamend.Bans.Ban, future.id)
+    assert Repo.get(Gamend.Bans.Ban, permanent.id)
   end
 
   describe "lobby snapshots" do

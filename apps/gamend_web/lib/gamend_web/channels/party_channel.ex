@@ -38,8 +38,14 @@ defmodule GamendWeb.PartyChannel do
   alias GamendWeb.ChannelUpdates
   alias GamendWeb.Serializers
 
+  # A banned account joins no channel but its own user channel.
   @impl true
-  def join("party:" <> party_id_str, _payload, socket) do
+  def join(topic, payload, socket) do
+    with :ok <- GamendWeb.UserSocket.refuse_banned(socket),
+         do: join_topic(topic, payload, socket)
+  end
+
+  defp join_topic("party:" <> party_id_str, _payload, socket) do
     current_scope = Map.get(socket.assigns, :current_scope)
 
     with {:ok, party_id} <- Ecto.UUID.cast(party_id_str),

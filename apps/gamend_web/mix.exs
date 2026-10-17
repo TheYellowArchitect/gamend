@@ -200,7 +200,7 @@ defmodule GamendWeb.MixProject do
       ],
       # Observability and runtime plumbing a host runs but rarely calls.
       Runtime: [
-        ~r/^GamendWeb\.(PromEx|Telemetry|RateLimit|ConnectionTracker|AdminLogBuffer|FileLogHandler|IpBanSync|HostSupervision|RuntimeIntrospection|RealtimeEvents|GeoCountryCleaner|HostContentStatic|HostLayouts)/
+        ~r/^GamendWeb\.(PromEx|Telemetry|RateLimit|ConnectionTracker|AdminLogBuffer|FileLogHandler|HostSupervision|RuntimeIntrospection|RealtimeEvents|GeoCountryCleaner|HostContentStatic|HostLayouts)/
       ]
     ]
   end

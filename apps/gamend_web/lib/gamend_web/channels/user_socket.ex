@@ -90,6 +90,26 @@ defmodule GamendWeb.UserSocket do
     end
   end
 
+  @doc """
+  `{:error, %{reason: "account_banned"}}` when the socket's account is banned
+  (`Gamend.Bans`), else `:ok`.
+
+  A banned account still connects, so it hears `account_banned` and
+  `account_unbanned` on its user channel. Every other channel refuses it at
+  join, and the user channel refuses its actions (hook calls, KV
+  subscriptions, WebRTC). A ban placed while it is connected closes the
+  socket (`GamendWeb.AccountBanKicks`), so what it had joined is left too.
+  """
+  @spec refuse_banned(Phoenix.Socket.t()) :: :ok | {:error, %{reason: String.t()}}
+  def refuse_banned(socket) do
+    with user_id when is_binary(user_id) <- Scope.user_id(socket.assigns[:current_scope]),
+         true <- Gamend.Bans.banned?(:account, user_id) do
+      {:error, %{reason: "account_banned"}}
+    else
+      _ -> :ok
+    end
+  end
+
   # The client's log session id, carried so server lines logged for this socket
   # correlate with the client's own uploaded lines. Same param shapes as the
   # token and format, because clients differ in how they nest connect params.

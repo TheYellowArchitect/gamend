@@ -48,8 +48,10 @@ defmodule Gamend.Retention do
     for N minutes, in minutes rather than days. The same window releases a lobby
     seat held by a long-offline player. A party everyone abandoned is disbanded
     on its own window, `GAMEND_RETENTION_ABANDONED_PARTY_MINUTES` (15).
+  - `GAMEND_RETENTION_BANS_DAYS` (365) — IP and account bans that ended (lifted
+    or expired) more than N days ago. An active ban is never deleted.
 
-  Expired IP bans, OAuth sessions older than a day, user tokens past their own
+  OAuth sessions older than a day, user tokens past their own
   context's validity, personal API tokens that can no longer authenticate
   (expired, or older than their owner's last credential change), login
   lockouts whose window and lock have run out, accounts past the deletion date
@@ -367,7 +369,7 @@ defmodule Gamend.Retention do
       oauth_sessions: fn ->
         prune_older_than(Gamend.OAuthSession, @oauth_session_ttl_days)
       end,
-      expired_ip_bans: &prune_expired_ip_bans/0,
+      bans: fn -> Gamend.Bans.prune(config(:bans_days)) end,
       expired_user_tokens: &prune_expired_user_tokens/0,
       login_lockouts: fn -> delete_in_batches(LoginLockouts.expired_query()) end,
       scheduled_deletions: &delete_due_accounts/0,
@@ -795,19 +797,6 @@ defmodule Gamend.Retention do
   end
 
   defp avatar_owner_id(_key), do: :error
-
-  defp prune_expired_ip_bans do
-    now = DateTime.utc_now(:second)
-
-    {count, _} =
-      Repo.delete_all(
-        from(b in Gamend.IpBans.IpBan,
-          where: not is_nil(b.expires_at) and b.expires_at < ^now
-        )
-      )
-
-    count
-  end
 
   # Releases the seat of a player who has been offline past the window while
   # their lobby is still alive. `prune_lobbies` below only fires once EVERY
@@ -1243,6 +1232,13 @@ defmodule Gamend.Retention do
     doc:
       "Delete per-user daily activity rows (DAU / D1-D7-D30 source) older than N days. " <>
         "0 keeps forever. Below 60 the admin retention cohorts go blank."
+  )
+
+  setting(:bans_days, :integer,
+    default: 365,
+    doc:
+      "Delete bans (IP and account) that ended, lifted or expired, more than N days ago. " <>
+        "0 keeps them all. An active ban is never deleted."
   )
 
   setting(:analytics_events_days, :integer,
