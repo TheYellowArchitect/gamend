@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-334 settings across 31 groups.
+330 settings across 30 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -191,16 +191,6 @@ Live values, and where each one came from, are on the
 | `GAMEND_HOOKS_CALL_TIMEOUT_IN_TRANSACTION_MS` | integer | `5000` | The same, for a hook called inside a database transaction: on SQLite that transaction holds the only write connection while the hook runs. |
 | `GAMEND_HOOKS_CALL_TIMEOUT_MS` | integer | `60000` | How long a plugin hook or RPC may run before it is killed, in ms. The caller's request waits that long. |
 | `GAMEND_HOOKS_SLOW_THRESHOLD_MS` | integer | `200` | Log a hook call as slow when it takes longer than this, in ms. |
-
-
-## IndexNow
-
-| Variable | Type | Default | Notes |
-|---|---|---|---|
-| `GAMEND_INDEX_NOW_ENABLED` | boolean | `false` | Notify IndexNow search engines (Bing, Yandex, Seznam — not Google) when pages change. |
-| `GAMEND_INDEX_NOW_ENDPOINT` | string | `"https://api.indexnow.org/indexnow"` | IndexNow submission endpoint. Any participating engine's endpoint reaches all of them. |
-| `GAMEND_INDEX_NOW_KEY` | string | - | IndexNow key, 8-128 hex characters. Public by design — it is served at /<key>.txt to prove domain ownership. Warns if unset when `GAMEND_INDEX_NOW_ENABLED` is `true`. |
-| `GAMEND_INDEX_NOW_TIMEOUT_MS` | integer | `10000` | How long to wait for the IndexNow endpoint before giving up. |
 
 
 ## Limits

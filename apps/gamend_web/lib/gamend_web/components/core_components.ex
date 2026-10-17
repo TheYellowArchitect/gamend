@@ -1098,10 +1098,10 @@ defmodule GamendWeb.CoreComponents do
     """
   end
 
-  defp card_classes, do: "card bg-base-200 transition"
+  defp card_classes, do: "card bg-base-200"
 
-  defp clickable_classes,
-    do: "cursor-pointer hover:bg-base-300 hover:shadow-md motion-safe:hover:-translate-y-0.5"
+  # Its fill is base-200 already, so the hover's is a step past it.
+  defp clickable_classes, do: "card-hover cursor-pointer hover:bg-base-300"
 
   defp render_slot_card_body(assigns) do
     ~H"""

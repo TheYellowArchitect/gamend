@@ -56,10 +56,10 @@ defmodule GamendWeb.AdminLive.Translations do
               <div
                 :for={stats <- @completeness}
                 class={[
-                  "card p-4 cursor-pointer transition-all hover:shadow-md",
+                  "card-hover card p-4 cursor-pointer",
                   if(stats.locale == @selected_locale,
-                    do: "bg-primary/10 ring-2 ring-primary",
-                    else: "bg-base-100"
+                    do: "bg-primary/10 ring-2 ring-primary hover:bg-primary/10",
+                    else: "bg-base-100 hover:bg-base-100"
                   )
                 ]}
                 phx-click="select_locale"

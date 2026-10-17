@@ -77,9 +77,7 @@ User-agent: Google-InspectionTool
 # through to the `User-agent: *` deny at the bottom. Note it is
 # NOT Google-Extended: training stays blocked in the group above.
 User-agent: GoogleOther
-# Other search indexes. Bingbot matters twice over: it is one of
-# the engines IndexNow reaches, so blocking it would make every
-# ping a dead end.
+# Other search indexes.
 User-agent: Bingbot
 User-agent: SeznamBot
 User-agent: DuckDuckBot

@@ -5,7 +5,7 @@ defmodule GamendWeb.Sitemap.Source do
   Core owns the dating machinery (`GamendWeb.Sitemap.Lastmod`) but has no idea
   what a host's pages are made of — one host's page is a blog post, another's
   is a slice of a dictionary. The host implements this behaviour; the mix task
-  and the change notifier both drive it through here.
+  and the sitemap cache both drive it through here.
 
   Configure the implementation and where its manifest lives:
 
@@ -38,15 +38,6 @@ defmodule GamendWeb.Sitemap.Source do
   @callback entries() :: [Lastmod.entry()]
 
   @doc """
-  Every public URL a key is visible at — all of its locale variants.
-
-  Only needed to notify search engines of changes; `mix gamend.sitemap.lastmod
-  --notify` maps the keys that moved through this and submits the result to
-  `GamendWeb.IndexNow`. Routing belongs to the host, so the mapping does too.
-  """
-  @callback urls(key :: String.t()) :: [String.t()]
-
-  @doc """
   Everything besides the manifest that changes the rendered sitemap.
 
   Read by `GamendWeb.Sitemap.Cache` to build the signature its keys and ETags
@@ -64,24 +55,7 @@ defmodule GamendWeb.Sitemap.Source do
   """
   @callback signature_inputs() :: [term()]
 
-  @optional_callbacks urls: 1, signature_inputs: 0
-
-  @doc """
-  URLs for the keys that changed, via the source's `c:urls/1`.
-
-  An empty list when the source does not implement it — there is nothing
-  sensible to guess, and submitting wrong URLs is worse than submitting none.
-  """
-  @spec urls_for([String.t()]) :: [String.t()]
-  def urls_for(keys) do
-    module = source()
-
-    if module && Code.ensure_loaded?(module) && function_exported?(module, :urls, 1) do
-      Enum.flat_map(keys, &module.urls/1)
-    else
-      []
-    end
-  end
+  @optional_callbacks signature_inputs: 0
 
   @doc """
   The source's `c:signature_inputs/0`, or an empty list when it has none.

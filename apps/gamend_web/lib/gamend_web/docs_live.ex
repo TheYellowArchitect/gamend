@@ -329,7 +329,7 @@ defmodule GamendWeb.DocsLive do
           <.link
             :for={guide <- category.guides}
             navigate={"#{@item_path}/#{guide.slug}"}
-            class="card block bg-base-100 shadow-sm transition-shadow hover:shadow-md"
+            class="card-hover card block bg-base-100 shadow-sm"
           >
             <div class="card-body flex-row items-center gap-3 py-4">
               <.icon name={guide.icon} class={"size-6 shrink-0 opacity-80 #{category.color}"} />
@@ -784,7 +784,7 @@ defmodule GamendWeb.DocsLive do
       <.link
         :for={entry <- @entries}
         navigate={"#{@item_path}/#{entry.slug}"}
-        class="card bg-base-100 shadow-sm transition-shadow hover:shadow-md"
+        class="card-hover card bg-base-100 shadow-sm"
       >
         <div class="card-body gap-2 py-4">
           <span class="card-title flex items-center gap-2 text-base">

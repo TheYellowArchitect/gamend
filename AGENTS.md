@@ -227,7 +227,7 @@ invariants code must keep.
 | `Gamend.Hooks` | [server scripting](priv/docs/40-gameplay/90-server-scripting.md) | See Hooks below |
 | `Gamend.Content`, `Gamend.Theme` | [theme](priv/docs/10-setup/50-theme.md) | `Content` serves `CHANGELOG.md`, `ROADMAP.md`, `blog/` and `priv/docs/` (paths in `lib/gamend_host/content_paths.ex`) |
 
-Web-side features with no context: the site search palette (`GamendWeb.SearchIndex`; host content in `lib/gamend_host/search.ex`), the sitemap (`GamendWeb.Sitemap.*`; host pages in `lib/gamend_host/sitemap/source.ex` and `sitemap_controller.ex`), IndexNow (`GamendWeb.IndexNow`), and the public feature gates (`GamendWeb.Features`, `GAMEND_FEATURES_*`).
+Web-side features with no context: the site search palette (`GamendWeb.SearchIndex`; host content in `lib/gamend_host/search.ex`), the sitemap (`GamendWeb.Sitemap.*`; host pages in `lib/gamend_host/sitemap/source.ex` and `sitemap_controller.ex`), and the public feature gates (`GamendWeb.Features`, `GAMEND_FEATURES_*`).
 
 ### Hooks
 
@@ -298,7 +298,7 @@ apps/
       components/                # core_components, layouts, host_layouts*
       router/shared.ex           # route macros
       auth/                      # Guardian JWT
-      sitemap/, search_index/, index_now.ex
+      sitemap/, search_index/
     assets/js/            # app.js, webrtc.js, hooks
     test/                 # controller, channel, LiveView tests
 lib/gamend_host/          # host: application, router, search, sitemap, page meta

@@ -29,15 +29,7 @@ defmodule GamendHost.Sitemap.Source do
   @behaviour GamendWeb.Sitemap.Source
 
   alias Gamend.Content
-  alias GamendWeb.Plugs.LocalePath
   alias GamendWeb.Sitemap.Lastmod
-
-  # Where each non-guide key is served.
-  @pages %{
-    "docs" => "/docs/setup",
-    "changelog" => "/changelog",
-    "roadmap" => "/roadmap"
-  }
 
   @impl true
   def entries do
@@ -50,16 +42,6 @@ defmodule GamendHost.Sitemap.Source do
     ] ++ guides
   end
 
-  @impl true
-  def urls("docs/" <> slug), do: locale_urls("/docs/" <> slug)
-
-  def urls(key) do
-    case Map.fetch(@pages, key) do
-      {:ok, loc} -> locale_urls(loc)
-      :error -> []
-    end
-  end
-
   # Title and summary are hashed alongside the body because both are visible —
   # on the guide's own page and in its card on the hub.
   defp guide_entries do
@@ -69,26 +51,5 @@ defmodule GamendHost.Sitemap.Source do
         content: [doc.title, doc.summary || "", Content.doc_html(doc.slug) || ""]
       }
     end)
-  end
-
-  # Every public URL a key is visible at, so `--notify` can submit them all.
-  defp locale_urls(loc) do
-    base = String.trim_trailing(GamendWeb.endpoint().url(), "/")
-
-    if LocalePath.localized_path?(loc) do
-      default = LocalePath.default_locale()
-
-      [
-        base <> loc
-        | LocalePath.hreflang_locales()
-          |> Enum.reject(&(&1 == default))
-          |> Enum.map(fn locale ->
-            suffix = if loc == "/", do: "", else: loc
-            base <> "/" <> LocalePath.url_locale(locale) <> suffix
-          end)
-      ]
-    else
-      [base <> loc]
-    end
   end
 end

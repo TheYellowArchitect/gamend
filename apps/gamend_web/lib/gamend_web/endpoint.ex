@@ -60,7 +60,6 @@ defmodule GamendWeb.Endpoint do
   # After ForceSSL so a plain-HTTP request to an alias costs one redirect to
   # https on the canonical host rather than two hops.
   plug GamendWeb.Plugs.CanonicalHost
-  plug GamendWeb.Plugs.IndexNowKey
   plug GamendWeb.Plugs.SecurityHeaders
   plug GamendWeb.Plugs.WellKnown
   # The LiveView route table `live_nav.js` reads (`GamendWeb.LiveNav`).

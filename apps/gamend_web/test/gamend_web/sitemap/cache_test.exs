@@ -13,7 +13,6 @@ defmodule GamendWeb.Sitemap.CacheTest do
   defmodule TestSource do
     @behaviour GamendWeb.Sitemap.Source
     def entries, do: []
-    def urls(key), do: ["https://example.test/" <> key]
     def signature_inputs, do: [Application.get_env(:gamend_web, :sitemap_test_version, 1)]
   end
 
@@ -96,12 +95,10 @@ defmodule GamendWeb.Sitemap.CacheTest do
     assert {:ok, _} = Storage.get(new_key)
   end
 
-  test "the source names the URLs of changed keys; with no source, none" do
-    assert Source.urls_for(["a", "b"]) == ["https://example.test/a", "https://example.test/b"]
+  test "the source gives its signature inputs; with no source, none" do
     assert Source.signature_inputs() == [1]
 
     Application.put_env(:gamend_web, GamendWeb.Sitemap, [])
-    assert Source.urls_for(["a"]) == []
     assert Source.signature_inputs() == []
     assert Source.source() == nil
   end

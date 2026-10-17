@@ -87,9 +87,8 @@ defmodule GamendWeb.Sitemap.Lastmod do
 
   Returns `{manifest, changed_keys}`. A key keeps its stored date while its
   hash is unchanged; otherwise it takes `today` — or its `:seed_date`, when the
-  key is new and one was supplied. `changed_keys` lists what actually moved,
-  which is what a change notifier (IndexNow) wants to submit; a seeded first
-  sighting is not reported as a change, because nothing changed, we simply had
+  key is new and one was supplied. `changed_keys` lists what actually moved; a
+  seeded first sighting is not reported as a change, because nothing changed, we simply had
   not looked before.
   """
   @spec stamp(manifest(), [entry()], Date.t()) :: {manifest(), [String.t()]}

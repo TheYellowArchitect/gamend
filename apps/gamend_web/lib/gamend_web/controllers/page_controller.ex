@@ -1,6 +1,7 @@
 defmodule GamendWeb.PageController do
   use GamendWeb, :controller
 
+  alias Gamend.Accounts.Scope
   alias GamendWeb.PresentationPage
 
   def home(conn, _params) do
@@ -114,7 +115,7 @@ defmodule GamendWeb.PageController do
   defp presentation_body(conn, page, background_icons, locale, path) do
     scope = conn.assigns[:current_scope]
 
-    if scope && Gamend.Accounts.Scope.user(scope),
+    if scope && Scope.user(scope),
       do: PresentationPage.personal_body(page, background_icons, scope),
       else: PresentationPage.cached_body(page, background_icons, locale, path)
   end

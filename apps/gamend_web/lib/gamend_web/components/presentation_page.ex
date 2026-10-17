@@ -482,7 +482,7 @@ defmodule GamendWeb.PresentationPage do
         <span
           :if={button["disabled"] == true}
           aria-disabled="true"
-          class={[button_class(button), "cursor-default opacity-70 hover:scale-100"]}
+          class={[button_class(button), "pointer-events-none opacity-70"]}
         >
           <.button_content button={button} />
         </span>
@@ -603,7 +603,7 @@ defmodule GamendWeb.PresentationPage do
     ~H"""
     <a
       href={@card["href"]}
-      class="flex h-full flex-col gap-2 rounded-xl border border-base-300 bg-base-100/80 p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+      class="card-hover flex h-full flex-col gap-2 rounded-xl border border-base-300 bg-base-100/80 p-4"
     >
       <.card_inner card={@card} />
     </a>
@@ -843,7 +843,7 @@ defmodule GamendWeb.PresentationPage do
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         ]}
       >
-        <span class="grid size-16 place-items-center rounded-full bg-base-100/85 text-base-content shadow-lg ring-1 ring-base-content/10 backdrop-blur-sm transition group-hover:scale-105 group-hover:bg-base-100">
+        <span class="grid size-16 place-items-center rounded-full bg-base-100/85 text-base-content shadow-lg ring-1 ring-base-content/10 backdrop-blur-sm transition group-hover:bg-base-100">
           <.icon name="hero-play-solid" class="size-7" />
         </span>
       </button>
@@ -1603,23 +1603,18 @@ defmodule GamendWeb.PresentationPage do
   defp media_shell_class,
     do: "flex w-full items-center justify-center"
 
+  # A `btn`, so it answers the pointer as every other button does: colour on
+  # hover, a press on click, nothing growing (2026-10-17). `h-11 text-base`:
+  # a call to action, a size past `btn`'s own.
   defp button_class(button) do
-    base =
-      "group flex min-h-11 w-full items-center justify-center gap-2.5 rounded-lg px-5 py-2.5 text-base font-semibold transition hover:scale-[1.02] active:scale-[0.98] sm:w-auto sm:min-w-36"
+    base = "btn h-11 w-full gap-2.5 px-5 text-base sm:w-auto sm:min-w-36"
 
     style =
       case Map.get(button, "style", "default") do
-        "primary" ->
-          "bg-primary text-primary-content shadow-lg hover:bg-primary/90"
-
-        "secondary" ->
-          "bg-secondary text-secondary-content shadow-lg hover:bg-secondary/90"
-
-        "accent" ->
-          "bg-accent text-accent-content shadow-lg hover:bg-accent/90"
-
-        _ ->
-          "border border-base-300/85 bg-base-100/88 text-base-content shadow-lg shadow-black/6 backdrop-blur-md hover:bg-base-100"
+        "primary" -> "btn-primary"
+        "secondary" -> "btn-secondary"
+        "accent" -> "btn-accent"
+        _ -> "btn-surface"
       end
 
     [base, style]

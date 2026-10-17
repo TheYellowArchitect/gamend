@@ -210,7 +210,7 @@ defmodule GamendWeb.ContentPages do
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <article
                     :for={post <- posts}
-                    class="overflow-hidden rounded-3xl border border-base-300 bg-base-100/95 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    class="card-hover overflow-hidden rounded-3xl border border-base-300 bg-base-100/95 shadow-sm"
                   >
                     <.link navigate={~p"/blog/#{post.slug}"} class="flex h-full flex-col">
                       <%!-- The post's picture, cropped to a landscape tile
@@ -332,7 +332,7 @@ defmodule GamendWeb.ContentPages do
               <.link
                 :if={@prev}
                 navigate={~p"/blog/#{@prev.slug}"}
-                class="group flex h-full flex-col rounded-2xl border border-base-300 bg-base-100/90 p-4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                class="card-hover group flex h-full flex-col rounded-2xl border border-base-300 bg-base-100/90 p-4"
               >
                 <span class="text-xs uppercase tracking-[0.2em] text-muted">
                   {gettext("Newer")}
@@ -346,7 +346,7 @@ defmodule GamendWeb.ContentPages do
               <.link
                 :if={@next}
                 navigate={~p"/blog/#{@next.slug}"}
-                class="group flex h-full flex-col rounded-2xl border border-base-300 bg-base-100/90 p-4 text-right transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                class="card-hover group flex h-full flex-col rounded-2xl border border-base-300 bg-base-100/90 p-4 text-right"
               >
                 <span class="text-xs uppercase tracking-[0.2em] text-muted">
                   {gettext("Older")}

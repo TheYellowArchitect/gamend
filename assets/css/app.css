@@ -183,6 +183,43 @@
   }
 }
 
+/* `card-hover`: how a card answers the pointer. A card is a box that is one
+   link or one click (a tile, a topic, a Continue card, Previous/Next, a
+   folded panel, a blog post): it rises 2 px and takes a shadow, a primary
+   edge and the base-200 fill. A control (a button, a chip, a row, a key)
+   never rises: it changes colour and presses, as daisyUI's `btn` does, and
+   nothing grows on hover (2026-10-17, user: one hover for cards, one for
+   controls). A card whose own fill is base-200 or a tint names its hover
+   fill with `hover:bg-*`, which the sheet puts after this. A card with a
+   button of its own beside it (the X on a recent card) sits in a
+   `group/card` parent, so the card stays up while the X is under the
+   pointer. Hover only where a pointer hovers, the rise only where motion
+   is welcome. Core's templates use it, so every host stylesheet declares
+   it. */
+@utility card-hover {
+  transition-property: color, background-color, border-color, box-shadow, translate;
+  transition-duration: var(--motion-ease, 120ms);
+  transition-timing-function: ease;
+
+  @media (hover: hover) {
+    &:hover,
+    :where(.group\/card):hover > & {
+      @apply border-primary/40 bg-base-200 shadow-md;
+    }
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    &:hover,
+    :where(.group\/card):hover > & {
+      @apply -translate-y-0.5;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 /* `text-muted`: the site's second text tone, for a detail under something.
    Text is `text-base-content` or this, nothing else: it is the lightest tone
    that reads at 4.5:1 on every base of both themes (`/60` was 4.46 on the

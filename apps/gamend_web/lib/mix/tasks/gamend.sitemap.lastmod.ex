@@ -8,7 +8,6 @@ defmodule Mix.Tasks.Gamend.Sitemap.Lastmod do
       mix gamend.sitemap.lastmod           # rewrite the manifest
       mix gamend.sitemap.lastmod --check   # fail if it is stale
       mix gamend.sitemap.lastmod --dry-run # report changes, write nothing
-      mix gamend.sitemap.lastmod --notify  # rewrite, then tell IndexNow
 
   Run it whenever content lands — after a translation sync, before a deploy —
   and commit the result. The manifest is data, not a build artifact: it is the
@@ -18,9 +17,6 @@ defmodule Mix.Tasks.Gamend.Sitemap.Lastmod do
   `--check` belongs in CI next to `mix gamend.settings.env_example --check`: it
   fails when content was edited without restamping, which is the mistake that
   leaves the sitemap advertising dates that no longer match the pages.
-
-  The list of changed keys is printed so it can be fed to a change notifier —
-  see `GamendWeb.IndexNow`.
   """
 
   use Mix.Task
@@ -38,7 +34,7 @@ defmodule Mix.Tasks.Gamend.Sitemap.Lastmod do
 
     {opts, _rest} =
       OptionParser.parse!(argv,
-        strict: [check: :boolean, dry_run: :boolean, notify: :boolean, output: :string]
+        strict: [check: :boolean, dry_run: :boolean, output: :string]
       )
 
     source = Source.source() || Mix.raise(no_source())
@@ -54,27 +50,6 @@ defmodule Mix.Tasks.Gamend.Sitemap.Lastmod do
       Keyword.get(opts, :check, false) -> check(path, next)
       Keyword.get(opts, :dry_run, false) -> Mix.shell().info("dry run — #{path} not written")
       true -> write(path, next)
-    end
-
-    # After writing, never before: a notification for a date that failed to
-    # persist would be a claim we cannot back up on the next crawl.
-    if Keyword.get(opts, :notify, false) and not Keyword.get(opts, :dry_run, false) do
-      notify(changed)
-    end
-  end
-
-  defp notify([]), do: Mix.shell().info("nothing changed — no IndexNow submission")
-
-  defp notify(changed) do
-    case Source.urls_for(changed) do
-      [] ->
-        Mix.shell().info("no URLs for the changed keys — does the source implement urls/1?")
-
-      urls ->
-        case GamendWeb.IndexNow.submit(urls) do
-          :ok -> Mix.shell().info("IndexNow: submitted #{length(urls)} URLs")
-          {:error, reason} -> Mix.shell().error("IndexNow: not submitted (#{inspect(reason)})")
-        end
     end
   end
 
