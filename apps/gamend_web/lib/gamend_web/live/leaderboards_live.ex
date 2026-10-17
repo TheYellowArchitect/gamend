@@ -9,6 +9,11 @@ defmodule GamendWeb.LeaderboardsLive do
   A board's page has a button to where it is climbed, beside its title,
   when the host says where (`Leaderboards.host_action/2`,
   `config :gamend_core, :leaderboard_action`).
+
+  A board with several rankings may declare views in its metadata: a tab
+  per key and filters that add a part to it (`GamendWeb.LeaderboardViews`),
+  held in the URL (`?tab=match&lang=es_es`). Every read on the page (the
+  rows, their count, the reader's own rank) is the view's one key.
   """
   use GamendWeb, :live_view
 
@@ -16,6 +21,7 @@ defmodule GamendWeb.LeaderboardsLive do
   alias Gamend.Leaderboards
   alias Gamend.Leaderboards.Leaderboard
   alias GamendWeb.ContentText
+  alias GamendWeb.LeaderboardViews
   alias GamendWeb.LiveHelpers
   alias GamendWeb.OnMount.SeoTitle
   alias GamendWeb.Plugs.FeatureGate
@@ -39,6 +45,8 @@ defmodule GamendWeb.LeaderboardsLive do
       |> assign(:records_search, "")
       |> assign(:user_record, nil)
       |> assign(:board_action, nil)
+      |> assign(:view, nil)
+      |> assign(:record_key, "")
       |> reload_groups()
 
     {:ok, socket}
@@ -46,7 +54,7 @@ defmodule GamendWeb.LeaderboardsLive do
 
   @impl true
   # A hidden board is shown by the host's own pages, never here.
-  def handle_params(%{"slug" => slug, "id" => id}, _uri, socket) do
+  def handle_params(%{"slug" => slug, "id" => id} = params, _uri, socket) do
     case Leaderboards.get_leaderboard(id) do
       board when is_nil(board) or board.hidden ->
         {:noreply,
@@ -59,26 +67,26 @@ defmodule GamendWeb.LeaderboardsLive do
         cond do
           leaderboard.slug != slug ->
             # Wrong slug, redirect to correct one
-            {:noreply, push_navigate(socket, to: leaderboard_path(leaderboard))}
+            {:noreply, push_navigate(socket, to: leaderboard_path(leaderboard, params))}
 
           Leaderboards.Leaderboard.active?(leaderboard) ->
             # Active leaderboard should use slug-only URL
-            {:noreply, push_navigate(socket, to: ~p"/leaderboards/#{slug}")}
+            {:noreply, push_navigate(socket, to: leaderboard_path(leaderboard, params))}
 
           true ->
-            load_leaderboard(socket, leaderboard)
+            load_leaderboard(socket, leaderboard, params)
         end
     end
   end
 
-  def handle_params(%{"slug" => slug}, _uri, socket) do
+  def handle_params(%{"slug" => slug} = params, _uri, socket) do
     # Slug-only URL: load the active leaderboard directly
     case Leaderboards.get_active_leaderboard_by_slug(slug) do
       board when is_nil(board) or board.hidden ->
         # No active one, redirect to the latest with ID (never a hidden one)
         case Leaderboards.list_leaderboards_by_slug(slug) do
           [latest | _] ->
-            {:noreply, push_navigate(socket, to: ~p"/leaderboards/#{slug}/#{latest.id}")}
+            {:noreply, push_navigate(socket, to: leaderboard_path(latest, params))}
 
           [] ->
             {:noreply,
@@ -89,7 +97,7 @@ defmodule GamendWeb.LeaderboardsLive do
 
       leaderboard ->
         # Active leaderboard found, load it directly
-        load_leaderboard(socket, leaderboard)
+        load_leaderboard(socket, leaderboard, params)
     end
   end
 
@@ -157,6 +165,7 @@ defmodule GamendWeb.LeaderboardsLive do
             records_search={@records_search}
             current_user_id={@current_scope && Scope.user(@current_scope) && @current_scope.user_id}
             locale={@locale}
+            view={@view}
           />
         <% else %>
           <.render_group_list
@@ -286,6 +295,8 @@ defmodule GamendWeb.LeaderboardsLive do
       </div>
     </div>
 
+    <.view_controls :if={@view} view={@view} leaderboard={@leaderboard} />
+
     <%= if @user_record do %>
       <div class="card bg-primary/10 border border-primary/30 mb-6">
         <div class="card-body py-4">
@@ -389,6 +400,12 @@ defmodule GamendWeb.LeaderboardsLive do
                         } />
                       </span>
                       <.user_title user={record.user} />
+                      <span
+                        :for={label <- row_values(@view, @leaderboard, record)}
+                        class="text-xs text-muted"
+                      >
+                        {label}
+                      </span>
                     </div>
                     <%= if record.user_id != nil and record.user_id == @current_user_id do %>
                       <span class="badge badge-primary badge-sm">{gettext("You")}</span>
@@ -445,7 +462,7 @@ defmodule GamendWeb.LeaderboardsLive do
     new_index = min(socket.assigns.current_season_index + 1, length(slug_lbs) - 1)
     leaderboard = Enum.at(slug_lbs, new_index)
 
-    {:noreply, push_patch(socket, to: leaderboard_path(leaderboard))}
+    {:noreply, push_patch(socket, to: leaderboard_path(leaderboard, view_params(socket)))}
   end
 
   def handle_event("next_season", _, socket) do
@@ -454,8 +471,28 @@ defmodule GamendWeb.LeaderboardsLive do
     new_index = max(socket.assigns.current_season_index - 1, 0)
     leaderboard = Enum.at(slug_lbs, new_index)
 
-    {:noreply, push_patch(socket, to: leaderboard_path(leaderboard))}
+    {:noreply, push_patch(socket, to: leaderboard_path(leaderboard, view_params(socket)))}
   end
+
+  # A filter picked: the view's URL, its tab kept and the filters after the
+  # changed one let go (their values depend on it).
+  def handle_event("view_filter", %{"_target" => [field]} = params, socket) do
+    %{tab: tab, picked: picked} = socket.assigns
+    before = Enum.take_while(picked, fn {f, _} -> f != field end)
+    value = params[field]
+
+    picked =
+      if value in [nil, ""],
+        do: before,
+        else: Enum.reverse([{field, value} | Enum.reverse(before)])
+
+    {:noreply,
+     push_patch(socket,
+       to: leaderboard_path(socket.assigns.selected_leaderboard, query(tab, picked))
+     )}
+  end
+
+  def handle_event("view_filter", _params, socket), do: {:noreply, socket}
 
   def handle_event("records_prev", _, socket),
     do: {:noreply, socket |> LiveHelpers.prev_page(:records_page) |> reload_records()}
@@ -495,8 +532,12 @@ defmodule GamendWeb.LeaderboardsLive do
     page_size = 25
     search = socket.assigns[:records_search] || ""
 
-    records = Leaderboards.list_records(lb.id, page: page, page_size: page_size, search: search)
-    count = Leaderboards.count_records(lb.id, search: search)
+    key = socket.assigns[:record_key] || ""
+
+    records =
+      Leaderboards.list_records(lb.id, key: key, page: page, page_size: page_size, search: search)
+
+    count = Leaderboards.count_records(lb.id, key: key, search: search)
     total_pages = max(1, LiveHelpers.total_pages(count, page_size))
 
     socket
@@ -526,10 +567,10 @@ defmodule GamendWeb.LeaderboardsLive do
   defp register_href(locale),
     do: GamendWeb.HostLayouts.localized_href(~p"/users/register", locale)
 
-  defp get_user_record(socket, leaderboard_id) do
+  defp get_user_record(socket, leaderboard_id, key) do
     case socket.assigns[:current_scope] do
       %{user_id: user_id} when is_binary(user_id) ->
-        case Leaderboards.get_user_record(leaderboard_id, user_id) do
+        case Leaderboards.get_user_record(leaderboard_id, user_id, key: key) do
           {:ok, record} -> record
           _ -> nil
         end
@@ -539,11 +580,12 @@ defmodule GamendWeb.LeaderboardsLive do
     end
   end
 
-  defp load_leaderboard(socket, leaderboard) do
+  defp load_leaderboard(socket, leaderboard, params) do
     # Load all leaderboards with same slug for season navigation
     slug_leaderboards = Leaderboards.list_leaderboards_by_slug(leaderboard.slug)
     current_index = Enum.find_index(slug_leaderboards, &(&1.id == leaderboard.id)) || 0
-    user_record = get_user_record(socket, leaderboard.id)
+    {view, tab, picked, key} = view_for(leaderboard, params)
+    user_record = get_user_record(socket, leaderboard.id, key)
     leaderboard = ContentText.translate(leaderboard)
 
     {:noreply,
@@ -553,6 +595,10 @@ defmodule GamendWeb.LeaderboardsLive do
      |> assign(:slug_leaderboards, ContentText.translate(slug_leaderboards))
      |> assign(:current_season_index, current_index)
      |> assign(:user_record, user_record)
+     |> assign(:view, view)
+     |> assign(:tab, tab)
+     |> assign(:picked, picked)
+     |> assign(:record_key, key)
      |> assign(
        :board_action,
        Leaderboards.host_action(
@@ -568,12 +614,159 @@ defmodule GamendWeb.LeaderboardsLive do
   # Returns the appropriate URL for a leaderboard:
   # - Active leaderboards use slug-only: /leaderboards/weekly_kills
   # - Historical leaderboards use slug/id: /leaderboards/weekly_kills/123
-  defp leaderboard_path(leaderboard) do
-    if Leaderboard.active?(leaderboard) do
-      ~p"/leaderboards/#{leaderboard.slug}"
-    else
-      ~p"/leaderboards/#{leaderboard.slug}/#{leaderboard.id}"
+  defp leaderboard_path(leaderboard, params) do
+    path =
+      if Leaderboard.active?(leaderboard) do
+        ~p"/leaderboards/#{leaderboard.slug}"
+      else
+        ~p"/leaderboards/#{leaderboard.slug}/#{leaderboard.id}"
+      end
+
+    case view_query(params) do
+      "" -> path
+      query -> path <> "?" <> query
     end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Views (`GamendWeb.LeaderboardViews`)
+  # ---------------------------------------------------------------------------
+
+  # A board's view from the URL: its declared views, the tab, the picked key
+  # filters and the key they read. A board with one ranking reads `""`.
+  defp view_for(leaderboard, params) do
+    case LeaderboardViews.of(leaderboard) do
+      nil ->
+        {nil, nil, [], ""}
+
+      views ->
+        {tab, picked} = LeaderboardViews.pick(leaderboard, views, params)
+        {view(leaderboard, views, tab, picked), tab, picked, LeaderboardViews.key(tab, picked)}
+    end
+  end
+
+  # What the controls draw: the tabs, and each key filter with its values
+  # (sorted by name) while the filters before it are picked.
+  defp view(leaderboard, views, tab, picked) do
+    tabs =
+      for key <- views.tabs do
+        %{
+          key: key,
+          label: LeaderboardViews.tab_label(leaderboard, key),
+          icon: LeaderboardViews.tab_icon(leaderboard, key),
+          active: key == tab,
+          path: leaderboard_path(leaderboard, query(key, []))
+        }
+      end
+
+    filters =
+      views.filters
+      |> Enum.with_index()
+      |> Enum.take_while(fn {_field, i} -> i <= length(picked) end)
+      |> Enum.map(fn {field, i} ->
+        before = Enum.take(picked, i)
+
+        options =
+          leaderboard
+          |> LeaderboardViews.values(tab, before)
+          |> Enum.map(&{LeaderboardViews.value_label(leaderboard, field, &1), &1})
+          |> Enum.sort_by(&String.downcase(elem(&1, 0)))
+
+        %{
+          field: field,
+          label: LeaderboardViews.filter_label(leaderboard, field),
+          options: options,
+          value: picked |> Enum.at(i) |> then(&(&1 && elem(&1, 1)))
+        }
+      end)
+      |> Enum.reject(&(&1.options == []))
+
+    %{views: views, tabs: tabs, filters: filters, picked: picked}
+  end
+
+  # The URL's query for a view: the tab, then the picked filters in order.
+  defp query(tab, picked), do: [{"tab", tab} | picked]
+
+  defp view_params(socket) do
+    case socket.assigns do
+      %{view: %{}, tab: tab, picked: picked} -> query(tab, picked)
+      _ -> []
+    end
+  end
+
+  defp view_query(params) when is_list(params), do: URI.encode_query(params)
+
+  # A URL's view carried through a redirect as it came (any parameter but
+  # the route's own); `LeaderboardViews.pick/3` drops what the board does not
+  # hold.
+  defp view_query(params) when is_map(params) do
+    params
+    |> Map.drop(["slug", "id"])
+    |> Enum.filter(&is_binary(elem(&1, 1)))
+    |> Enum.sort()
+    |> URI.encode_query()
+  end
+
+  # A row's values for the filters left on All: its record's metadata, named.
+  defp row_values(%{views: views, picked: picked}, leaderboard, record) do
+    picked_fields = Enum.map(picked, &elem(&1, 0))
+
+    views.filters
+    |> Enum.reject(&(&1 in picked_fields))
+    |> Enum.flat_map(fn field ->
+      case record.metadata do
+        %{^field => value} when is_binary(value) and value != "" ->
+          [LeaderboardViews.value_label(leaderboard, field, value)]
+
+        _ ->
+          []
+      end
+    end)
+  end
+
+  defp row_values(_view, _leaderboard, _record), do: []
+
+  attr :view, :map, required: true
+  attr :leaderboard, :any, required: true
+
+  # The tabs (one per key) and the key filters, above the reader's rank.
+  defp view_controls(assigns) do
+    ~H"""
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div role="tablist" class="tabs tabs-box flex-wrap w-fit">
+        <.link
+          :for={tab <- @view.tabs}
+          role="tab"
+          patch={tab.path}
+          aria-selected={to_string(tab.active)}
+          class={["tab gap-2", tab.active && "tab-active"]}
+        >
+          <.icon :if={tab.icon} name={tab.icon} class="size-4" />
+          {tab.label}
+        </.link>
+      </div>
+      <form
+        :if={@view.filters != []}
+        id="leaderboard-view-filters"
+        phx-change="view_filter"
+        class="flex flex-wrap gap-3"
+      >
+        <label :for={filter <- @view.filters} class="flex items-center gap-2 text-sm">
+          <span class="text-muted">{filter.label}</span>
+          <select name={filter.field} class="select select-sm">
+            <option value="" selected={is_nil(filter.value)}>{gettext("All")}</option>
+            <option
+              :for={{label, value} <- filter.options}
+              value={value}
+              selected={filter.value == value}
+            >
+              {label}
+            </option>
+          </select>
+        </label>
+      </form>
+    </div>
+    """
   end
 
   # What the score column is called, and what a value in it means. A board that

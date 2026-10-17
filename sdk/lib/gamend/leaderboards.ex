@@ -627,6 +627,29 @@ defmodule Gamend.Leaderboards do
   end
 
   @doc ~S"""
+    Where a board is climbed, for the button on its page and its card:
+    `{label, path}`, or nil. Set `config :gamend_core, :leaderboard_action,
+    {Module, :function}`; it is called as `function(user_id | nil, slug)` and
+    answers `{label, path}` (the label already in the reader's language) or nil.
+    
+    A board only says what it counts ("Most kilometers sailed"), never where
+    that is done, and only the host knows its own pages, as with a quest
+    (`Gamend.Quests.host_action/2`). A path starts with one `/` (`"/games"`); a
+    URL or `"//…"` is dropped. The page keeps the reader's locale prefix on it.
+    
+  """
+  @spec host_action(String.t(), Ecto.UUID.t() | nil) :: {String.t(), String.t()} | nil
+  def host_action(_slug, _user_id) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        nil
+
+      _ ->
+        raise "Gamend.Leaderboards.host_action/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     Forget the cached leaderboard lookups.
     
     Every write in here does this already. It is public because a CALLER can also

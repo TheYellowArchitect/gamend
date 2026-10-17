@@ -628,7 +628,7 @@ defmodule GamendWeb.UserLive.Settings.GroupsTab do
                   </tr>
                 </thead>
                 <tbody id="browse-groups" phx-update="stream">
-                  <tr class="hidden only:table-row">
+                  <tr id="browse-groups-empty" class="hidden only:table-row">
                     <td colspan="4" class="text-center text-sm text-muted">
                       {gettext("No results.")}
                     </td>

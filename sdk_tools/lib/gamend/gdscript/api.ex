@@ -425,6 +425,7 @@ defmodule Gamend.GDScript.API do
       "get_record" => [1, 2, 3],
       "get_record!" => [1],
       "get_user_record" => [2, 3],
+      "host_action" => [2],
       "invalidate_cache" => [0],
       "list_leaderboard_groups" => [0, 1],
       "list_leaderboards" => [0, 1],

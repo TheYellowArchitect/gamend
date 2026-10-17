@@ -29,7 +29,10 @@ defmodule Gamend.Leaderboards do
   board with one ranking. A host keeping, say, a best per game and language
   on one board submits with `key: "match|60|es_es"` and metadata naming the
   parts; `list_records/2` with `key: :all` and `meta:` reads across keys
-  (`best_per_user: true` keeps each player's best of them).
+  (`best_per_user: true` keeps each player's best of them). `list_keys/2`
+  names the keys a board holds, and `list_records_above/3` the records just
+  ahead of a score on one key. A board can show its keys as tabs and
+  filters on `/leaderboards` (`GamendWeb.LeaderboardViews`).
 
   ## Hidden boards
 
@@ -1375,6 +1378,112 @@ defmodule Gamend.Leaderboards do
         rank: fragment("row_number() over (order by ? asc, ? asc)", r.score, r.inserted_at)
       }
     )
+  end
+
+  @doc """
+  The listed records just ahead of `score` on one key, nearest first: the
+  runs a player at that score would overtake next. Ahead means a strictly
+  better score (higher on a `:desc` board, lower on an `:asc` one), so a tie
+  is not ahead. Each record carries its `rank`.
+
+  It needs no record of the caller's: a first-timer reads it with their
+  first score, and a guest with theirs, though a guest's own record is not
+  listed (`Gamend.AccountRequired`). `list_records_around_user/3` needs the
+  caller on the board. Labels' records are listed, like any.
+
+  ## Options
+
+    * `:key` — the ranking (default `""`)
+    * `:limit` — how many (default 3)
+  """
+  @spec list_records_above(String.t(), integer()) :: [Record.t()]
+  @spec list_records_above(String.t(), integer(), keyword()) :: [Record.t()]
+  def list_records_above(leaderboard_id, score, opts \\ [])
+      when is_binary(leaderboard_id) and is_integer(score) do
+    case get_leaderboard(leaderboard_id) do
+      nil ->
+        []
+
+      leaderboard ->
+        list_records_above_cached(
+          leaderboard,
+          key_opt(opts),
+          score,
+          max(Keyword.get(opts, :limit, 3), 1)
+        )
+    end
+  end
+
+  # Ranked over the whole key in one statement, as `list_records_around_user/3`
+  # is, so the ranks agree with every other read; then the rows ahead of the
+  # score, the nearest (the highest rank number) first.
+  @decorate cacheable(
+              key:
+                {:leaderboards, :above, records_cache_version(leaderboard.id), leaderboard.id,
+                 leaderboard.sort_order, key, score, limit},
+              opts: [ttl: @records_cache_ttl_ms]
+            )
+  defp list_records_above_cached(
+         %Leaderboard{sort_order: sort_order} = leaderboard,
+         key,
+         score,
+         limit
+       )
+       when is_integer(limit) do
+    ahead =
+      case sort_order do
+        :desc -> dynamic([r], r.score > ^score)
+        :asc -> dynamic([r], r.score < ^score)
+      end
+
+    from(r in Record,
+      join: k in @rank_cte,
+      on: k.id == r.id,
+      where: ^ahead,
+      order_by: [desc: k.rank],
+      limit: ^limit,
+      select: {r, k.rank},
+      preload: [:user]
+    )
+    |> with_cte(@rank_cte, as: ^ranked_records(leaderboard, key))
+    |> Repo.all()
+    |> Enum.map(fn {record, rank} -> %{record | rank: rank} end)
+  end
+
+  @doc """
+  The keys a board holds, sorted, from its listed records; with `prefix:`
+  only the keys starting with it (`"match|"`: every language Word match has
+  runs in). A key only guests have played is not offered.
+  """
+  @spec list_keys(String.t()) :: [String.t()]
+  @spec list_keys(String.t(), keyword()) :: [String.t()]
+  def list_keys(leaderboard_id, opts \\ []) when is_binary(leaderboard_id) do
+    case get_leaderboard(leaderboard_id) do
+      nil -> []
+      leaderboard -> list_keys_cached(leaderboard, Keyword.get(opts, :prefix, ""))
+    end
+  end
+
+  # `substr` reads the same in Postgres and SQLite and needs no LIKE escaping.
+  @decorate cacheable(
+              key:
+                {:leaderboards, :keys, records_cache_version(leaderboard.id), leaderboard.id,
+                 prefix},
+              opts: [ttl: @records_cache_ttl_ms]
+            )
+  defp list_keys_cached(%Leaderboard{id: id} = leaderboard, prefix) when is_binary(prefix) do
+    query = listed(in_key(id, :all), leaderboard, [])
+
+    query =
+      if prefix == "",
+        do: query,
+        else:
+          from(r in query,
+            where: fragment("substr(?, 1, ?)", r.key, ^String.length(prefix)) == ^prefix
+          )
+
+    from(r in query, distinct: true, select: r.key, order_by: r.key)
+    |> Repo.all()
   end
 
   @doc """
