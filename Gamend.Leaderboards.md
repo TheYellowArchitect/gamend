@@ -30,7 +30,10 @@ and `key`, and every read ranks within one key. `""` is the default, a
 board with one ranking. A host keeping, say, a best per game and language
 on one board submits with `key: "match|60|es_es"` and metadata naming the
 parts; `list_records/2` with `key: :all` and `meta:` reads across keys
-(`best_per_user: true` keeps each player's best of them).
+(`best_per_user: true` keeps each player's best of them). `list_keys/2`
+names the keys a board holds, and `list_records_above/3` the records just
+ahead of a score on one key. A board can show its keys as tabs and
+filters on `/leaderboards` (`GamendWeb.LeaderboardViews`).
 
 ## Hidden boards
 
@@ -279,6 +282,16 @@ id whose row is gone, and the next `submit_score/4` fails on the foreign key.
 A caller that sees that can drop the lookup and try again rather than wait out
 the TTL.
 
+# `list_keys`
+
+```elixir
+@spec list_keys(String.t(), keyword()) :: [String.t()]
+```
+
+The keys a board holds, sorted, from its listed records; with `prefix:`
+only the keys starting with it (`"match|"`: every language Word match has
+runs in). A key only guests have played is not offered.
+
 # `list_leaderboard_groups`
 
 ```elixir
@@ -361,6 +374,29 @@ See `t:Gamend.Types.pagination_opts/0` for available options, plus:
     row only: one board read across keys, a player once.
   * `:guests` — `true` lists guests' records on a public board too, when
     the host keeps them off it (`Gamend.AccountRequired`): the admin's view.
+
+# `list_records_above`
+
+```elixir
+@spec list_records_above(String.t(), integer(), keyword()) :: [
+  Gamend.Leaderboards.Record.t()
+]
+```
+
+The listed records just ahead of `score` on one key, nearest first: the
+runs a player at that score would overtake next. Ahead means a strictly
+better score (higher on a `:desc` board, lower on an `:asc` one), so a tie
+is not ahead. Each record carries its `rank`.
+
+It needs no record of the caller's: a first-timer reads it with their
+first score, and a guest with theirs, though a guest's own record is not
+listed (`Gamend.AccountRequired`). `list_records_around_user/3` needs the
+caller on the board. Labels' records are listed, like any.
+
+## Options
+
+  * `:key` — the ranking (default `""`)
+  * `:limit` — how many (default 3)
 
 # `list_records_around_user`
 
