@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1327">
+    <meta name="project" content="gamend_core v1.1.1328">
 
 
-    <title>API Reference — gamend_core v1.1.1327</title>
+    <title>API Reference — gamend_core v1.1.1328</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-AA737D6A.js"></script>
+    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1327
+          v1.1.1328
         </div>
       </div>
     </div>
@@ -92,7 +92,7 @@ gamend_core
 
 <div id="top-content">
   <div class="heading-with-actions top-heading">
-    <h1>API Reference <small class="app-vsn">gamend_core v#1.1.1327</small></h1>
+    <h1>API Reference <small class="app-vsn">gamend_core v#1.1.1328</small></h1>
 <a href="api-reference.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
   <i class="ri-markdown-line" aria-hidden="true"></i>
   <span class="sr-only">Copy Markdown</span>
@@ -541,6 +541,45 @@ them, no row does.</p></div>
   </div>
 
     <div class="summary-synopsis"><p>Utilities for running best-effort background work.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Gamend.Bans.html" translate="no">Gamend.<wbr />Bans</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Bans: an IP address or an account kept out for a while, or for good.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Gamend.Bans.Ban.html" translate="no">Gamend.<wbr />Bans.<wbr />Ban</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>One ban: an IP address or an account kept out until <code class="inline">expires_at</code> (<code class="inline">nil</code> is
+permanent), or until an admin lifts it.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Gamend.Bans.Cache.html" translate="no">Gamend.<wbr />Bans.<wbr />Cache</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Node-local hot path for <a href="Gamend.Bans.html"><code class="inline">Gamend.Bans</code></a>: every active ban in ETS, keyed
+<code class="inline">{kind, subject}</code>, read on each request an IP ban covers.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Gamend.Bans.Sync.html" translate="no">Gamend.<wbr />Bans.<wbr />Sync</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Keeps the node-local ban table (<a href="Gamend.Bans.Cache.html"><code class="inline">Gamend.Bans.Cache</code></a>) in step with the
+database and the other app instances.</p></div>
 
 </div>
 <div class="summary-row">
@@ -1134,24 +1173,6 @@ source code on disk, for the admin Config page and the command line.</p></div>
     <div class="summary-synopsis"><p>Append-only record of a single item-stack change (grant, consume, admin
 adjustment) — the inventory counterpart of <a href="Gamend.Economy.LedgerEntry.html"><code class="inline">Gamend.Economy.LedgerEntry</code></a>.
 Carries the <code class="inline">idempotency_key</code> that makes item grants safe to retry.</p></div>
-
-</div>
-<div class="summary-row">
-  <div class="summary-signature">
-    <a href="Gamend.IpBans.html" translate="no">Gamend.<wbr />IpBans</a>
-
-  </div>
-
-    <div class="summary-synopsis"><p>Persistence for IP bans.</p></div>
-
-</div>
-<div class="summary-row">
-  <div class="summary-signature">
-    <a href="Gamend.IpBans.IpBan.html" translate="no">Gamend.<wbr />IpBans.<wbr />IpBan</a>
-
-  </div>
-
-    <div class="summary-synopsis"><p>A persisted IP ban. <code class="inline">expires_at</code> is <code class="inline">nil</code> for permanent bans.</p></div>
 
 </div>
 <div class="summary-row">
@@ -2475,9 +2496,9 @@ the production key, read from <code class="inline">.env</code> like the server r
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1327">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1327">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
 
             </span>
 

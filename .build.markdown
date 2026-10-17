@@ -40,6 +40,10 @@ Gamend.Analytics.md
 Gamend.ApiConventions.md
 Gamend.Apple.md
 Gamend.Async.md
+Gamend.Bans.Ban.md
+Gamend.Bans.Cache.md
+Gamend.Bans.Sync.md
+Gamend.Bans.md
 Gamend.Broadcast.md
 Gamend.Cache.L1.md
 Gamend.Cache.L2.Partitioned.Primary.md
@@ -103,8 +107,6 @@ Gamend.Hooks.md
 Gamend.Inventory.Item.md
 Gamend.Inventory.LedgerEntry.md
 Gamend.Inventory.md
-Gamend.IpBans.IpBan.md
-Gamend.IpBans.md
 Gamend.Jobs.md
 Gamend.KV.md
 Gamend.Leaderboards.Leaderboard.md

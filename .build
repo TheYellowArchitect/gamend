@@ -41,6 +41,10 @@ Gamend.Analytics.html
 Gamend.ApiConventions.html
 Gamend.Apple.html
 Gamend.Async.html
+Gamend.Bans.Ban.html
+Gamend.Bans.Cache.html
+Gamend.Bans.Sync.html
+Gamend.Bans.html
 Gamend.Broadcast.html
 Gamend.Cache.L1.html
 Gamend.Cache.L2.Partitioned.Primary.html
@@ -104,8 +108,6 @@ Gamend.Hooks.html
 Gamend.Inventory.Item.html
 Gamend.Inventory.LedgerEntry.html
 Gamend.Inventory.html
-Gamend.IpBans.IpBan.html
-Gamend.IpBans.html
 Gamend.Jobs.html
 Gamend.KV.html
 Gamend.Leaderboards.Leaderboard.html
@@ -253,8 +255,8 @@ dist/lato-latin-700-normal-2XVSBPG4.woff2
 dist/lato-latin-ext-400-normal-N27NCBWW.woff2
 dist/lato-latin-ext-700-normal-Q2L5DVMW.woff2
 dist/remixicon-ZWU5GQ4X.woff2
-dist/search_data-FB17A189.js
-dist/sidebar_items-AA737D6A.js
+dist/search_data-9DECFCD0.js
+dist/sidebar_items-CC44FC55.js
 index.html
 readme.html
 search.html

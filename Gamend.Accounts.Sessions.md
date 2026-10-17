@@ -122,6 +122,15 @@ There are three cases to consider:
 
 Revokes all session tokens for a user (mass logout).
 
+# `session_tokens`
+
+```elixir
+@spec session_tokens(Ecto.UUID.t()) :: [%{token: binary()}]
+```
+
+A user's browser session tokens, as `[%{token: binary}]`: what
+`GamendWeb.UserAuth.disconnect_sessions/1` takes to close their open pages.
+
 ---
 
 *Consult [api-reference.md](api-reference.md) for complete listing*

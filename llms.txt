@@ -1,4 +1,4 @@
-# gamend_core v1.1.1327 - Table of Contents
+# gamend_core v1.1.1328 - Table of Contents
 
 > Core functionality for Gamend, including user management, authentication, friends, matchmaking, and more.
 
@@ -48,6 +48,13 @@ nothing but a device or a browser, `Gamend.Accounts.User.anonymous?/1`).
 A visitor with no account is in none of them: the daily counters count
 them, no row does.
 - [Gamend.ApiConventions](Gamend.ApiConventions.md): Mechanical checks for the conventions in `docs/specs/api-conventions.md`.
+- [Gamend.Bans](Gamend.Bans.md): Bans: an IP address or an account kept out for a while, or for good.
+- [Gamend.Bans.Ban](Gamend.Bans.Ban.md): One ban: an IP address or an account kept out until `expires_at` (`nil` is
+permanent), or until an admin lifts it.
+- [Gamend.Bans.Cache](Gamend.Bans.Cache.md): Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed
+`{kind, subject}`, read on each request an IP ban covers.
+- [Gamend.Bans.Sync](Gamend.Bans.Sync.md): Keeps the node-local ban table (`Gamend.Bans.Cache`) in step with the
+database and the other app instances.
 - [Gamend.Broadcast](Gamend.Broadcast.md): PubSub broadcasts that must never take the caller down with them.
 - [Gamend.Captcha](Gamend.Captcha.md): Human verification for the unauthenticated browser forms, via
 [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/).
@@ -394,9 +401,6 @@ runtime config; `Gamend.Cache` itself holds the assembled structure.
 aggregated from telemetry events
   - [Gamend.Cache.Sync](Gamend.Cache.Sync.md): Applies cache invalidations broadcast by other app instances.
   - [Gamend.Config](Gamend.Config.md): Typed reads of environment variables a plugin declared via `env_vars/0`.
-  - [Gamend.IpBans](Gamend.IpBans.md): Persistence for IP bans.
-  - [Gamend.IpBans.IpBan](Gamend.IpBans.IpBan.md): A persisted IP ban. `expires_at` is `nil` for permanent bans.
-
   - [Gamend.Jobs](Gamend.Jobs.md): Durable background jobs, backed by Oban.
   - [Gamend.Limits](Gamend.Limits.md): Central module for configurable validation limits.
   - [Gamend.Lock](Gamend.Lock.md): Serialized execution using database-level advisory locks.

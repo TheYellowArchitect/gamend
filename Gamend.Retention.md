@@ -49,8 +49,10 @@ env vars `GAMEND_RETENTION_*`); `0` or unset keeps data forever:
   for N minutes, in minutes rather than days. The same window releases a lobby
   seat held by a long-offline player. A party everyone abandoned is disbanded
   on its own window, `GAMEND_RETENTION_ABANDONED_PARTY_MINUTES` (15).
+- `GAMEND_RETENTION_BANS_DAYS` (365) — IP and account bans that ended (lifted
+  or expired) more than N days ago. An active ban is never deleted.
 
-Expired IP bans, OAuth sessions older than a day, user tokens past their own
+OAuth sessions older than a day, user tokens past their own
 context's validity, personal API tokens that can no longer authenticate
 (expired, or older than their owner's last credential change), login
 lockouts whose window and lock have run out, accounts past the deletion date

@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1327">
+    <meta name="project" content="gamend_core v1.1.1328">
 
 
-    <title>Gamend.IpBans — gamend_core v1.1.1327</title>
+    <title>Gamend.Bans.Ban — gamend_core v1.1.1328</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-AA737D6A.js"></script>
+    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1327
+          v1.1.1328
         </div>
       </div>
     </div>
@@ -93,19 +93,19 @@ gamend_core
 <div id="top-content">
   <div class="heading-with-actions top-heading">
     <h1>
-      <span translate="no">Gamend.<wbr />IpBans</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1327)</small>
+      <span translate="no">Gamend.<wbr />Bans.<wbr />Ban</span> 
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1328)</small>
 
     </h1>
 
-<a href="Gamend.IpBans.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+<a href="Gamend.Bans.Ban.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
   <i class="ri-markdown-line" aria-hidden="true"></i>
   <span class="sr-only">Copy Markdown</span>
 </a>
 
 
 
-      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/ip_bans.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
+      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
         <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         <span class="sr-only">View Source</span>
       </a>
@@ -114,10 +114,12 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>Persistence for IP bans.</p><p><code class="inline">GamendWeb.Plugs.IpBan</code> keeps the hot-path check in ETS; this context
-is the durable source of truth so bans survive restarts and can be shared
-across instances (each instance loads them at boot and applies PubSub
-updates).</p>
+<p>One ban: an IP address or an account kept out until <code class="inline">expires_at</code> (<code class="inline">nil</code> is
+permanent), or until an admin lifts it.</p><p>A row is kept after it ends, lifted or expired, so a target's history reads
+as its rows; retention deletes ended rows after <code class="inline">bans_days</code>. A ban is active
+while <code class="inline">lifted_at</code> is nil and <code class="inline">expires_at</code> is nil or still ahead.</p><ul><li><code class="inline">kind</code> — <code class="inline">:ip</code> (<code class="inline">subject</code> is the address, an IPv6 one as its /64) or
+<code class="inline">:account</code> (<code class="inline">subject</code> is the user id, also in <code class="inline">user_id</code>).</li><li><code class="inline">reason</code> — why, in the words the banned player is shown.</li><li><code class="inline">source</code> — who placed it: <code class="inline">:admin</code> (the admin pages), <code class="inline">:api</code> (the admin
+API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">:system</code>.</li><li><code class="inline">banned_by</code> / <code class="inline">lifted_by</code> — the admin who placed or lifted it, when one did.</li></ul>
     </section>
 
 </div>
@@ -129,6 +131,28 @@ updates).</p>
       </a>
       <span class="text">Summary</span>
     </h2>
+<div class="summary-types summary">
+  <h3>
+    <a href="#types">Types</a>
+  </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:kind/0" data-no-tooltip="" translate="no">kind()</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:t/0" data-no-tooltip="" translate="no">t()</a>
+
+      </div>
+
+    </div>
+
+</div>
 <div class="summary-functions summary">
   <h3>
     <a href="#functions">Functions</a>
@@ -136,41 +160,21 @@ updates).</p>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#delete_ban/1" data-no-tooltip="" translate="no">delete_ban(ip)</a>
+        <a href="#kinds/0" data-no-tooltip="" translate="no">kinds()</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Deletes the ban for <code class="inline">ip</code> (no-op if none exists).</p></div>
+        <div class="summary-synopsis"><p>The kinds of ban.</p></div>
 
     </div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#list_active/0" data-no-tooltip="" translate="no">list_active()</a>
+        <a href="#sources/0" data-no-tooltip="" translate="no">sources()</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Lists all bans that are permanent or not yet expired.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#purge_expired/0" data-no-tooltip="" translate="no">purge_expired()</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Deletes expired bans. Returns the number of rows removed.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#upsert_ban/2" data-no-tooltip="" translate="no">upsert_ban(ip, expires_at)</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Creates or updates a ban for <code class="inline">ip</code>. <code class="inline">expires_at</code> is <code class="inline">nil</code> for a permanent ban.</p></div>
+        <div class="summary-synopsis"><p>Who may place a ban.</p></div>
 
     </div>
 
@@ -178,6 +182,92 @@ updates).</p>
 
   </section>
 
+
+  <section id="types" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h2>
+
+    <div class="types-list">
+<section class="detail" id="t:kind/0">
+
+  <div class="detail-header">
+    <a href="#t:kind/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">kind()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L26" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> kind() :: :ip | :account</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:t/0">
+
+  <div class="detail-header">
+    <a href="#t:t/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">t()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L27" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> t() :: %Gamend.Bans.Ban{
+  __meta__: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  banned_by: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  banned_by_user: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  expires_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  inserted_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  kind: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  lifted_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  lifted_by: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  lifted_by_user: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  reason: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  source: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  subject: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  updated_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  user: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  user_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()
+}</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
 
   <section id="functions" class="details-list">
     <h2 class="section-heading">
@@ -188,17 +278,17 @@ updates).</p>
     </h2>
 
     <div class="functions-list">
-<section class="detail" id="delete_ban/1">
+<section class="detail" id="kinds/0">
 
   <div class="detail-header">
-    <a href="#delete_ban/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#kinds/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">delete_ban(ip)</h1>
+      <h1 class="signature" translate="no">kinds()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/ip_bans.ex#L32" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L46" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -209,24 +299,24 @@ updates).</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> delete_ban(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok</pre>
+          <pre translate="no"><span class="attribute">@spec</span> kinds() :: [<a href="#t:kind/0">kind</a>()]</pre>
 
       </div>
 
-<p>Deletes the ban for <code class="inline">ip</code> (no-op if none exists).</p>
+<p>The kinds of ban.</p>
   </section>
 </section>
-<section class="detail" id="list_active/0">
+<section class="detail" id="sources/0">
 
   <div class="detail-header">
-    <a href="#list_active/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#sources/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">list_active()</h1>
+      <h1 class="signature" translate="no">sources()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/ip_bans.ex#L39" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L50" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -237,68 +327,11 @@ updates).</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> list_active() :: [<a href="Gamend.IpBans.IpBan.html#t:t/0">Gamend.IpBans.IpBan.t</a>()]</pre>
+          <pre translate="no"><span class="attribute">@spec</span> sources() :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">atom</a>()]</pre>
 
       </div>
 
-<p>Lists all bans that are permanent or not yet expired.</p>
-  </section>
-</section>
-<section class="detail" id="purge_expired/0">
-
-  <div class="detail-header">
-    <a href="#purge_expired/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">purge_expired()</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/ip_bans.ex#L47" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> purge_expired() :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
-
-      </div>
-
-<p>Deletes expired bans. Returns the number of rows removed.</p>
-  </section>
-</section>
-<section class="detail" id="upsert_ban/2">
-
-  <div class="detail-header">
-    <a href="#upsert_ban/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">upsert_ban(ip, expires_at)</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/ip_bans.ex#L21" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> upsert_ban(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/DateTime.html#t:t/0">DateTime.t</a>() | nil) ::
-  {:ok, <a href="Gamend.IpBans.IpBan.html#t:t/0">Gamend.IpBans.IpBan.t</a>()} | {:error, <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Changeset.html#t:t/0">Ecto.Changeset.t</a>()}</pre>
-
-      </div>
-
-<p>Creates or updates a ban for <code class="inline">ip</code>. <code class="inline">expires_at</code> is <code class="inline">nil</code> for a permanent ban.</p>
+<p>Who may place a ban.</p>
   </section>
 </section>
 
@@ -310,9 +343,9 @@ updates).</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1327">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1327">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
 
             </span>
 
