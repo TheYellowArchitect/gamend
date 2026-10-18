@@ -6,21 +6,22 @@ defmodule Gamend.Chat.Moderation do
   against every outgoing message, and mutes that silence a sender globally or
   in one lobby/group/party. Both are checked in `Gamend.Chat.send_message/2`
   before the message is persisted, so nothing unmoderated reaches the database
-  or PubSub.
+  or PubSub. A mute is a chat ban (`Gamend.Bans`, kind `:chat`).
 
   Reports live in `Gamend.Chat.Reports`.
 
-  Writes go to the database first and are then mirrored into
+  Blocklist writes go to the database first and are then mirrored into
   `Gamend.Chat.Moderation.Cache` (ETS + PubSub), which is what the per-message
-  path actually reads.
+  path actually reads; mutes are cached by `Gamend.Bans.Cache`.
   """
 
   import Ecto.Query
 
+  alias Gamend.Bans
+  alias Gamend.Bans.Ban
   alias Gamend.Chat.FilterWord
   alias Gamend.Chat.Moderation.Cache
   alias Gamend.Chat.Moderation.Normalizer
-  alias Gamend.Chat.Mute
   alias Gamend.Repo
 
   @bundled_dir "chat_filter"
@@ -332,157 +333,79 @@ defmodule Gamend.Chat.Moderation do
   end
 
   # ── Mutes ──────────────────────────────────────────────────────────────────
+  #
+  # A mute is a chat ban (`Gamend.Bans`, kind `:chat`): stored, cached, expired,
+  # kept as history and told to hooks with every other ban. These keep chat's
+  # own words and rules: a scope and its room.
 
   @doc """
   Whether `user_id` is currently muted for the given chat (ETS read).
   """
   @spec muted?(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: boolean()
-  defdelegate muted?(user_id, chat_type, chat_ref_id), to: Cache
+  defdelegate muted?(user_id, chat_type, chat_ref_id), to: Bans
 
   @doc """
   Mute `user_id`.
 
   `scope` is `"global"` (every chat, `scope_ref_id` nil) or one of `"lobby"`,
   `"group"`, `"party"` with the room id as `scope_ref_id`. `attrs` may carry
-  `expires_at` (nil means permanent), `reason` and `muted_by`.
+  `expires_at` (nil means permanent), `reason`, `muted_by` (who did it) and
+  `source` (`:admin`, `:room` for a room's own authority, `:plugin` by
+  default; see `Gamend.Bans.Ban`).
 
   Re-muting an already-muted user replaces the existing mute, so a moderator
   can extend or shorten one without unmuting first.
   """
   @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-          {:ok, Mute.t()} | {:error, term()}
+          {:ok, Ban.t()} | {:error, term()}
   def mute_user(user_id, scope, scope_ref_id, attrs \\ %{}) do
-    attrs =
-      attrs
-      |> normalize_attrs()
-      |> Map.merge(%{
-        "user_id" => user_id,
-        "scope" => scope,
-        "scope_ref_id" => scope_ref_id
-      })
+    attrs = normalize_attrs(attrs)
 
-    %Mute{}
-    |> Mute.changeset(attrs)
-    |> Repo.insert(
-      on_conflict: {:replace, [:expires_at, :reason, :muted_by, :updated_at]},
-      conflict_target: conflict_target(scope_ref_id)
+    Bans.ban(:chat, to_string(user_id),
+      scope: scope,
+      scope_ref_id: scope_ref_id,
+      expires_at: attrs["expires_at"],
+      reason: attrs["reason"],
+      by: attrs["muted_by"],
+      source: source(attrs["source"])
     )
-    |> tap_ok(fn mute ->
-      Cache.put_mute(mute)
-      notify_user(mute.user_id, {:chat_muted, mute})
-      dispatch(:after_user_muted, [mute])
-    end)
   end
 
-  # The composite index does not constrain global mutes (NULL never equals
-  # NULL), so those upsert against the partial index instead.
-  defp conflict_target(nil), do: {:unsafe_fragment, "(user_id, scope) WHERE scope_ref_id IS NULL"}
-  defp conflict_target(_ref), do: [:user_id, :scope, :scope_ref_id]
+  defp source(source),
+    do: Enum.find(Ban.sources(), :plugin, &(&1 == source or to_string(&1) == source))
 
-  @doc "Remove a mute. Returns `{:ok, count}` — 0 when the user was not muted."
-  @spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: {:ok, non_neg_integer()}
-  def unmute_user(user_id, scope, scope_ref_id \\ nil) do
-    {count, _} =
-      Repo.delete_all(
-        from(m in Mute,
-          where: m.user_id == ^user_id and m.scope == ^scope,
-          where: ^scope_ref_match(scope_ref_id)
-        )
-      )
+  @doc "Lift a mute. Returns `{:ok, count}` — 0 when the user was not muted."
+  @spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, Ecto.UUID.t() | nil) ::
+          {:ok, non_neg_integer()}
+  def unmute_user(user_id, scope, scope_ref_id \\ nil, by \\ nil) do
+    {:ok, lifted} =
+      Bans.lift(:chat, to_string(user_id), scope: scope, scope_ref_id: scope_ref_id, by: by)
 
-    Cache.delete_mute(user_id, scope, scope_ref_id)
-
-    if count > 0 do
-      notify_user(
-        user_id,
-        {:chat_unmuted, %{user_id: user_id, scope: scope, scope_ref_id: scope_ref_id}}
-      )
-    end
-
-    {:ok, count}
+    {:ok, length(lifted)}
   end
-
-  defp scope_ref_match(nil), do: dynamic([m], is_nil(m.scope_ref_id))
-  defp scope_ref_match(ref), do: dynamic([m], m.scope_ref_id == ^ref)
 
   @doc "Fetch one mute."
-  @spec get_mute(Ecto.UUID.t()) :: Mute.t() | nil
-  def get_mute(id), do: Repo.get(Mute, id) |> Repo.preload([:user, :muted_by_user])
+  @spec get_mute(Ecto.UUID.t()) :: Ban.t() | nil
+  def get_mute(id) do
+    case Bans.get(id) do
+      %Ban{kind: :chat} = ban -> ban
+      _ -> nil
+    end
+  end
 
   @doc """
-  List mutes. Filters: `:user_id`, `:scope`, `:scope_ref_id`, `:active` (when
-  true, only unexpired mutes).
+  List mutes, newest first. Filters: `:user_id`, `:scope`, `:scope_ref_id`,
+  `:active` (when true, only mutes in force).
   """
-  @spec list_mutes(map(), keyword()) :: [Mute.t()]
-  def list_mutes(filters \\ %{}, opts \\ []) do
-    filters
-    |> mutes_query()
-    |> order_by([m], desc: m.inserted_at, desc: m.id)
-    |> Gamend.Query.page(opts)
-    |> preload([:user, :muted_by_user])
-    |> Repo.all()
-  end
+  @spec list_mutes(map(), keyword()) :: [Ban.t()]
+  def list_mutes(filters \\ %{}, opts \\ []),
+    do: filters |> chat_filters() |> Bans.list(opts)
 
   @doc "Count mutes matching `filters`."
   @spec count_mutes(map()) :: non_neg_integer()
-  def count_mutes(filters \\ %{}) do
-    filters |> mutes_query() |> Repo.aggregate(:count, :id)
-  end
+  def count_mutes(filters \\ %{}), do: filters |> chat_filters() |> Bans.count()
 
-  @doc "Every unexpired mute, for the boot load."
-  @spec list_active_mutes() :: [Mute.t()]
-  def list_active_mutes do
-    now = DateTime.utc_now()
-    Repo.all(from(m in Mute, where: is_nil(m.expires_at) or m.expires_at > ^now))
-  end
-
-  @doc """
-  Delete mutes whose `expires_at` has passed. Returns the number removed.
-
-  Hygiene only — `muted?/3` already ignores expired entries, so a missed sweep
-  never lets a mute outlive its expiry.
-  """
-  @spec purge_expired_mutes() :: non_neg_integer()
-  def purge_expired_mutes do
-    now = DateTime.utc_now()
-
-    {count, _} =
-      Repo.delete_all(from(m in Mute, where: not is_nil(m.expires_at) and m.expires_at <= ^now))
-
-    # No cache work: `muted?/3` drops expired entries as it reads them.
-    count
-  end
-
-  defp mutes_query(filters) do
-    query = from(m in Mute)
-
-    query =
-      case Gamend.Parse.blank_to_nil(Map.get(filters, :user_id) || Map.get(filters, "user_id")) do
-        nil -> query
-        value -> where(query, [m], m.user_id == ^to_string(value))
-      end
-
-    query =
-      case Gamend.Parse.blank_to_nil(Map.get(filters, :scope) || Map.get(filters, "scope")) do
-        nil -> query
-        value -> where(query, [m], m.scope == ^value)
-      end
-
-    query =
-      case Gamend.Parse.blank_to_nil(
-             Map.get(filters, :scope_ref_id) || Map.get(filters, "scope_ref_id")
-           ) do
-        nil -> query
-        value -> where(query, [m], m.scope_ref_id == ^to_string(value))
-      end
-
-    if Map.get(filters, :active) || Map.get(filters, "active") do
-      now = DateTime.utc_now()
-      where(query, [m], is_nil(m.expires_at) or m.expires_at > ^now)
-    else
-      query
-    end
-  end
+  defp chat_filters(filters), do: filters |> normalize_attrs() |> Map.put("kind", :chat)
 
   # ── Shared helpers ─────────────────────────────────────────────────────────
 
@@ -500,14 +423,4 @@ defmodule Gamend.Chat.Moderation do
   end
 
   defp tap_ok(result, _fun), do: result
-
-  # The muted player's own socket, so the client can grey out its chat input.
-  # Best-effort for the same reason the cache broadcast is.
-  defp notify_user(user_id, event), do: Gamend.Broadcast.best_effort("user:#{user_id}", event)
-
-  # Hooks never run inside the write — they are queued and flushed after it.
-  defp dispatch(hook, args) do
-    Gamend.Async.run(fn -> Gamend.Hooks.internal_call(hook, args) end)
-    :ok
-  end
 end

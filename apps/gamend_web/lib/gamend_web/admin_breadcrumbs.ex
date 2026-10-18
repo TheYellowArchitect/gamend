@@ -8,7 +8,7 @@ defmodule GamendWeb.AdminBreadcrumbs do
   else the segment with its underscores as spaces and a capital first letter
   (`rate_limiting` is "Rate limiting"). Every crumb but the page's own links
   to its path, since each step of an admin page's path is an admin page too
-  (`/admin/chat` above `/admin/chat/mutes`). A host's own admin pages get a
+  (`/admin/chat` above `/admin/chat/reports`). A host's own admin pages get a
   trail the same way; its provider answers first, for one whose last step
   deserves a better name than its slug.
   """

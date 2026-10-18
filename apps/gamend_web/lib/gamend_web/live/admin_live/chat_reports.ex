@@ -8,10 +8,11 @@ defmodule GamendWeb.AdminLive.ChatReports do
   use GamendWeb, :live_view
 
   alias Gamend.Accounts.Scope
+  alias Gamend.Bans.Ban
   alias Gamend.Chat
   alias Gamend.Chat.Moderation.Notices
-  alias Gamend.Chat.Mute
   alias Gamend.Chat.Report
+  alias GamendWeb.AdminLive.BanForm
   alias GamendWeb.AdminLive.Shared
   alias GamendWeb.LiveHelpers
 
@@ -185,17 +186,18 @@ defmodule GamendWeb.AdminLive.ChatReports do
     end
   end
 
+  # Placed as a chat ban through the console's one ban form, which also sends
+  # the player the notice when asked.
   defp mute(socket, report, form, scope, scope_ref_id) do
-    attrs = %{
-      "expires_at" => Shared.expires_at(form["duration"]),
-      "reason" => Gamend.Parse.blank_to_nil(String.trim(form["reason"] || "")),
-      "muted_by" => admin_id(socket)
-    }
+    ban_form =
+      Map.merge(form, %{
+        "scope" => scope,
+        "scope_ref_id" => scope_ref_id || "",
+        "notify" => form["notify_user"]
+      })
 
-    case Chat.mute_user(report.reported_user_id, scope, scope_ref_id, attrs) do
-      {:ok, mute} ->
-        notify_muted(report, form, mute)
-
+    case BanForm.place(:chat, report.reported_user_id, ban_form, admin_id(socket)) do
+      {:ok, _mute} ->
         finish(
           socket,
           report,
@@ -221,17 +223,6 @@ defmodule GamendWeb.AdminLive.ChatReports do
       {:error, _reason} ->
         put_flash(socket, :error, gettext("Could not resolve the report"))
     end
-  end
-
-  defp notify_muted(report, form, mute) do
-    if form["notify_user"] == "true" do
-      Notices.notify_muted(
-        report.reported_user_id,
-        notice(form["message"], Notices.default_mute_message(mute))
-      )
-    end
-
-    :ok
   end
 
   defp notify_reporter(%Report{reporter_id: nil}, _form, _status), do: :ok
@@ -543,7 +534,7 @@ defmodule GamendWeb.AdminLive.ChatReports do
                 <label class="label text-xs">{gettext("Scope")}</label>
                 <select name="scope" class="select select-bordered select-sm">
                   <option
-                    :for={scope <- Mute.scopes()}
+                    :for={scope <- Ban.scopes()}
                     value={scope}
                     selected={@form["scope"] == scope}
                   >

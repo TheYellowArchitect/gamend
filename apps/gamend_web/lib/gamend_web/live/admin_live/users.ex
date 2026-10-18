@@ -3,8 +3,11 @@ defmodule GamendWeb.AdminLive.Users do
 
   alias Gamend.Accounts
   alias Gamend.Accounts.LoginLockouts
+  alias Gamend.Accounts.Scope
   alias Gamend.Accounts.User
   alias Gamend.Async
+  alias Gamend.Bans
+  alias GamendWeb.AdminLive.BanForm
   alias GamendWeb.AdminLive.Shared
   alias GamendWeb.LiveHelpers
 
@@ -211,6 +214,16 @@ defmodule GamendWeb.AdminLive.Users do
                   <input
                     type="checkbox"
                     phx-click="toggle_provider"
+                    phx-value-provider="banned"
+                    checked={"banned" in @filters}
+                    class="checkbox"
+                  />
+                  <span class="label-text ml-2">Banned</span>
+                </label>
+                <label class="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    phx-click="toggle_provider"
                     phx-value-provider="unverified"
                     checked={"unverified" in @filters}
                     class="checkbox"
@@ -379,6 +392,13 @@ defmodule GamendWeb.AdminLive.Users do
                       >
                         Deleting
                       </span>
+                      <span
+                        :if={Bans.banned?(:account, user.id)}
+                        class="badge badge-error badge-sm"
+                        title="The account is banned"
+                      >
+                        Banned
+                      </span>
                     </td>
                     <td>
                       <%= if user.metadata && user.metadata != %{} do %>
@@ -541,17 +561,30 @@ defmodule GamendWeb.AdminLive.Users do
                   />
                 </label>
               </div>
-              <div class="form-control">
-                <label class="label cursor-pointer">
-                  <span class="label-text">Activated</span>
-                  <input
-                    type="checkbox"
-                    name="user[is_activated]"
-                    class="checkbox"
-                    checked={@selected_user.is_activated}
-                  />
-                </label>
-              </div>
+              <%!-- Activation is the approval gate for new accounts, and only that:
+                    it keeps a player out only while approval is on. With it off
+                    the box would read like a ban and do nothing, so its value is
+                    carried as it is and the Ban section below is the way. --%>
+              <%= if Accounts.require_account_activation?() do %>
+                <div class="form-control">
+                  <label class="label cursor-pointer">
+                    <span class="label-text">Activated (approved to sign in)</span>
+                    <input
+                      type="checkbox"
+                      name="user[is_activated]"
+                      class="checkbox"
+                      checked={@selected_user.is_activated}
+                    />
+                  </label>
+                </div>
+              <% else %>
+                <input
+                  :if={@selected_user.is_activated}
+                  type="hidden"
+                  name="user[is_activated]"
+                  value="on"
+                />
+              <% end %>
               <div class="form-control">
                 <label class="label">
                   <span class="label-text">Metadata (JSON)</span>
@@ -567,6 +600,62 @@ defmodule GamendWeb.AdminLive.Users do
                 <button type="submit" class="btn btn-primary">Save</button>
               </div>
             </.form>
+
+            <%!-- Ban section (`Gamend.Bans`) --%>
+            <div class="divider">Ban</div>
+            <div id="admin-user-ban" class="space-y-2">
+              <%= cond do %>
+                <% @selected_user.is_admin -> %>
+                  <p class="text-sm text-muted">An admin account cannot be banned.</p>
+                <% @selected_ban -> %>
+                  <div
+                    role="alert"
+                    class="alert alert-error flex flex-wrap items-center justify-between gap-2"
+                  >
+                    <span>
+                      Banned
+                      <%= if @selected_ban.expires_at do %>
+                        until <.timestamp at={@selected_ban.expires_at} format="full" />
+                      <% else %>
+                        permanently
+                      <% end %>
+                      <span :if={@selected_ban.reason}>: {@selected_ban.reason}</span>
+                    </span>
+                    <button
+                      type="button"
+                      id="admin-lift-ban"
+                      phx-click="lift_user_ban"
+                      data-confirm="Lift this ban?"
+                      class="btn btn-sm"
+                    >
+                      Lift ban
+                    </button>
+                  </div>
+                <% true -> %>
+                  <form
+                    id="admin-user-ban-form"
+                    phx-submit="ban_user"
+                    phx-change="ban_form_change"
+                    phx-no-unused-field
+                    class="flex flex-wrap items-end gap-2"
+                  >
+                    <BanForm.fields form={@ban_form} />
+                    <button type="submit" class="btn btn-warning btn-sm">
+                      <.icon name="hero-no-symbol" class="w-4 h-4" /> Ban
+                    </button>
+                  </form>
+                  <p class="text-xs text-muted">
+                    The player can still sign in, read and delete their account, and nothing else.
+                  </p>
+              <% end %>
+              <p :if={@ban_error} class="text-error text-xs">{@ban_error}</p>
+              <.link
+                navigate={~p"/admin/bans?user_id=#{@selected_user.id}"}
+                class="link link-primary text-xs"
+              >
+                Ban history →
+              </.link>
+            </div>
 
             <%!-- Sessions / Tokens section --%>
             <div class="divider">Sessions &amp; Tokens ({length(@user_tokens)})</div>
@@ -668,6 +757,7 @@ defmodule GamendWeb.AdminLive.Users do
       case params["filter"] do
         "unactivated" -> ["unactivated"]
         "unverified" -> ["unverified"]
+        "banned" -> ["banned"]
         _ -> []
       end
 
@@ -692,6 +782,9 @@ defmodule GamendWeb.AdminLive.Users do
      |> assign(:form, nil)
      |> assign(:user_tokens, [])
      |> assign(:login_locked, false)
+     |> assign(:selected_ban, nil)
+     |> assign(:ban_form, BanForm.empty())
+     |> assign(:ban_error, nil)
      |> assign(:search_query, "")
      |> assign(:filters, initial_filters)
      |> assign(:sort_field, sort_field)
@@ -709,8 +802,41 @@ defmodule GamendWeb.AdminLive.Users do
        |> assign(:selected_user, user)
        |> assign(:form, form)
        |> assign(:user_tokens, Accounts.list_user_tokens(user.id))
-       |> assign(:login_locked, login_locked?(user))}
+       |> assign(:login_locked, login_locked?(user))
+       |> assign(:selected_ban, Bans.account_ban(user.id))
+       |> assign(:ban_form, BanForm.empty())
+       |> assign(:ban_error, nil)}
     end)
+  end
+
+  def handle_event("ban_form_change", params, socket) do
+    {:noreply, assign(socket, :ban_form, Map.take(params, Map.keys(BanForm.empty())))}
+  end
+
+  def handle_event("ban_user", params, socket) do
+    user = socket.assigns.selected_user
+    form = Map.take(params, Map.keys(BanForm.empty()))
+
+    case BanForm.place(:account, user.id, form, Scope.user_id(socket.assigns.current_scope)) do
+      {:ok, ban} ->
+        {:noreply,
+         socket
+         |> assign(selected_ban: ban, ban_form: BanForm.empty(), ban_error: nil)
+         |> put_flash(:info, "#{user_display(user)} is banned")}
+
+      {:error, message} ->
+        {:noreply, assign(socket, ban_form: form, ban_error: message)}
+    end
+  end
+
+  def handle_event("lift_user_ban", _params, socket) do
+    user = socket.assigns.selected_user
+    {:ok, _lifted} = Bans.lift(:account, user.id, by: Scope.user_id(socket.assigns.current_scope))
+
+    {:noreply,
+     socket
+     |> assign(:selected_ban, nil)
+     |> put_flash(:info, "The ban on #{user_display(user)} is lifted")}
   end
 
   def handle_event("cancel_user_deletion", %{"id" => id}, socket) do
@@ -845,7 +971,9 @@ defmodule GamendWeb.AdminLive.Users do
      |> assign(:selected_user, nil)
      |> assign(:form, nil)
      |> assign(:user_tokens, [])
-     |> assign(:login_locked, false)}
+     |> assign(:login_locked, false)
+     |> assign(:selected_ban, nil)
+     |> assign(:ban_error, nil)}
   end
 
   def handle_event("revoke_token", %{"id" => id}, socket) do

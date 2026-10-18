@@ -255,24 +255,27 @@ Unique on `(reporter_id, message_id)` so a player cannot report one message
 twice. It is partial, so the many filter-filed rows (null reporter) never collide
 with each other.
 
-## chat_mutes
+## bans
 
-[`Gamend.Chat.Mute`](https://docs.gamend.org/Gamend.Chat.Mute.html)
+[`Gamend.Bans.Ban`](https://docs.gamend.org/Gamend.Bans.Ban.html)
 
 | Column | Type | Notes |
 |---|---|---|
-| `user_id` | FK users | Who is silenced |
-| `scope` | string | `global` / `lobby` / `group` / `party`, default `global`. A global mute covers friend DMs too |
-| `scope_ref_id` | uuid | The lobby, group or party. Null for `global`; not a foreign key, since it points at three tables |
-| `expires_at` | utc_datetime | When the mute lifts; null is permanent |
-| `reason` | string | Moderator-facing, never shown to the muted player by core |
-| `muted_by` | FK users | Who applied it; null for a plugin or automated mute, and nulled if that account goes |
+| `kind` | string | `ip`, `account` or `chat` (a mute) |
+| `subject` | string | The IP (an IPv6 one as its /64), or the user id |
+| `user_id` | FK users | The banned or muted player; null for an IP ban. Deleting the account deletes its bans |
+| `scope` | string | A chat ban's reach: `global` / `lobby` / `group` / `party`; null for the other kinds. A global mute covers friend DMs too |
+| `scope_ref_id` | uuid | A scoped mute's lobby, group or party; not a foreign key, since it points at three tables |
+| `expires_at` | utc_datetime | When the ban ends; null is permanent |
+| `reason` | text | Why, as the banned player is shown it |
+| `source` | string | `admin`, `api`, `room` (a room's own authority), `plugin` or `system` |
+| `banned_by` / `lifted_by` | FK users | Who placed and who lifted it; nulled if that account goes |
+| `lifted_at` | utc_datetime | Set when lifted or replaced; null while in force or once expired |
 
-Unique on `(user_id, scope, scope_ref_id)`, plus a second partial unique index
-for global mutes, because `NULL` never equals `NULL`, so the composite one does not
-constrain them. Expiry is filtered in the query rather than indexed, because a
-partial index on `expires_at > now()` is not portable to SQLite; the sweep that
-deletes lapsed rows is hygiene only.
+A target (kind, subject and, for a mute, its reach) has at most one active ban:
+placing another lifts the old one. Rows stay after a ban ends, as history, until
+retention deletes them (`bans_days`). Expiry is read against `expires_at`, never
+swept.
 
 ## notifications
 
@@ -312,7 +315,7 @@ ledger is the audit trail; the balance is a cache of it.
 | `users_tokens` | Session, magic-link and email-change tokens, pruned on their own expiry | Authentication |
 | `oauth_sessions` | In-flight OAuth handshakes, pruned daily | Authentication |
 | `login_lockouts` | Failed passwords per email address (a SHA-256 of it, never the address) and the lock they set, pruned once both run out | Authentication |
-| `bans` | IP address and account bans: end, reason, who placed and lifted them; kept as history after they end, pruned by retention | Security |
+| `bans` | IP address, account and chat bans (mutes): end, reason, who placed and lifted them; kept as history after they end, pruned by retention | Security |
 | `matchmaking_tickets` | Queue state, one per user or party | Matchmaking |
 | `ready_checks`, `ready_check_participants` | "Everyone must answer" boards on a lobby or party, one row per participant | Matchmaking |
 | `tournaments`, `tournament_entries`, `tournament_matches`, `tournament_brackets` | Bracket state per occurrence | Tournaments |

@@ -18,7 +18,7 @@ An IP ban is checked in ETS on every request that reaches it: a banned address g
 
 IP bans are `Gamend.Bans` rows of kind `:ip`, the table every ban lives in: each has an optional end, a reason, and who placed it. A ban is broadcast over PubSub so every instance in a cluster applies it within moments, and its row is kept after it ends (lifted or expired) as history, deleted by retention after `GAMEND_RETENTION_BANS_DAYS` (365). Banning an address that is already banned replaces its ban.
 
-Ban and unban from [/admin/rate_limiting](/admin/rate_limiting) (a duration from 10 minutes to permanent, and a reason), or from server code:
+Ban and unban from [/admin/rate_limiting](/admin/rate_limiting) or [/admin/bans](/admin/bans) (a preset from 10 minutes to permanent or a number of days, and a reason), from the admin API (`GET`/`POST /api/v1/admin/bans`, `DELETE /api/v1/admin/bans/:id`), or from server code:
 
 ```elixir
 GamendWeb.Plugs.IpBan.ban("1.2.3.4")                    # permanent
@@ -31,13 +31,19 @@ GamendWeb.Plugs.IpBan.unban("1.2.3.4")
 
 ## Account bans
 
+(Every ban, chat mutes included, is a `Gamend.Bans` row; mutes are described in the [Chat guide](/docs/chat#mutes).)
+
 An account ban (`Gamend.Bans`, kind `:account`) keeps a player out of the game while letting them see why. A banned account still signs in, refreshes its token and signs out; `GET /api/v1/me` carries its `ban` (`expires_at`, null for permanent, and `reason`), and it can delete itself. Everything else refuses it:
 
 - **API**: every authenticated call answers 403 `account_banned` (`GamendWeb.Plugs.AccountBan`, in the `:api_auth` and `:api_optional_auth` pipelines; a personal API token too).
 - **Socket**: it connects and joins its own user channel, which carries `account_banned` and `account_unbanned`, and nothing else; the user channel refuses its hook calls, KV subscriptions and WebRTC.
 - **Website**: every LiveView sends it to `/suspended` (until when, why, a way to its settings and to log out), its settings excepted; a plain page shows a notice leading there.
 
-A ban placed while the account is connected closes its sockets and open pages within a second (`GamendWeb.AccountBanKicks`), and they reconnect into those limits. Placing one from code:
+A ban placed while the account is connected closes its sockets and open pages within a second (`GamendWeb.AccountBanKicks`), and they reconnect into those limits. An admin account cannot be banned, so no admin can lock another out of the console.
+
+A ban with an end schedules a job at that time (`Gamend.Bans.ExpiryWorker`), so a ban running out is told like a lift: `account_unbanned` on the user channel and the `after_ban_lifted` hook. The ban stops counting at its end whether or not the job has run. Plugins hear of every ban through `after_ban_created` and `after_ban_lifted` (see [Server scripting](/docs/server-scripting)).
+
+Place and lift one on [/admin/bans](/admin/bans) or a user's editor on [/admin/users](/admin/users), through the admin API (`POST /api/v1/admin/bans` with `kind: "account"` and `user_id`), or from code (a plugin passes `source: :plugin`):
 
 ```elixir
 Gamend.Bans.ban(:account, user.id,
@@ -125,5 +131,5 @@ GAMEND_TLS_FORCE=true
 ## Reference
 
 - **Every variable:** the [Settings guide](/docs/settings) — the Rate limiting, Captcha, TLS & certificates and Server & HTTP groups.
-- **Admin pages:** [/admin/rate_limiting](/admin/rate_limiting), [/admin/users](/admin/users), [/admin/sessions](/admin/sessions).
+- **Admin pages:** [/admin/bans](/admin/bans), [/admin/rate_limiting](/admin/rate_limiting), [/admin/users](/admin/users), [/admin/sessions](/admin/sessions).
 - **Scaling:** the [Scaling guide](/docs/scaling) for running the Redis-backed limiter under Docker Compose.

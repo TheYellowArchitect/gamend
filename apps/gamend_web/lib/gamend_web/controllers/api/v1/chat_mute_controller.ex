@@ -8,8 +8,9 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
   caller's `lobby_id` / `party_id`.
 
   Global mutes are deliberately absent here: they are server-authoritative and
-  live on the admin API (`/api/v1/admin/chat/mutes`) or a plugin calling
-  `Gamend.Chat.mute_user/4`.
+  live on the admin API (`/api/v1/admin/bans`, kind `chat`) or a plugin calling
+  `Gamend.Chat.mute_user/4`. A mute is a chat ban (`Gamend.Bans`); one placed
+  here is recorded with `source: :room`.
   """
   use GamendWeb, :controller
   use OpenApiSpex.ControllerSpecs
@@ -91,7 +92,7 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
   def unmute_lobby(conn, params) do
     with_lobby(conn, fn user, lobby ->
       if Lobbies.can_manage_lobby?(user, lobby) do
-        do_unmute(conn, params, "lobby", lobby.id)
+        do_unmute(conn, params, "lobby", lobby.id, user)
       else
         forbidden(conn, "not_host")
       end
@@ -176,8 +177,8 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
   )
 
   def unmute_group(conn, %{"id" => group_id} = params) do
-    with_group_admin(conn, group_id, fn _user, group_id ->
-      do_unmute(conn, params, "group", group_id)
+    with_group_admin(conn, group_id, fn user, group_id ->
+      do_unmute(conn, params, "group", group_id, user)
     end)
   end
 
@@ -251,7 +252,7 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
   def unmute_party(conn, params) do
     with_party(conn, fn user, party ->
       if Parties.can_manage_party?(user, party) do
-        do_unmute(conn, params, "party", party.id)
+        do_unmute(conn, params, "party", party.id, user)
       else
         forbidden(conn, "not_leader")
       end
@@ -297,7 +298,8 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
         attrs = %{
           "expires_at" => param(params, "expires_at"),
           "reason" => param(params, "reason"),
-          "muted_by" => actor.id
+          "muted_by" => actor.id,
+          "source" => :room
         }
 
         case Chat.mute_user(target_user_id, scope, scope_ref_id, attrs) do
@@ -313,13 +315,13 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
     end
   end
 
-  defp do_unmute(conn, params, scope, scope_ref_id) do
+  defp do_unmute(conn, params, scope, scope_ref_id, actor) do
     case target_id(params) do
       nil ->
         reply_error(conn, :bad_request, "invalid_target_user_id")
 
       target_user_id ->
-        {:ok, count} = Chat.unmute_user(target_user_id, scope, scope_ref_id)
+        {:ok, count} = Chat.unmute_user(target_user_id, scope, scope_ref_id, actor.id)
         reply_data(conn, %{deleted: count})
     end
   end
@@ -342,7 +344,7 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
       scope_ref_id: mute.scope_ref_id,
       expires_at: mute.expires_at,
       reason: mute.reason || "",
-      muted_by: mute.muted_by || "",
+      muted_by: mute.banned_by || "",
       inserted_at: mute.inserted_at
     }
   end

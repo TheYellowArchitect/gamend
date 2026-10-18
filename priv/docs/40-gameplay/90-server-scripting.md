@@ -170,12 +170,13 @@ end
 ### Chat moderation hooks
 
 Core already enforces the word filter and mutes inside `before_chat_message`: a
-blocked word or a muted sender never reaches your hook. These two observe what
+blocked word or a muted sender never reaches your hook. Two hooks observe what
 core did: `after_chat_message_reported/1` fires when a player reports a message
-or the filter files one itself (`reporter_id` is nil then), and
-`after_user_muted/1` fires whenever anyone is muted by an admin, lobby host, group
-admin, party leader or a plugin. Both are fire-and-forget; the report is already
-queued and the mute already in effect. They are where a strike policy lives,
+or the filter files one itself (`reporter_id` is nil then), and, since a mute is
+a chat ban, `after_ban_created/1` fires with `kind: :chat` whenever anyone is
+muted, by an admin, lobby host, group admin, party leader or a plugin (see Ban
+hooks below). Both are fire-and-forget; the report is already queued and the
+mute already in effect. They are where a strike policy lives,
 since core deliberately ships none:
 
 ```elixir
@@ -195,12 +196,34 @@ def after_chat_message_reported(report) do
 end
 
 @impl true
-def after_user_muted(mute) do
+def after_ban_created(%{kind: :chat} = mute) do
   Gamend.Push.send_to_user(mute.user_id, %{
     "title" => "You have been muted",
     "body" => mute.reason || "Chat is disabled for you."
   })
 end
+
+def after_ban_created(_ban), do: :ok
+```
+
+### Ban hooks
+
+A plugin bans an IP address or an account with `Gamend.Bans` (`source: :plugin`), and mutes with `Gamend.Chat.mute_user/4`, which places a chat ban; a banned account still signs in and reads `GET /me`, which carries its ban, and every other call refuses it. `after_ban_created/1` fires for every ban placed, by anyone. `after_ban_lifted/1` fires once for every ban that ends: lifted by an admin or plugin, replaced by a new ban on the same target (`lifted_at` is set for both), or run out (`lifted_at` is nil). Both are fire-and-forget.
+
+```elixir
+# Caught three times: a week out.
+Gamend.Bans.ban(:account, user_id,
+  expires_at: DateTime.add(DateTime.utc_now(), 7, :day),
+  reason: "Speed hack",
+  source: :plugin
+)
+
+@impl true
+def after_ban_lifted(%{kind: :account, user_id: user_id, lifted_at: nil}) do
+  Gamend.Push.send_to_user(user_id, %{"title" => "Your suspension is over"})
+end
+
+def after_ban_lifted(_ban), do: :ok
 ```
 
 ### Ready check hooks
@@ -393,7 +416,7 @@ A complete, runnable example is in
 
 ## Every hook
 
-79 callbacks, all optional; implement only what you need. A `before_*`
+80 callbacks, all optional; implement only what you need. A `before_*`
 hook returns `{:ok, value}` to continue (optionally rewriting the value) or
 `{:error, reason}` to reject the operation. An `after_*` hook runs once the
 change is committed and its return value is ignored.
@@ -405,8 +428,9 @@ change is committed and its return value is ignored.
 | Lobbies | `before_lobby_create` `before_lobby_delete` `before_lobby_join` `before_lobby_kick` `before_lobby_leave` `before_lobby_state_change` `before_lobby_update` | `after_lobby_create` `after_lobby_deleted` `after_lobby_host_change` `after_lobby_join` `after_lobby_kick` `after_lobby_leave` `after_lobby_state_changed` `after_lobby_updated` |
 | Parties | `before_party_create` `before_party_join` `before_party_kick` `before_party_update` | `after_party_create` `after_party_disband` `after_party_join` `after_party_kick` `after_party_leave` `after_party_updated` |
 | Groups | `before_group_create` `before_group_delete` `before_group_join` `before_group_kick` `before_group_update` | `after_group_create` `after_group_deleted` `after_group_join` `after_group_kick` `after_group_leave` `after_group_updated` |
-| Chat | `before_chat_message` | `after_chat_message` `after_chat_message_reported` `after_user_muted` |
+| Chat | `before_chat_message` | `after_chat_message` `after_chat_message_reported` |
 | Reports | `before_report_create` | `after_report_created` `after_report_resolved` |
+| Bans | — | `after_ban_created` `after_ban_lifted` |
 | Quests | `before_quest_claim` | `after_quest_claimed` `after_quest_completed` |
 | Matchmaking | `before_matchmaking_join` | `after_matchmaking_cancel` `after_matchmaking_join` `after_matchmaking_matched` |
 | Ready checks | `before_ready_check_open` | `after_ready_check_failed` `after_ready_check_passed` |

@@ -34,7 +34,7 @@ defmodule GamendWeb.Plugs.IpBanTest do
 
     refute IpBan.banned?("203.0.113.9")
     assert Bans.list_active(:ip) == []
-    assert [%{subject: "203.0.113.9", lifted_at: %DateTime{}}] = Bans.history(:ip)
+    assert [%{subject: "203.0.113.9", lifted_at: %DateTime{}}] = Bans.list(%{kind: :ip})
   end
 
   test "load_persisted/0 restores bans into ETS" do
@@ -54,11 +54,11 @@ defmodule GamendWeb.Plugs.IpBanTest do
   end
 
   test "apply_remote/2 mirrors events without touching the database" do
-    :ok = Cache.apply_remote(:put, {{:ip, "203.0.113.13"}, nil})
+    :ok = Cache.apply_remote(:put, {{:ip, "203.0.113.13", nil}, nil})
     assert IpBan.banned?("203.0.113.13")
     assert Bans.list_active(:ip) == []
 
-    :ok = Cache.apply_remote(:deleted, {:ip, "203.0.113.13"})
+    :ok = Cache.apply_remote(:deleted, {:ip, "203.0.113.13", nil})
     refute IpBan.banned?("203.0.113.13")
   end
 

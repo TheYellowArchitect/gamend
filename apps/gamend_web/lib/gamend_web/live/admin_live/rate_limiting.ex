@@ -3,7 +3,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
 
   alias Gamend.Accounts.Scope
   alias Gamend.Bans
-  alias GamendWeb.AdminLive.Shared
+  alias GamendWeb.AdminLive.BanForm
   alias GamendWeb.Plugs.IpBan
 
   @refresh_interval 5_000
@@ -225,7 +225,12 @@ defmodule GamendWeb.AdminLive.RateLimiting do
           <%!-- IP Ban Management --%>
           <div class="card bg-base-200 shadow">
             <div class="card-body">
-              <h2 class="card-title text-lg">IP Ban Management</h2>
+              <div class="flex items-center justify-between">
+                <h2 class="card-title text-lg">IP Ban Management</h2>
+                <.link navigate={~p"/admin/bans"} class="link link-primary text-xs">
+                  All bans, accounts too →
+                </.link>
+              </div>
 
               <%!-- Ban form --%>
               <form phx-submit="ban_ip" class="flex flex-wrap items-end gap-2 mb-4" id="ban-ip-form">
@@ -239,28 +244,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
                     required
                   />
                 </div>
-                <div>
-                  <label class="label text-xs">Duration</label>
-                  <select name="duration" class="select select-bordered select-sm">
-                    <option
-                      :for={{value, label} <- Shared.duration_options()}
-                      value={value}
-                      selected={value == "permanent"}
-                    >
-                      {label}
-                    </option>
-                  </select>
-                </div>
-                <div class="grow">
-                  <label class="label text-xs">Reason</label>
-                  <input
-                    type="text"
-                    name="reason"
-                    placeholder="Optional"
-                    maxlength={Gamend.Limits.get(:max_ban_reason)}
-                    class="input input-bordered input-sm w-full"
-                  />
-                </div>
+                <BanForm.fields form={Map.put(BanForm.empty(), "duration", "permanent")} />
                 <button type="submit" class="btn btn-warning btn-sm">
                   <.icon name="hero-no-symbol" class="w-4 h-4" /> Ban IP
                 </button>
@@ -389,7 +373,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
        config: config,
        ets_backend?: GamendWeb.RateLimit.backend() == GamendWeb.RateLimit.ETS,
        ip_bans: Bans.list_active(:ip),
-       ban_log: Bans.history(:ip),
+       ban_log: Bans.list(%{kind: :ip}, page: 1, page_size: 100),
        rate_stats: build_rate_limit_stats()
      )}
   end
@@ -401,7 +385,7 @@ defmodule GamendWeb.AdminLive.RateLimiting do
     {:noreply,
      assign(socket,
        ip_bans: Bans.list_active(:ip),
-       ban_log: Bans.history(:ip),
+       ban_log: Bans.list(%{kind: :ip}, page: 1, page_size: 100),
        rate_stats: build_rate_limit_stats()
      )}
   end
@@ -410,28 +394,21 @@ defmodule GamendWeb.AdminLive.RateLimiting do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
-  def handle_event("ban_ip", %{"ip" => ip_str, "duration" => duration} = params, socket) do
+  def handle_event("ban_ip", %{"ip" => ip_str} = params, socket) do
     ip_str = String.trim(ip_str)
 
     if ip_str == "" do
       {:noreply, put_flash(socket, :error, "IP address is required")}
     else
-      opts = [
-        expires_at: Shared.expires_at(duration),
-        reason: Gamend.Parse.blank_to_nil(String.trim(params["reason"] || "")),
-        by: Scope.user_id(socket.assigns.current_scope)
-      ]
-
-      case IpBan.ban(ip_str, opts) do
+      case BanForm.place(:ip, ip_str, params, Scope.user_id(socket.assigns.current_scope)) do
         {:ok, ban} ->
           {:noreply,
            socket
            |> reload_bans()
            |> put_flash(:info, "Banned #{ban.subject}")}
 
-        {:error, changeset} ->
-          {:noreply,
-           put_flash(socket, :error, "Could not ban: #{Shared.error_summary(changeset)}")}
+        {:error, message} ->
+          {:noreply, put_flash(socket, :error, "Could not ban: #{message}")}
       end
     end
   end
@@ -451,7 +428,10 @@ defmodule GamendWeb.AdminLive.RateLimiting do
   defp schedule_refresh, do: Process.send_after(self(), :refresh, @refresh_interval)
 
   defp reload_bans(socket) do
-    assign(socket, ip_bans: Bans.list_active(:ip), ban_log: Bans.history(:ip))
+    assign(socket,
+      ip_bans: Bans.list_active(:ip),
+      ban_log: Bans.list(%{kind: :ip}, page: 1, page_size: 100)
+    )
   end
 
   @empty_stats %{limited: 0, usage: [], by_type: %{}}

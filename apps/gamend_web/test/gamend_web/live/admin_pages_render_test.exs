@@ -33,7 +33,6 @@ defmodule GamendWeb.AdminPagesRenderTest do
     {"/admin/friends", "Friends"},
     {"/admin/chat", "Chat"},
     {"/admin/chat/reports", "reports"},
-    {"/admin/chat/mutes", "mutes"},
     {"/admin/chat/filter", "filter"},
     {"/admin/quests", "Quests"},
     {"/admin/payments", "Payments"},

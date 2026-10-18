@@ -5,8 +5,8 @@ defmodule GamendWeb.AdminLive.ChatReportsTest do
 
   alias Gamend.Accounts.User
   alias Gamend.AccountsFixtures
+  alias Gamend.Bans
   alias Gamend.Chat.Message
-  alias Gamend.Chat.Moderation.Cache
   alias Gamend.Chat.Reports
   alias Gamend.Repo
 
@@ -26,7 +26,7 @@ defmodule GamendWeb.AdminLive.ChatReportsTest do
       |> Repo.insert!()
 
     {:ok, report} = Reports.report_message(reporter.id, message.id, "abusive")
-    on_exit(fn -> Cache.apply_remote(:mute_deleted, {sender.id, "global", nil}) end)
+    on_exit(fn -> Bans.Cache.apply_remote(:deleted, {:chat, sender.id, "global"}) end)
     %{admin: admin, sender: sender, message: message, report: report}
   end
 
@@ -116,7 +116,7 @@ defmodule GamendWeb.AdminLive.ChatReportsTest do
     })
 
     assert status(report) == "actioned"
-    assert Cache.muted?(sender.id, "lobby", Ecto.UUID.generate())
+    assert Bans.muted?(sender.id, "lobby", Ecto.UUID.generate())
   end
 
   test "an action form closes without acting; an unknown report says so", %{

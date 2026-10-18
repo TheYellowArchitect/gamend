@@ -127,7 +127,7 @@ defmodule GamendWeb.ApiSpec do
         - **Moderation is built in**: an admin-managed word filter (`block` / `mask` / `flag`, matched on a normalized form so leetspeak and padding do not slip through) and mutes are enforced before a message is stored or broadcast; the `before_chat_message` pipeline hook stays available for rules of your own
         - **Report a message**: `POST /chat/messages/:id/report` with an optional `reason` — one report per player per message, capped per day; reports the filter files itself have no reporter
         - **Scoped mutes** mirror kick: `POST /lobbies/mute` + `/lobbies/unmute` (lobby host), `POST /groups/:id/mute` + `/groups/:id/unmute` (group admin), `POST /parties/mute` + `/parties/unmute` (party leader), each with a paginated `.../mutes` listing for the same authority. Body is `{target_user_id, expires_at?, reason?}`; omitting `expires_at` mutes permanently
-        - **Global mutes and the blocklist are server-authoritative** — no public endpoint; admin API (`/api/v1/admin/chat`) or a plugin calling `Gamend.Chat.mute_user/4`
+        - **Global mutes and the blocklist are server-authoritative** — no public endpoint; a mute is a chat ban on the admin bans API (`/api/v1/admin/bans`, `kind: "chat"`), the blocklist is on `/api/v1/admin/chat`, and a plugin calls `Gamend.Chat.mute_user/4`
         - **Real-time moderation events**: the muted player receives `chat_muted` / `chat_unmuted` on their user channel
 
         ## **9. Leaderboards**
@@ -294,6 +294,7 @@ defmodule GamendWeb.ApiSpec do
         # --- Admin API ---
         %Tag{name: "Admin – Users", description: "Admin user management"},
         %Tag{name: "Admin – Sessions", description: "Admin session management"},
+        %Tag{name: "Admin – Bans", description: "IP address and account bans"},
         %Tag{name: "Admin – Lobbies", description: "Admin lobby management"},
         %Tag{name: "Admin – Groups", description: "Admin group management"},
         %Tag{name: "Admin – Chat", description: "Admin chat management"},

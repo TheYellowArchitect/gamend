@@ -55,7 +55,7 @@ defmodule GamendWeb.RuntimeIntrospection do
 
   # Order categories appear in, grouped views included. A hook maps to the first
   # match, so specific keywords come before generic ones.
-  @hook_group_order ~w(Lifecycle User Lobby Group Party Chat Push Quest Leaderboard Tournament Matchmaking Payments Economy KV Other)
+  @hook_group_order ~w(Lifecycle User Lobby Group Party Chat Bans Push Quest Leaderboard Tournament Matchmaking Payments Economy KV Other)
 
   @doc "Category a hook belongs to, derived from its name (not source position)."
   @spec hook_group(String.t()) :: String.t()
@@ -63,9 +63,8 @@ defmodule GamendWeb.RuntimeIntrospection do
     cond do
       name in ~w(after_startup before_stop on_custom_hook) -> "Lifecycle"
       String.contains?(name, "kv") -> "KV"
-      # Before the "user" clause: after_user_muted is chat moderation.
-      String.contains?(name, "mute") -> "Chat"
       String.contains?(name, "chat") -> "Chat"
+      String.contains?(name, "_ban_") -> "Bans"
       String.contains?(name, "push") -> "Push"
       String.contains?(name, "quest") -> "Quest"
       String.contains?(name, "score") -> "Leaderboard"

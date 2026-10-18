@@ -183,7 +183,10 @@ defmodule Gamend.Hooks.Defaults do
       def after_report_resolved(_report), do: :ok
 
       @impl true
-      def after_user_muted(_mute), do: :ok
+      def after_ban_created(_ban), do: :ok
+
+      @impl true
+      def after_ban_lifted(_ban), do: :ok
 
       @impl true
       def before_push_send(_user_id, message), do: {:ok, message}
@@ -335,7 +338,8 @@ defmodule Gamend.Hooks.Defaults do
                      before_report_create: 1,
                      after_report_created: 1,
                      after_report_resolved: 1,
-                     after_user_muted: 1,
+                     after_ban_created: 1,
+                     after_ban_lifted: 1,
                      before_push_send: 2,
                      after_push_sent: 3,
                      before_lobby_leave: 2,

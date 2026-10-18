@@ -1,10 +1,10 @@
 defmodule GamendWeb.Api.V1.Admin.ChatModerationController do
   @moduledoc """
-  Admin API for chat moderation: the report queue, mutes and the word filter.
+  Admin API for chat moderation: the report queue and the word filter.
 
   Parity with the admin console — everything the moderation pages can click is
-  callable from a script. Global mutes live only here and on the admin UI (the
-  player-facing routes are scoped to a lobby, group or party).
+  callable from a script. Mutes are chat bans, on the bans API
+  (`GamendWeb.Api.V1.Admin.BanController`, kind `chat`).
   """
   use GamendWeb, :controller
   use OpenApiSpex.ControllerSpecs
@@ -19,8 +19,6 @@ defmodule GamendWeb.Api.V1.Admin.ChatModerationController do
   alias GamendWeb.Schemas
 
   alias GamendWeb.Schemas.{
-    AdminChatMutePage,
-    AdminChatMuteResponse,
     ChatFilterLanguagesResponse,
     ChatFilterTestResponse,
     ChatFilterWordPage,
@@ -150,136 +148,6 @@ defmodule GamendWeb.Api.V1.Admin.ChatModerationController do
         {:ok, _report} -> reply_ok(conn)
         {:error, error} -> write_error(conn, error)
       end
-    end)
-  end
-
-  # ---------------------------------------------------------------------------
-  # Mutes
-  # ---------------------------------------------------------------------------
-
-  operation(:list_mutes,
-    operation_id: "admin_list_chat_mutes",
-    summary: "List chat mutes (admin)",
-    description: "Every mute, newest first. Pass `active=true` to hide expired ones.",
-    security: [%{"authorization" => []}],
-    parameters: [
-      user_id: [in: :query, schema: %Schema{type: :string, format: :uuid}],
-      scope: [
-        in: :query,
-        schema: %Schema{type: :string, enum: ["global", "lobby", "group", "party"]}
-      ],
-      scope_ref_id: [in: :query, schema: %Schema{type: :string, format: :uuid}],
-      active: [in: :query, schema: %Schema{type: :boolean}],
-      page: [in: :query, schema: %Schema{type: :integer, default: 1}],
-      page_size: [in: :query, schema: %Schema{type: :integer, default: 25}]
-    ],
-    responses: [
-      ok: {"Mutes", "application/json", AdminChatMutePage},
-      bad_request: Schemas.error("Invalid id")
-    ]
-  )
-
-  def list_mutes(conn, params) do
-    case id_filters(params, ["user_id", "scope_ref_id"]) do
-      :error ->
-        invalid_id(conn)
-
-      {:ok, filters} ->
-        filters =
-          filters
-          |> maybe_put_string_filter("scope", params["scope"])
-          |> maybe_put_bool_filter("active", params["active"])
-
-        {page, page_size} = GamendWeb.Pagination.params(params)
-
-        mutes = Moderation.list_mutes(filters, page: page, page_size: page_size)
-        total_count = Moderation.count_mutes(filters)
-
-        reply_page(conn, Enum.map(mutes, &serialize_mute/1), page, page_size, total_count)
-    end
-  end
-
-  operation(:create_mute,
-    operation_id: "admin_create_chat_mute",
-    summary: "Mute a player (admin)",
-    description:
-      "Silences a player. `global` covers every chat including friend DMs and is " <>
-        "admin-only; the scoped variants take the lobby, group or party id in " <>
-        "`scope_ref_id`. Re-muting an already-muted player replaces the mute.",
-    security: [%{"authorization" => []}],
-    request_body:
-      {"Mute", "application/json",
-       %Schema{
-         type: :object,
-         required: [:user_id],
-         properties: %{
-           user_id: %Schema{type: :string, format: :uuid, description: "Player to mute"},
-           scope: %Schema{
-             type: :string,
-             enum: ["global", "lobby", "group", "party"],
-             default: "global"
-           },
-           scope_ref_id: %Schema{
-             type: :string,
-             format: :uuid,
-             description: "Lobby, group or party id. Omit for a global mute."
-           },
-           expires_at: %Schema{
-             type: :string,
-             format: :"date-time",
-             nullable: true,
-             description: "When the mute lifts. Omit for a permanent mute."
-           },
-           reason: %Schema{type: :string}
-         }
-       }},
-    responses: [
-      ok: {"Muted (replacing any earlier mute)", "application/json", AdminChatMuteResponse},
-      bad_request: Schemas.error("Invalid id"),
-      unprocessable_entity: Schemas.error("Invalid mute")
-    ]
-  )
-
-  def create_mute(conn, params) do
-    case {parse_id(params["user_id"]), param_id(params["scope_ref_id"])} do
-      {nil, _scope_ref} ->
-        invalid_id(conn)
-
-      {_user_id, :error} ->
-        invalid_id(conn)
-
-      {user_id, {:ok, scope_ref_id}} ->
-        attrs = %{
-          "expires_at" => params["expires_at"],
-          "reason" => params["reason"],
-          "muted_by" => admin_id(conn)
-        }
-
-        case Moderation.mute_user(user_id, params["scope"] || "global", scope_ref_id, attrs) do
-          {:ok, mute} -> reply_data(conn, serialize_mute(mute))
-          {:error, error} -> write_error(conn, error)
-        end
-    end
-  end
-
-  operation(:delete_mute,
-    operation_id: "admin_delete_chat_mute",
-    summary: "Lift a mute (admin)",
-    security: [%{"authorization" => []}],
-    parameters: [
-      id: [in: :path, schema: %Schema{type: :string, format: :uuid}, required: true]
-    ],
-    responses: [
-      ok: {"Mutes lifted", "application/json", DeletedCountResponse},
-      bad_request: Schemas.error("Invalid id"),
-      not_found: Schemas.error("Not found")
-    ]
-  )
-
-  def delete_mute(conn, %{"id" => id}) do
-    with_record(conn, id, &Moderation.get_mute/1, fn mute ->
-      {:ok, count} = Moderation.unmute_user(mute.user_id, mute.scope, mute.scope_ref_id)
-      reply_data(conn, %{deleted: count})
     end)
   end
 
@@ -589,22 +457,6 @@ defmodule GamendWeb.Api.V1.Admin.ChatModerationController do
       resolved_at: report.resolved_at,
       inserted_at: report.inserted_at,
       updated_at: report.updated_at
-    }
-  end
-
-  defp serialize_mute(mute) do
-    %{
-      id: mute.id,
-      user_id: mute.user_id,
-      user_name: display_name(mute, :user),
-      scope: mute.scope || "global",
-      scope_ref_id: mute.scope_ref_id || "",
-      expires_at: mute.expires_at,
-      reason: mute.reason || "",
-      muted_by: mute.muted_by || "",
-      muted_by_name: display_name(mute, :muted_by_user),
-      inserted_at: mute.inserted_at,
-      updated_at: mute.updated_at
     }
   end
 

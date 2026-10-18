@@ -7,7 +7,7 @@ defmodule Gamend.Bans.SyncTest do
   alias Gamend.Bans.Cache
   alias Gamend.Bans.Sync
 
-  @key {:ip, "203.0.113.88"}
+  @key {:ip, "203.0.113.88", nil}
 
   setup do
     Cache.init_table()
@@ -21,18 +21,18 @@ defmodule Gamend.Bans.SyncTest do
     {:noreply, _} =
       Sync.handle_info({:bans, :put, {@key, later()}, :other@node}, %{loaded?: true})
 
-    assert Cache.banned?(:ip, "203.0.113.88")
+    assert Cache.active?(@key)
 
     {:noreply, _} = Sync.handle_info({:bans, :deleted, @key, :other@node}, %{loaded?: true})
 
-    refute Cache.banned?(:ip, "203.0.113.88")
+    refute Cache.active?(@key)
   end
 
   test "an event this node sent is not applied twice" do
     {:noreply, _} =
       Sync.handle_info({:bans, :put, {@key, later()}, Node.self()}, %{loaded?: true})
 
-    refute Cache.banned?(:ip, "203.0.113.88")
+    refute Cache.active?(@key)
   end
 
   test "the persisted bans load once; a later retry is a no-op" do

@@ -112,11 +112,12 @@ defmodule GamendWeb.Api.V1.Admin.ChatAdminControllerTest do
     end
   end
 
+  # A mute is a chat ban, on the bans API.
   describe "mutes" do
     test "create, list and lift", ctx do
       body =
         ctx.admin_conn
-        |> post("/api/v1/admin/chat/mutes", %{user_id: ctx.member.id, reason: "spam"})
+        |> post("/api/v1/admin/bans", %{kind: "chat", user_id: ctx.member.id, reason: "spam"})
         |> json_response(200)
 
       assert %{"scope" => "global", "user_id" => user_id, "id" => mute_id} = body["data"]
@@ -124,14 +125,15 @@ defmodule GamendWeb.Api.V1.Admin.ChatAdminControllerTest do
 
       body =
         ctx.admin_conn
-        |> get("/api/v1/admin/chat/mutes", %{user_id: ctx.member.id})
+        |> get("/api/v1/admin/bans", %{kind: "chat", user_id: ctx.member.id})
         |> json_response(200)
 
       assert [%{"id" => ^mute_id, "user_name" => _}] = body["data"]
 
-      assert ctx.admin_conn
-             |> delete("/api/v1/admin/chat/mutes/#{mute_id}")
-             |> json_response(200) == %{"data" => %{"deleted" => 1}}
+      assert %{"data" => %{"active" => false, "id" => ^mute_id}} =
+               ctx.admin_conn
+               |> delete("/api/v1/admin/bans/#{mute_id}")
+               |> json_response(200)
     end
   end
 

@@ -132,7 +132,7 @@ defmodule Gamend.Accounts.Search do
   sensitive fields a player cannot, so it is admin-only.
 
   `filters` keys (string or atom): `:search` (term or full id), `:facets` (list
-  of `"online"`, `"unactivated"`, `"unverified"` — an email never confirmed —
+  of `"online"`, `"unactivated"`, `"banned"` (an active account ban), `"unverified"` — an email never confirmed —
   and provider names). `opts`: `:page`,
   `:page_size`, `:sort_field`, `:sort_dir`.
   """
@@ -195,11 +195,16 @@ defmodule Gamend.Accounts.Search do
       if "unactivated" in facets, do: where(q, [u], u.is_activated == false), else: q
     end)
     |> then(fn q ->
+      if "banned" in facets,
+        do: where(q, [u], u.id in subquery(Gamend.Bans.banned_user_ids())),
+        else: q
+    end)
+    |> then(fn q ->
       if "unverified" in facets,
         do: where(q, [u], not is_nil(u.email) and is_nil(u.confirmed_at)),
         else: q
     end)
-    |> apply_provider_presence(facets -- ["online", "unactivated", "unverified"])
+    |> apply_provider_presence(facets -- ["online", "unactivated", "unverified", "banned"])
   end
 
   defp apply_provider_presence(query, providers) do

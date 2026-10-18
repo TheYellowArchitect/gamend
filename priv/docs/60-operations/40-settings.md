@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-332 settings across 30 groups.
+331 settings across 30 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -234,7 +234,6 @@ Live values, and where each one came from, are on the
 | `GAMEND_LIMITS_MAX_MATCHMAKING_PARAMS_SIZE` | integer | `2048` | Serialized byte size of a ticket's match_params map. |
 | `GAMEND_LIMITS_MAX_MATCHMAKING_PLAYERS` | integer | `64` | Hard cap on a ticket's own max_players setting. |
 | `GAMEND_LIMITS_MAX_METADATA_SIZE` | integer | `16384` |  |
-| `GAMEND_LIMITS_MAX_MUTE_REASON` | integer | `500` |  |
 | `GAMEND_LIMITS_MAX_NOTIFICATIONS_PER_USER` | integer | `500` |  |
 | `GAMEND_LIMITS_MAX_NOTIFICATION_CONTENT` | integer | `10000` |  |
 | `GAMEND_LIMITS_MAX_NOTIFICATION_TITLE` | integer | `255` |  |

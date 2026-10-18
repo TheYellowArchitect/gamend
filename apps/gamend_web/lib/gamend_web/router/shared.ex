@@ -787,6 +787,9 @@ defmodule GamendWeb.Router.Shared do
         get "/sessions", SessionController, :index
         delete "/sessions/:id", SessionController, :delete
         delete "/users/:id/sessions", SessionController, :delete_user_sessions
+        get "/bans", BanController, :index
+        post "/bans", BanController, :create
+        delete "/bans/:id", BanController, :delete
         get "/storage", StorageController, :index
         get "/storage/usage", StorageController, :usage
         delete "/storage", StorageController, :delete
@@ -823,9 +826,6 @@ defmodule GamendWeb.Router.Shared do
         get "/chat/reports", ChatModerationController, :list_reports
         post "/chat/reports/:id/resolve", ChatModerationController, :resolve_report
         delete "/chat/reports/:id", ChatModerationController, :delete_report
-        get "/chat/mutes", ChatModerationController, :list_mutes
-        post "/chat/mutes", ChatModerationController, :create_mute
-        delete "/chat/mutes/:id", ChatModerationController, :delete_mute
         get "/chat/filter_words", ChatModerationController, :list_filter_words
         get "/chat/filter_words/languages", ChatModerationController, :filter_languages
         post "/chat/filter_words", ChatModerationController, :create_filter_word
@@ -945,7 +945,6 @@ defmodule GamendWeb.Router.Shared do
           live "/admin/friends", AdminLive.Friends, :index
           live "/admin/chat", AdminLive.Chat, :index
           live "/admin/chat/reports", AdminLive.ChatReports, :index
-          live "/admin/chat/mutes", AdminLive.ChatMutes, :index
           live "/admin/chat/filter", AdminLive.ChatFilter, :index
           live "/admin/reports", AdminLive.Reports, :index
           live "/admin/quests", AdminLive.Quests, :index
@@ -953,6 +952,7 @@ defmodule GamendWeb.Router.Shared do
           live "/admin/translations", AdminLive.Translations, :index
           live "/admin/connections", AdminLive.Connections, :index
           live "/admin/rate_limiting", AdminLive.RateLimiting, :index
+          live "/admin/bans", AdminLive.Bans, :index
           live "/admin/logs", AdminLive.Logs, :index
           live "/admin/lobby_snapshots", AdminLive.LobbySnapshots, :index
           live "/admin/geo", AdminLive.Geo, :index

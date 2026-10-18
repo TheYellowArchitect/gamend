@@ -419,14 +419,14 @@ defmodule Gamend.Chat do
   end
 
   @doc ~S"""
-    List mutes. Filters: `:user_id`, `:scope`, `:scope_ref_id`, `:active` (when
-    true, only unexpired mutes).
+    List mutes, newest first. Filters: `:user_id`, `:scope`, `:scope_ref_id`,
+    `:active` (when true, only mutes in force).
     
   """
   @spec list_mutes(
           map(),
           keyword()
-        ) :: [Gamend.Chat.Mute.t()]
+        ) :: [Gamend.Bans.Ban.t()]
   def list_mutes(_filters \\ %{}, _opts \\ []) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
@@ -479,26 +479,33 @@ defmodule Gamend.Chat do
     
     `scope` is `"global"` (every chat, `scope_ref_id` nil) or one of `"lobby"`,
     `"group"`, `"party"` with the room id as `scope_ref_id`. `attrs` may carry
-    `expires_at` (nil means permanent), `reason` and `muted_by`.
+    `expires_at` (nil means permanent), `reason`, `muted_by` (who did it) and
+    `source` (`:admin`, `:room` for a room's own authority, `:plugin` by
+    default; see `Gamend.Bans.Ban`).
     
     Re-muting an already-muted user replaces the existing mute, so a moderator
     can extend or shorten one without unmuting first.
     
   """
   @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-          {:ok, Gamend.Chat.Mute.t()} | {:error, term()}
+          {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
   def mute_user(_user_id, _scope, _scope_ref_id, _attrs \\ %{}) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         {:ok,
-         %Gamend.Chat.Mute{
+         %Gamend.Bans.Ban{
            id: "",
-           user_id: "",
-           scope: "global",
-           scope_ref_id: nil,
+           kind: :account,
+           subject: "",
+           user_id: nil,
            expires_at: nil,
            reason: nil,
-           muted_by: nil,
+           source: :plugin,
+           scope: nil,
+           scope_ref_id: nil,
+           banned_by: nil,
+           lifted_at: nil,
+           lifted_by: nil,
            inserted_at: ~U[1970-01-01 00:00:00Z],
            updated_at: ~U[1970-01-01 00:00:00Z]
          }}
@@ -717,16 +724,17 @@ defmodule Gamend.Chat do
   end
 
   @doc ~S"""
-    Remove a mute. Returns `{:ok, count}` — 0 when the user was not muted.
+    Lift a mute. Returns `{:ok, count}` — 0 when the user was not muted.
   """
-  @spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: {:ok, non_neg_integer()}
-  def unmute_user(_user_id, _scope, _scope_ref_id \\ nil) do
+  @spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, Ecto.UUID.t() | nil) ::
+          {:ok, non_neg_integer()}
+  def unmute_user(_user_id, _scope, _scope_ref_id \\ nil, _by \\ nil) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         {:ok, nil}
 
       _ ->
-        raise "Gamend.Chat.unmute_user/3 is a stub - only available at runtime on Gamend"
+        raise "Gamend.Chat.unmute_user/4 is a stub - only available at runtime on Gamend"
     end
   end
 

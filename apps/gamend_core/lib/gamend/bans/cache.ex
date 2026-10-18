@@ -1,7 +1,8 @@
 defmodule Gamend.Bans.Cache do
   @moduledoc """
-  Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed
-  `{kind, subject}`, read on each request an IP ban covers.
+  Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed by its
+  target (`Gamend.Bans.Ban.target/4`, `{kind, subject, scope}`), read on each
+  request an IP ban covers and each chat message a mute covers.
 
   The database is the source of truth; this mirrors it, and PubSub carries each
   change to the other instances, where `Gamend.Bans.Sync` applies it (and loads
@@ -29,11 +30,11 @@ defmodule Gamend.Bans.Cache do
     :ok
   end
 
-  @doc "Whether `subject` has an active ban of `kind` on this node."
-  @spec banned?(Ban.kind(), String.t()) :: boolean()
-  def banned?(kind, subject) do
+  @doc "Whether `target` has an active ban on this node."
+  @spec active?(tuple()) :: boolean()
+  def active?(target) do
     init_table()
-    key = {kind, subject}
+    key = target
 
     case :ets.lookup(@table, key) do
       [{^key, :infinity}] ->
@@ -54,16 +55,16 @@ defmodule Gamend.Bans.Cache do
 
   @doc "Mirror a ban locally and on the other instances."
   @spec put(Ban.t()) :: :ok
-  def put(%Ban{kind: kind, subject: subject, expires_at: expires_at}) do
-    key = {kind, subject}
+  def put(%Ban{expires_at: expires_at} = ban) do
+    key = Ban.target(ban)
     apply_put(key, expires_at)
     broadcast({:bans, :put, {key, expires_at}, Node.self()})
   end
 
-  @doc "Remove a ban locally and on the other instances."
-  @spec delete(Ban.kind(), String.t()) :: :ok
-  def delete(kind, subject) do
-    key = {kind, subject}
+  @doc "Remove a target's ban locally and on the other instances."
+  @spec delete(tuple()) :: :ok
+  def delete(target) do
+    key = target
     apply_delete(key)
     broadcast({:bans, :deleted, key, Node.self()})
   end
@@ -77,7 +78,7 @@ defmodule Gamend.Bans.Cache do
     init_table()
     now = DateTime.utc_now()
 
-    for {{kind, subject}, expires_at} <- :ets.tab2list(@table),
+    for {{kind, subject, _scope}, expires_at} <- :ets.tab2list(@table),
         only_kind in [nil, kind],
         expires_at == :infinity or DateTime.after?(expires_at, now),
         do: {kind, subject, expires_at}
@@ -93,7 +94,7 @@ defmodule Gamend.Bans.Cache do
     bans = Bans.list_active()
     init_table()
     :ets.delete_all_objects(@table)
-    Enum.each(bans, &apply_put({&1.kind, &1.subject}, &1.expires_at))
+    Enum.each(bans, &apply_put(Ban.target(&1), &1.expires_at))
   end
 
   @doc """

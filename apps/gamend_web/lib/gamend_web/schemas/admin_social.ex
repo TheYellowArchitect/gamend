@@ -154,47 +154,6 @@ defmodule GamendWeb.Schemas.ChatReport do
   })
 end
 
-defmodule GamendWeb.Schemas.AdminChatMute do
-  @moduledoc """
-  A chat mute with the names of who is muted and who muted them: the
-  admin's view of `ChatMuteRecord`.
-  """
-  require OpenApiSpex
-  alias OpenApiSpex.Schema
-
-  OpenApiSpex.schema(%{
-    title: "AdminChatMute",
-    description: "A chat mute, with names",
-    type: :object,
-    properties: %{
-      id: %Schema{type: :string, format: :uuid},
-      user_id: %Schema{type: :string, format: :uuid},
-      user_name: %Schema{type: :string},
-      scope: %Schema{type: :string, enum: ["global", "lobby", "group", "party"]},
-      scope_ref_id: %Schema{type: :string, description: "Empty for a global mute"},
-      expires_at: %Schema{type: :string, format: :"date-time", nullable: true},
-      reason: %Schema{type: :string},
-      muted_by: %Schema{type: :string, description: "Empty for the system"},
-      muted_by_name: %Schema{type: :string},
-      inserted_at: %Schema{type: :string, format: :"date-time"},
-      updated_at: %Schema{type: :string, format: :"date-time"}
-    },
-    required: [
-      :id,
-      :user_id,
-      :user_name,
-      :scope,
-      :scope_ref_id,
-      :expires_at,
-      :reason,
-      :muted_by,
-      :muted_by_name,
-      :inserted_at,
-      :updated_at
-    ]
-  })
-end
-
 defmodule GamendWeb.Schemas.ChatFilterWord do
   @moduledoc "A word on the chat blocklist."
   require OpenApiSpex
@@ -311,16 +270,6 @@ defmodule GamendWeb.Schemas.ChatReportResponse do
   use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.ChatReport
 end
 
-defmodule GamendWeb.Schemas.AdminChatMutePage do
-  @moduledoc "A page of chat mutes."
-  use GamendWeb.Schemas.Envelope, page: GamendWeb.Schemas.AdminChatMute
-end
-
-defmodule GamendWeb.Schemas.AdminChatMuteResponse do
-  @moduledoc "One chat mute under `data`."
-  use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.AdminChatMute
-end
-
 defmodule GamendWeb.Schemas.ChatFilterWordPage do
   @moduledoc "A page of blocklist words."
   use GamendWeb.Schemas.Envelope, page: GamendWeb.Schemas.ChatFilterWord
@@ -344,4 +293,75 @@ end
 defmodule GamendWeb.Schemas.ImportedCountResponse do
   @moduledoc "The imported count under `data`."
   use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.ImportedCount
+end
+
+defmodule GamendWeb.Schemas.AdminBan do
+  @moduledoc "A ban (`Gamend.Bans`) as the admin API sends it: an IP, an account or a chat mute, with names."
+  require OpenApiSpex
+  alias OpenApiSpex.Schema
+
+  OpenApiSpex.schema(%{
+    title: "AdminBan",
+    description: "An IP, account or chat ban, active or ended",
+    type: :object,
+    properties: %{
+      id: %Schema{type: :string, format: :uuid},
+      kind: %Schema{type: :string, enum: ["ip", "account", "chat"]},
+      subject: %Schema{
+        type: :string,
+        description: "The IP (an IPv6 one as its /64), or the user id"
+      },
+      user_id: %Schema{type: :string, description: "The banned user; empty for an IP ban"},
+      user_name: %Schema{type: :string},
+      scope: %Schema{
+        type: :string,
+        description: "A chat ban's reach (`global`, `lobby`, `group`, `party`); empty otherwise"
+      },
+      scope_ref_id: %Schema{
+        type: :string,
+        description: "A scoped chat ban's room; empty otherwise"
+      },
+      expires_at: %Schema{type: :string, format: :"date-time", nullable: true},
+      reason: %Schema{type: :string},
+      source: %Schema{type: :string, enum: ["admin", "api", "room", "plugin", "system"]},
+      banned_by: %Schema{type: :string, description: "Empty when no one placed it by hand"},
+      banned_by_name: %Schema{type: :string},
+      lifted_at: %Schema{type: :string, format: :"date-time", nullable: true},
+      lifted_by: %Schema{type: :string, description: "Empty unless an admin lifted it"},
+      lifted_by_name: %Schema{type: :string},
+      active: %Schema{type: :boolean, description: "In force now"},
+      inserted_at: %Schema{type: :string, format: :"date-time"},
+      updated_at: %Schema{type: :string, format: :"date-time"}
+    },
+    required: [
+      :id,
+      :kind,
+      :subject,
+      :user_id,
+      :user_name,
+      :scope,
+      :scope_ref_id,
+      :expires_at,
+      :reason,
+      :source,
+      :banned_by,
+      :banned_by_name,
+      :lifted_at,
+      :lifted_by,
+      :lifted_by_name,
+      :active,
+      :inserted_at,
+      :updated_at
+    ]
+  })
+end
+
+defmodule GamendWeb.Schemas.AdminBanPage do
+  @moduledoc "A page of bans."
+  use GamendWeb.Schemas.Envelope, page: GamendWeb.Schemas.AdminBan
+end
+
+defmodule GamendWeb.Schemas.AdminBanResponse do
+  @moduledoc "One ban under `data`."
+  use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.AdminBan
 end

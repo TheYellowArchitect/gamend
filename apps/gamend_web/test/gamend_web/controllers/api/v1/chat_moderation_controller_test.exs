@@ -22,7 +22,8 @@ defmodule GamendWeb.Api.V1.ChatModerationControllerTest do
 
   defp reset_cache do
     :ets.delete_all_objects(:chat_filter_words)
-    :ets.delete_all_objects(:chat_mutes)
+    # Mutes are chat bans; the test process may own the table and be gone.
+    if :ets.whereis(:bans) != :undefined, do: :ets.delete_all_objects(:bans)
     :persistent_term.erase({Cache, :substring_pattern})
     :ok
   end
@@ -444,7 +445,7 @@ defmodule GamendWeb.Api.V1.ChatModerationControllerTest do
 
     # Expiry is checked on every read, so a timestamp already in the past is the
     # same state as one that lapsed while the server was running.
-    test "a mute whose expiry has passed no longer applies", %{conn: conn} do
+    test "a mute whose expiry has already passed is refused, and does not apply", %{conn: conn} do
       %{host: host, member: member, lobby: lobby} = hosted_lobby("timed-mute-lapsed")
       past = DateTime.utc_now() |> DateTime.add(-60, :second) |> DateTime.truncate(:second)
 
@@ -456,7 +457,9 @@ defmodule GamendWeb.Api.V1.ChatModerationControllerTest do
           expires_at: DateTime.to_iso8601(past)
         })
 
-      assert json_response(conn, 200)
+      assert %{"errors" => %{"expires_at" => ["must be in the future"]}} =
+               json_response(conn, 422)
+
       refute Chat.muted?(member.id, "lobby", lobby.id)
     end
   end

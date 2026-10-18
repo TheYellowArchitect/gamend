@@ -1722,7 +1722,7 @@ defmodule Gamend.Accounts do
     sensitive fields a player cannot, so it is admin-only.
     
     `filters` keys (string or atom): `:search` (term or full id), `:facets` (list
-    of `"online"`, `"unactivated"`, `"unverified"` — an email never confirmed —
+    of `"online"`, `"unactivated"`, `"banned"` (an active account ban), `"unverified"` — an email never confirmed —
     and provider names). `opts`: `:page`,
     `:page_size`, `:sort_field`, `:sort_dir`.
     

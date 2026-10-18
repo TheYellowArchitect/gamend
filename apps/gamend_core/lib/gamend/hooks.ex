@@ -14,7 +14,6 @@ defmodule Gamend.Hooks do
 
   alias Gamend.Accounts.User
   alias Gamend.Chat.Message
-  alias Gamend.Chat.Mute
   alias Gamend.Chat.Report
   alias Gamend.Groups.Group
   alias Gamend.Hooks.Default, as: Default
@@ -272,11 +271,21 @@ defmodule Gamend.Hooks do
   @callback before_chat_message(User.t(), map()) :: hook_result(map())
   @callback after_chat_message(Message.t()) :: any()
 
-  # Chat moderation observations. Both are fire-and-forget: core has already
-  # filed the report / applied the mute by the time they run, so a plugin can
-  # tally strikes, notify moderators or auto-escalate, but cannot veto.
+  # Chat moderation observation. Fire-and-forget: core has already filed the
+  # report by the time it runs, so a plugin can tally strikes, notify
+  # moderators or auto-escalate, but cannot veto. A mute is a chat ban, told
+  # by `after_ban_created/1` and `after_ban_lifted/1` below (`kind: :chat`).
   @callback after_chat_message_reported(Report.t()) :: any()
-  @callback after_user_muted(Mute.t()) :: any()
+
+  # Bans (`Gamend.Bans`): an IP address, an account or a chat sender (a mute,
+  # `kind: :chat`) kept out. Both are
+  # fire-and-forget, after the ban is written and in force: a plugin can log,
+  # notify or tally, not veto. `after_ban_lifted/1` runs once for every ban
+  # that ends, whichever way: lifted (`lifted_at` set), replaced by a new ban
+  # on the same target (`lifted_at` set, and `after_ban_created/1` follows for
+  # the new one), or expired (`lifted_at` nil, `expires_at` passed).
+  @callback after_ban_created(Gamend.Bans.Ban.t()) :: any()
+  @callback after_ban_lifted(Gamend.Bans.Ban.t()) :: any()
 
   # Content reports (`Gamend.Reports`): a page, a word, anything a report kind
   # describes. `before_report_create/1` is a pipeline over the attrs about to
@@ -563,6 +572,8 @@ defmodule Gamend.Hooks do
   # Gamend.Hooks` still injects no-op defaults for anyone who wants them.
   @optional_callbacks after_chat_message: 1,
                       after_chat_message_reported: 1,
+                      after_ban_created: 1,
+                      after_ban_lifted: 1,
                       after_report_created: 1,
                       after_report_resolved: 1,
                       before_report_create: 1,
@@ -589,7 +600,6 @@ defmodule Gamend.Hooks do
                       after_startup: 0,
                       after_user_deleted: 1,
                       after_user_logged_in: 1,
-                      after_user_muted: 1,
                       after_user_offline: 1,
                       after_user_online: 1,
                       after_user_register: 1,
@@ -661,7 +671,8 @@ defmodule Gamend.Hooks do
       :before_chat_message,
       :after_chat_message,
       :after_chat_message_reported,
-      :after_user_muted,
+      :after_ban_created,
+      :after_ban_lifted,
       :before_report_create,
       :after_report_created,
       :after_report_resolved,
@@ -1729,7 +1740,10 @@ defmodule Gamend.Hooks.Default do
   def after_report_resolved(_report), do: :ok
 
   @impl true
-  def after_user_muted(_mute), do: :ok
+  def after_ban_created(_ban), do: :ok
+
+  @impl true
+  def after_ban_lifted(_ban), do: :ok
 
   @impl true
   def before_push_send(_user_id, message), do: {:ok, message}

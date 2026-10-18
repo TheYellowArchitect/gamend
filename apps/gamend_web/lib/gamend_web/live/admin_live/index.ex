@@ -384,7 +384,7 @@ defmodule GamendWeb.AdminLive.Index do
                   <div>Open reports</div>
                   <div>
                     Active mutes:
-                    <.link navigate={~p"/admin/chat/mutes"} class="link">{@active_mutes}</.link>
+                    <.link navigate={~p"/admin/bans?kind=chat"} class="link">{@active_mutes}</.link>
                   </div>
                   <div>
                     <.link navigate={~p"/admin/chat/filter"} class="link">Word filter</.link>
@@ -543,6 +543,36 @@ defmodule GamendWeb.AdminLive.Index do
                       if(@rate_stats.limited > 0, do: "badge-warning", else: "badge-ghost opacity-50")
                     ]}>
                       {@rate_stats.limited}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <%!-- 14b. Bans --%>
+              <div class="card bg-base-100 p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-sm font-semibold">Bans</div>
+                  <.link navigate={~p"/admin/bans"} class="link link-primary text-xs">
+                    View →
+                  </.link>
+                </div>
+                <div class="text-xs text-muted mt-2 space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span>Banned accounts</span>
+                    <span class={[
+                      "badge badge-sm font-mono",
+                      if(@account_ban_count > 0, do: "badge-error", else: "badge-ghost opacity-50")
+                    ]}>
+                      {@account_ban_count}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span>Banned IPs</span>
+                    <span class={[
+                      "badge badge-sm font-mono",
+                      if(@ip_ban_count > 0, do: "badge-error", else: "badge-ghost opacity-50")
+                    ]}>
+                      {@ip_ban_count}
                     </span>
                   </div>
                 </div>
@@ -947,6 +977,7 @@ defmodule GamendWeb.AdminLive.Index do
        sys_stats: sys_stats,
        rate_stats: rate_stats,
        ip_ban_count: length(BanCache.list(:ip)),
+       account_ban_count: length(BanCache.list(:account)),
        geo_stats: geo.stats_all,
        geo_total: geo.total_all,
        geo_total_1h: geo.total_1h,
@@ -979,6 +1010,7 @@ defmodule GamendWeb.AdminLive.Index do
        sys_stats: ConnectionTracker.system_stats(),
        rate_stats: build_rate_limit_stats(),
        ip_ban_count: length(BanCache.list(:ip)),
+       account_ban_count: length(BanCache.list(:account)),
        geo_stats: geo.stats_all,
        geo_total: geo.total_all,
        geo_total_1h: geo.total_1h,

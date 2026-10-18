@@ -55,11 +55,11 @@ defmodule Gamend.DemoSeed do
   import Ecto.Query
 
   alias Gamend.Accounts.User
+  alias Gamend.Bans.Ban
   alias Gamend.Chat.FilterWord
   alias Gamend.Chat.Message
   alias Gamend.Chat.Moderation
   alias Gamend.Chat.Moderation.Normalizer
-  alias Gamend.Chat.Mute
   alias Gamend.Chat.Report
   alias Gamend.Groups.Group
   alias Gamend.Groups.GroupMember
@@ -718,7 +718,10 @@ defmodule Gamend.DemoSeed do
 
     Repo.delete_all(from(r in Report, where: r.message_id in subquery(message_ids)))
     Repo.delete_all(from(m in Message, where: m.chat_ref_id in ^room_ids))
-    Repo.delete_all(from(m in Mute, where: m.user_id in subquery(demo_user_ids())))
+
+    Repo.delete_all(
+      from(b in Ban, where: b.kind == :chat and b.user_id in subquery(demo_user_ids()))
+    )
   end
 
   # Words go in through the context: it stores them normalized (a raw insert
@@ -839,8 +842,8 @@ defmodule Gamend.DemoSeed do
     end
   end
 
-  # Every scope, and a spread of permanent / expiring / already expired so the
-  # sweep has rows to reap. One mute per player keeps the unique index happy.
+  # Every scope, and a spread of permanent / expiring / already ended, so the
+  # bans list has history. A mute is a chat ban (`Gamend.Bans`, kind `:chat`).
   defp seed_chat_mutes(user_ids, rooms) do
     now = DateTime.utc_now(:second)
     [moderator | rest] = user_ids
@@ -855,18 +858,21 @@ defmodule Gamend.DemoSeed do
 
         %{
           id: UUIDv7.generate(),
+          kind: :chat,
+          subject: user_id,
           user_id: user_id,
           scope: scope,
           scope_ref_id: scope_ref_id,
           expires_at: expires_at,
           reason: reason,
-          muted_by: moderator,
+          source: :admin,
+          banned_by: moderator,
           inserted_at: now,
           updated_at: now
         }
       end)
 
-    insert_batches(rows, Mute)
+    insert_batches(rows, Ban)
     length(rows)
   end
 
@@ -883,7 +889,7 @@ defmodule Gamend.DemoSeed do
     case rem(div(i, 4), 3) do
       0 -> {nil, "Permanent — ban evasion."}
       1 -> {DateTime.add(now, 900), "Cooling off, back in 15 minutes."}
-      2 -> {DateTime.add(now, -86_400), "Expired yesterday; waiting for the sweep."}
+      2 -> {DateTime.add(now, -86_400), "Expired yesterday; kept as history."}
     end
   end
 

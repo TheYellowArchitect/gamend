@@ -245,11 +245,11 @@ defmodule Gamend.Hooks do
   @typedoc "A chat report struct from Gamend.Chat.Report"
   @type report :: Gamend.Chat.Report.t()
 
-  @typedoc "A chat mute struct from Gamend.Chat.Mute"
-  @type mute :: Gamend.Chat.Mute.t()
-
   @typedoc "A content report struct from Gamend.Reports.Report"
   @type content_report :: Gamend.Reports.Report.t()
+
+  @typedoc "A ban struct from Gamend.Bans.Ban"
+  @type ban :: Gamend.Bans.Ban.t()
 
   @typedoc "Result type for before hooks"
   @type hook_result(t) :: {:ok, t} | {:error, term()}
@@ -508,11 +508,18 @@ defmodule Gamend.Hooks do
   @callback after_report_resolved(content_report()) :: any()
 
   @doc """
-  Called after a user is muted, whether by an admin, a room's own authority
-  (lobby host, group admin, party leader) or a plugin. Fire-and-forget: the
-  mute is already in effect.
+  Called after a ban (`Gamend.Bans`) is placed on an IP address, an account or
+  a chat sender (a mute, `kind: :chat`, by an admin, a room's own authority or
+  a plugin). Fire-and-forget: the ban is already in force.
   """
-  @callback after_user_muted(mute()) :: any()
+  @callback after_ban_created(ban()) :: any()
+
+  @doc """
+  Called once for every ban that ends: lifted (`lifted_at` set), replaced by a
+  new ban on the same target (`lifted_at` set; `after_ban_created/1` follows for
+  the new one) or expired (`lifted_at` nil). Fire-and-forget.
+  """
+  @callback after_ban_lifted(ban()) :: any()
 
   @callback before_push_send(user_id :: String.t(), message :: map()) :: hook_result(map())
   @callback after_push_sent(user_id :: String.t(), message :: map(), result :: map()) :: any()
@@ -570,7 +577,8 @@ defmodule Gamend.Hooks do
                       before_chat_message: 2,
                       after_chat_message: 1,
                       after_chat_message_reported: 1,
-                      after_user_muted: 1,
+                      after_ban_created: 1,
+                      after_ban_lifted: 1,
                       before_report_create: 1,
                       after_report_created: 1,
                       after_report_resolved: 1,

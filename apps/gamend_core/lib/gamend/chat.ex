@@ -1062,22 +1062,29 @@ defmodule Gamend.Chat do
   Mute `user_id` in `scope` (`"global"`, `"lobby"`, `"group"` or `"party"`).
 
   `scope_ref_id` is the room id, or `nil` for a global mute. `attrs` may carry
-  `expires_at` (nil means permanent), `reason` and `muted_by`.
+  `expires_at` (nil means permanent), `reason`, `muted_by` and `source`
+  (`:plugin` by default). A mute is a chat ban (`Gamend.Bans`, kind `:chat`):
+  it is kept as history when it ends, and fires `after_ban_created` and
+  `after_ban_lifted`.
   """
   @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-          {:ok, Gamend.Chat.Mute.t()} | {:error, term()}
+          {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
   defdelegate mute_user(user_id, scope, scope_ref_id, attrs \\ %{}), to: Moderation
 
-  @doc "Lift a mute. Returns `{:ok, count}` — 0 when the user was not muted."
-  @spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: {:ok, non_neg_integer()}
-  defdelegate unmute_user(user_id, scope, scope_ref_id \\ nil), to: Moderation
+  @doc """
+  Lift a mute; `by` is who lifted it. Returns `{:ok, count}` — 0 when the user
+  was not muted.
+  """
+  @spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, Ecto.UUID.t() | nil) ::
+          {:ok, non_neg_integer()}
+  defdelegate unmute_user(user_id, scope, scope_ref_id \\ nil, by \\ nil), to: Moderation
 
   @doc "Whether `user_id` is currently muted for the given chat."
   @spec muted?(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: boolean()
   defdelegate muted?(user_id, chat_type, chat_ref_id), to: Moderation
 
   @doc "List mutes. Filters: `:user_id`, `:scope`, `:scope_ref_id`, `:active`."
-  @spec list_mutes(map(), keyword()) :: [Gamend.Chat.Mute.t()]
+  @spec list_mutes(map(), keyword()) :: [Gamend.Bans.Ban.t()]
   defdelegate list_mutes(filters \\ %{}, opts \\ []), to: Moderation
 
   @doc "Count mutes matching `filters`."

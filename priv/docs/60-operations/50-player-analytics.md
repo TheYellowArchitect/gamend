@@ -119,7 +119,7 @@ Already answerable from existing tables (no new plumbing):
 | Matchmaking wait time (`matched_at − queued_at`) — last 24 h only, tickets are pruned | `matchmaking_tickets` |
 | Ready-check accept / dodge rate | `ready_checks` |
 | Revenue per day, ARPPU, refund rate, provider split | `purchases` |
-| Chat volume, share of DAU that chats; moderation load | `chat_messages`, `chat_reports`, `chat_mutes` |
+| Chat volume, share of DAU that chats; moderation load | `chat_messages`, `chat_reports`, `bans` (kind `chat`) |
 | Notification read rate; reachable installs by platform | `notifications.read`, `push_tokens` |
 | Item ownership, wallet distribution | `inventory_items`, `wallets` |
 

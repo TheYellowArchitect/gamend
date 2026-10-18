@@ -1,11 +1,12 @@
 defmodule Gamend.Chat.Moderation.Cache do
   @moduledoc """
-  Node-local hot path for chat moderation: the word blocklist and active mutes.
+  Node-local hot path for chat moderation's word blocklist. (Mutes are chat
+  bans, cached by `Gamend.Bans.Cache`.)
 
-  Mirrors the shape of `GamendWeb.Plugs.IpBan` — the database is the source of
-  truth, ETS is the per-message read path, and PubSub carries changes to the
-  other instances (applied by `Gamend.Chat.Moderation.Sync`, which also loads
-  both tables at boot).
+  The same shape as `Gamend.Bans.Cache`: the database is the source of truth,
+  ETS is the per-message read path, and PubSub carries changes to the other
+  instances (applied by `Gamend.Chat.Moderation.Sync`, which also loads the
+  list at boot).
 
   It lives in core rather than beside the IP-ban table in the web app because
   the check runs inside `Gamend.Chat.send_message/2`, before anything web-facing
@@ -19,12 +20,9 @@ defmodule Gamend.Chat.Moderation.Cache do
   """
 
   alias Gamend.Chat.FilterWord
-  alias Gamend.Chat.Moderation
   alias Gamend.Chat.Moderation.Normalizer
-  alias Gamend.Chat.Mute
 
   @words_table :chat_filter_words
-  @mutes_table :chat_mutes
   @pattern_key {__MODULE__, :substring_pattern}
   @topic "chat_moderation"
 
@@ -37,10 +35,6 @@ defmodule Gamend.Chat.Moderation.Cache do
   def init_table do
     if :ets.whereis(@words_table) == :undefined do
       :ets.new(@words_table, [:set, :public, :named_table, read_concurrency: true])
-    end
-
-    if :ets.whereis(@mutes_table) == :undefined do
-      :ets.new(@mutes_table, [:set, :public, :named_table, read_concurrency: true])
     end
 
     :ok
@@ -103,58 +97,16 @@ defmodule Gamend.Chat.Moderation.Cache do
     broadcast({:chat_moderation, :words_reloaded, nil, Node.self()})
   end
 
-  # ── Mutes ──────────────────────────────────────────────────────────────────
-
-  @doc """
-  Whether `user_id` is currently muted for the given chat.
-
-  A `"global"` mute covers every chat type including friend DMs; a scoped mute
-  only covers its own room. Expired entries are dropped on read, so enforcement
-  never depends on the sweep having run.
-  """
-  @spec muted?(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: boolean()
-  def muted?(user_id, chat_type, chat_ref_id) do
-    init_table()
-
-    active?({user_id, "global", nil}) or
-      (chat_type in ["lobby", "group", "party"] and chat_ref_id != nil and
-         active?({user_id, chat_type, chat_ref_id}))
-  end
-
-  @doc "Mirror a mute locally and on the other instances."
-  @spec put_mute(Mute.t()) :: :ok
-  def put_mute(%Mute{} = mute) do
-    key = {mute.user_id, mute.scope, mute.scope_ref_id}
-    apply_mute_put(key, mute.expires_at)
-    broadcast({:chat_moderation, :mute_put, {key, mute.expires_at}, Node.self()})
-  end
-
-  @doc "Remove a mute locally and on the other instances."
-  @spec delete_mute(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: :ok
-  def delete_mute(user_id, scope, scope_ref_id) do
-    key = {user_id, scope, scope_ref_id}
-    apply_mute_delete(key)
-    broadcast({:chat_moderation, :mute_deleted, key, Node.self()})
-  end
-
-  @doc "Number of active mutes loaded on this node."
-  @spec mute_count() :: non_neg_integer()
-  def mute_count do
-    init_table()
-    :ets.info(@mutes_table, :size) || 0
-  end
-
   # ── Boot load ──────────────────────────────────────────────────────────────
 
   @doc """
-  Load the blocklist and every unexpired mute from the database into ETS.
+  Load the blocklist from the database into ETS.
 
   Called at boot by `Gamend.Chat.Moderation.Sync`.
   """
   @spec load_persisted() :: :ok
   def load_persisted do
     apply_words_reload()
-    apply_mutes_reload()
     :ok
   end
 
@@ -169,8 +121,6 @@ defmodule Gamend.Chat.Moderation.Cache do
 
   def apply_remote(:word_deleted, word), do: apply_word_delete(word)
   def apply_remote(:words_reloaded, _payload), do: apply_words_reload()
-  def apply_remote(:mute_put, {key, expires_at}), do: apply_mute_put(key, expires_at)
-  def apply_remote(:mute_deleted, key), do: apply_mute_delete(key)
   def apply_remote(_event, _payload), do: :ok
 
   # ── ETS writes (no broadcast) ──────────────────────────────────────────────
@@ -203,29 +153,6 @@ defmodule Gamend.Chat.Moderation.Cache do
     :ok
   end
 
-  defp apply_mute_put(key, expires_at) do
-    init_table()
-    :ets.insert(@mutes_table, {key, expires_at || :infinity})
-    :ok
-  end
-
-  defp apply_mute_delete(key) do
-    init_table()
-    :ets.delete(@mutes_table, key)
-    :ok
-  end
-
-  defp apply_mutes_reload do
-    init_table()
-    :ets.delete_all_objects(@mutes_table)
-
-    Enum.each(Moderation.list_active_mutes(), fn mute ->
-      apply_mute_put({mute.user_id, mute.scope, mute.scope_ref_id}, mute.expires_at)
-    end)
-
-    :ok
-  end
-
   defp rebuild_pattern do
     words =
       @words_table
@@ -242,25 +169,7 @@ defmodule Gamend.Chat.Moderation.Cache do
     :ok
   end
 
-  defp active?(key) do
-    case :ets.lookup(@mutes_table, key) do
-      [{^key, :infinity}] ->
-        true
-
-      [{^key, %DateTime{} = expires_at}] ->
-        if DateTime.after?(expires_at, DateTime.utc_now()) do
-          true
-        else
-          :ets.delete(@mutes_table, key)
-          false
-        end
-
-      _ ->
-        false
-    end
-  end
-
-  # Best-effort: a mute must still apply locally when PubSub is unavailable.
+  # Best-effort: a word must still apply locally when PubSub is unavailable.
   defp broadcast(message), do: Gamend.Broadcast.best_effort(@topic, message, "chat moderation")
 
   @doc """

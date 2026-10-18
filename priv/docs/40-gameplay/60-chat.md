@@ -277,10 +277,13 @@ note.
 
 ## Mutes
 
-A mute silences a sender without touching their account. The scope decides
-where it applies, and who is allowed to apply it:
+A mute silences a sender without touching their account. It is a chat ban
+(`Gamend.Bans`, kind `chat`), so it lives beside IP and account bans: one list
+on [/admin/bans](/admin/bans), one admin API, history kept after it ends, and
+the `after_ban_created` / `after_ban_lifted` hooks. The scope decides where it
+applies, and who is allowed to apply it:
 
-- **global** — every chat type, friend DMs included. Server-authoritative: the admin console or API, or a plugin calling `Gamend.Chat.mute_user/4`. There is deliberately no public endpoint.
+- **global** — every chat type, friend DMs included. Server-authoritative: [/admin/bans](/admin/bans), the report queue, the admin API (`POST /api/v1/admin/bans` with `kind: "chat"`), or a plugin calling `Gamend.Chat.mute_user/4`. There is deliberately no public endpoint.
 - **lobby**, **group**, **party** — that one room. Authority follows the room, mirroring kick: the lobby host, a group admin, the party leader.
 
 The scoped endpoints take `{ "target_user_id": …, "expires_at": …, "reason": … }`:
@@ -295,20 +298,21 @@ Lobby and party calls take no room id; the room is the caller's own. A hostless
 (matchmaking-owned) lobby has no in-game moderator, so only an admin or a plugin
 can mute there.
 
-A mute is editable after the fact. Open **Admin → Chat mutes** and change its
-duration or reason in place to shorten, extend or re-word one, so you do not have
-to unmute and start over. The same holds through the API: re-muting a player in a
-scope they are already muted in replaces the existing mute rather than failing.
+To change a mute's duration or reason, mute the player again in the same scope:
+the new mute replaces the old one, which stays in the history as lifted. The
+same holds through the API. A mute placed by a lobby host, group admin or party
+leader is recorded with the source `room`, one placed from the console `admin`.
 
-When you mute someone from the console you can notify them, with wording
-prefilled from the mute (its scope, expiry and reason) and editable before it
-goes out. Separately, a `chat_muted` realtime event reaches the player's socket
+When you mute someone from the console or the report queue you can notify them,
+with wording prefilled from the mute (its scope, expiry and reason) or your own.
+Separately, a `chat_muted` realtime event reaches the player's socket
 immediately so the client can grey out its chat input.
 
 `expires_at` sets the lifetime: a timestamp for a timed mute, omitted for a
 permanent one. Expiry is evaluated when a message is sent, so a mute stops
-biting the moment it lapses; the periodic sweep only clears dead rows and is
-never load-bearing.
+biting the moment it lapses; a job at `expires_at` then tells the player
+(`chat_unmuted`) and runs `after_ban_lifted`. Ended mutes stay as history until
+retention deletes them (`GAMEND_RETENTION_BANS_DAYS`).
 
 The muted player is pushed `chat_muted` (`scope`, `scope_ref_id`, `expires_at`,
 `reason`) and `chat_unmuted` (`scope`, `scope_ref_id`) on their user channel, so
@@ -323,8 +327,8 @@ blocked. Then before_chat_message is where your own rules go: custom rate
 limits, per-lobby etiquette, or a call out to a classifier. It can still reject
 or rewrite anything core let through. Two observation hooks watch what core did:
 after_chat_message_reported fires for every report (player-filed or
-filter-filed) and after_user_muted for every mute, which is where a strike
-policy belongs; see the [Server scripting](/docs/server-scripting)
+filter-filed) and after_ban_created for every mute (`kind: :chat`), which is
+where a strike policy belongs; see the [Server scripting](/docs/server-scripting)
 guide.
 
 ```elixir

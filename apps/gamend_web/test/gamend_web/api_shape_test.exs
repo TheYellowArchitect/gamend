@@ -12,7 +12,7 @@ defmodule GamendWeb.ApiShapeTest do
 
   # R16: a `<role>_name` names a person. Add a role here only for a person.
   @person_roles ~w(display sender user host creator recipient reporter reported_user
-                   resolved_by muted_by leader)
+                   resolved_by muted_by banned_by lifted_by leader)
 
   setup_all do
     spec = GamendWeb.ApiSpec.spec()

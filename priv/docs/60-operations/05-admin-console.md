@@ -42,7 +42,6 @@ A user with `is_admin` set can open the console; everyone else gets redirected. 
 |---|---|
 | [/admin/chat](/admin/chat) | Every message, filterable, with single and bulk delete. |
 | [/admin/chat/reports](/admin/chat/reports) | The player-report review queue — review a report and act on it in place. |
-| [/admin/chat/mutes](/admin/chat/mutes) | Mute or unmute a player, with editable reason and duration. |
 | [/admin/chat/filter](/admin/chat/filter) | The word blocklist: add and edit words, import the bundled per-language lists, and test a message against the live filter. |
 | [/admin/notifications](/admin/notifications) | Browse, create and delete in-app notifications. |
 | [/admin/push](/admin/push) | Registered device tokens, with delete for stale ones and a send form for test pushes. |
@@ -75,7 +74,8 @@ Two pages that look similar and are deliberately not:
 | [/admin/runtime](/admin/runtime) | Read-only introspection of what the code actually loaded: hooks, env vars, protobuf messages, channels and realtime events, an ER diagram of the data model, plugins and their RPCs, scheduled jobs, advisory locks, migration status. |
 | [/admin/system](/admin/system) | Node health: uptime, OTP release, scheduler utilisation, a BEAM memory breakdown, ETS tables and cluster size. |
 | [/admin/connections](/admin/connections) | Live connection counts — WebSockets, LiveViews, WebRTC peers — per cluster node, with a filterable per-connection list. |
-| [/admin/rate_limiting](/admin/rate_limiting) | Rate-limiter status across the HTTP, auth, WebSocket and WebRTC buckets, plus IP bans: ban with an optional TTL, unban, and the recent ban log. See the [Security guide](/docs/security). |
+| [/admin/rate_limiting](/admin/rate_limiting) | Rate-limiter status across the HTTP, auth, WebSocket and WebRTC buckets, plus IP bans: ban for a preset or a number of days with a reason, unban, and the ban history. See the [Security guide](/docs/security). |
+| [/admin/bans](/admin/bans) | Every ban, accounts, IP addresses and chat mutes, active and ended: place one (a preset or a number of days, a reason the player sees, and for a mute its scope and a notice to the player), lift one, filter by kind or target. The dashboard's active mutes link opens the mutes. A user's editor on [/admin/users](/admin/users) bans and lifts that account too, and the users list filters on Banned. See the [Security guide](/docs/security#account-bans). |
 | [/admin/geo](/admin/geo) | Traffic by country over 1h/24h/7d/all windows, with the active source shown (MaxMind database or the CF-IPCountry header) and a counter reset. |
 | [/admin/logs](/admin/logs) | The in-memory log ring buffer, filterable by level, module, text, source (server vs client) and session — including uploaded client-log sessions with per-session timelines and flagging. |
 | [/admin/translations](/admin/translations) | Locale completeness and every translatable string, filterable by domain and status. |

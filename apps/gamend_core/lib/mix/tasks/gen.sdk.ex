@@ -50,7 +50,10 @@ defmodule Mix.Tasks.Gen.Sdk do
     {Gamend.Analytics, "analytics.ex"},
     # Server-side signals, which the GDScript front end compiles `signal` /
     # `emit` / `await` into.
-    {Gamend.Signals, "signals.ex"}
+    {Gamend.Signals, "signals.ex"},
+    # So a plugin can ban a cheater (`source: :plugin`) and read a player's
+    # ban, alongside the `after_ban_*` hooks.
+    {Gamend.Bans, "bans.ex"}
   ]
 
   # Modules a plugin may call whose SDK stub is hand-written rather than
@@ -536,8 +539,8 @@ defmodule Mix.Tasks.Gen.Sdk do
        "{:ok, #{ready_check_placeholder_expr()}}"},
       {fn rt -> String.contains?(rt, "{:ok, Gamend.Chat.Report.t()}") end,
        "{:ok, #{chat_report_placeholder_expr()}}"},
-      {fn rt -> String.contains?(rt, "{:ok, Gamend.Chat.Mute.t()}") end,
-       "{:ok, #{chat_mute_placeholder_expr()}}"},
+      {fn rt -> String.contains?(rt, "{:ok, Gamend.Bans.Ban.t()}") end,
+       "{:ok, #{ban_placeholder_expr()}}"},
       {fn rt -> String.contains?(rt, "{:ok, Gamend.Quests.Quest.t()}") end,
        "{:ok, #{quest_placeholder_expr()}}"},
       {fn rt -> String.contains?(rt, "{:ok, Gamend.Quests.QuestProgress.t()}") end,
@@ -773,10 +776,10 @@ defmodule Mix.Tasks.Gen.Sdk do
     "%Gamend.Chat.Report{id: \"\", reporter_id: nil, message_id: nil, reported_user_id: \"\", content_snapshot: nil, reason: nil, status: \"open\", resolved_by: nil, resolution_note: nil, resolved_at: nil, inserted_at: #{dt}, updated_at: #{dt}}"
   end
 
-  defp chat_mute_placeholder_expr do
+  defp ban_placeholder_expr do
     dt = dt_placeholder_expr()
 
-    "%Gamend.Chat.Mute{id: \"\", user_id: \"\", scope: \"global\", scope_ref_id: nil, expires_at: nil, reason: nil, muted_by: nil, inserted_at: #{dt}, updated_at: #{dt}}"
+    "%Gamend.Bans.Ban{id: \"\", kind: :account, subject: \"\", user_id: nil, expires_at: nil, reason: nil, source: :plugin, scope: nil, scope_ref_id: nil, banned_by: nil, lifted_at: nil, lifted_by: nil, inserted_at: #{dt}, updated_at: #{dt}}"
   end
 
   defp push_token_placeholder_expr do

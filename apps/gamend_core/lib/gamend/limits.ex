@@ -117,7 +117,6 @@ defmodule Gamend.Limits do
 
   setting(:max_chat_filter_word_len, :integer, default: 64)
   setting(:max_report_reason, :integer, default: 500)
-  setting(:max_mute_reason, :integer, default: 500)
   setting(:max_ban_reason, :integer, default: 500)
 
   setting(:max_chat_reports_per_user_per_day, :integer,

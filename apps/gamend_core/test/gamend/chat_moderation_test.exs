@@ -1,10 +1,11 @@
 defmodule Gamend.ChatModerationTest do
-  # async: false — the blocklist and mute tables are named public ETS tables
+  # async: false — the blocklist and ban tables are named public ETS tables
   # shared by the whole VM, so a concurrent test would see this one's words.
   use Gamend.DataCase, async: false
 
   alias Gamend.Accounts.User
   alias Gamend.AccountsFixtures
+  alias Gamend.Bans
   alias Gamend.Chat
   alias Gamend.Chat.Message
   alias Gamend.Chat.Moderation
@@ -17,6 +18,7 @@ defmodule Gamend.ChatModerationTest do
 
   setup do
     Cache.init_table()
+    Bans.Cache.init_table()
     on_exit(fn -> reset_cache() end)
     reset_cache()
     :ok
@@ -24,7 +26,8 @@ defmodule Gamend.ChatModerationTest do
 
   defp reset_cache do
     :ets.delete_all_objects(:chat_filter_words)
-    :ets.delete_all_objects(:chat_mutes)
+    # The test process owns a table it created; after it exits there is none.
+    if :ets.whereis(:bans) != :undefined, do: :ets.delete_all_objects(:bans)
     :persistent_term.erase({Cache, :substring_pattern})
     :ok
   end
@@ -199,11 +202,12 @@ defmodule Gamend.ChatModerationTest do
       refute Moderation.muted?(user.id, "friend", Ecto.UUID.generate())
     end
 
-    test "an expired mute does not apply even before the sweep runs" do
+    test "an expired mute does not apply even before its expiry job runs" do
       user = create_user()
-      past = DateTime.add(DateTime.utc_now(), -60, :second)
+      past = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
-      {:ok, _mute} = Moderation.mute_user(user.id, "global", nil, %{"expires_at" => past})
+      # A mute cannot be placed already ended, so the cache holds one that ran out.
+      Bans.Cache.put(%Bans.Ban{kind: :chat, subject: user.id, scope: "global", expires_at: past})
 
       refute Moderation.muted?(user.id, "lobby", Ecto.UUID.generate())
     end
@@ -223,7 +227,7 @@ defmodule Gamend.ChatModerationTest do
       {:ok, mute} = Moderation.mute_user(user.id, "global", nil, %{"reason" => "second"})
 
       assert mute.reason == "second"
-      assert Moderation.count_mutes(%{"user_id" => user.id}) == 1
+      assert Moderation.count_mutes(%{"user_id" => user.id, "active" => true}) == 1
     end
 
     test "unmute lifts it locally and in the database" do
@@ -232,7 +236,7 @@ defmodule Gamend.ChatModerationTest do
 
       assert {:ok, 1} = Moderation.unmute_user(user.id, "global", nil)
       refute Moderation.muted?(user.id, "lobby", Ecto.UUID.generate())
-      assert Moderation.count_mutes(%{"user_id" => user.id}) == 0
+      assert Moderation.count_mutes(%{"user_id" => user.id, "active" => true}) == 0
     end
 
     test "unmuting someone who is not muted is not an error" do
@@ -253,19 +257,6 @@ defmodule Gamend.ChatModerationTest do
       user = create_user()
       assert {:error, changeset} = Moderation.mute_user(user.id, "lobby", nil)
       assert %{scope_ref_id: ["is required for a scoped mute"]} = errors_on(changeset)
-    end
-
-    test "the sweep deletes expired rows and keeps live ones" do
-      user_a = create_user()
-      user_b = create_user()
-      past = DateTime.add(DateTime.utc_now(), -60, :second)
-      future = DateTime.add(DateTime.utc_now(), 3600, :second)
-
-      {:ok, _} = Moderation.mute_user(user_a.id, "global", nil, %{"expires_at" => past})
-      {:ok, _} = Moderation.mute_user(user_b.id, "global", nil, %{"expires_at" => future})
-
-      assert Moderation.purge_expired_mutes() == 1
-      assert Moderation.count_mutes() == 1
     end
   end
 

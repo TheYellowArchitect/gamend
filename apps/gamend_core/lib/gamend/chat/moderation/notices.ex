@@ -19,7 +19,7 @@ defmodule Gamend.Chat.Moderation.Notices do
   require Logger
 
   alias Gamend.Accounts
-  alias Gamend.Chat.Mute
+  alias Gamend.Bans.Ban
   alias Gamend.Notifications
 
   @report_title "New chat reports"
@@ -69,8 +69,8 @@ defmodule Gamend.Chat.Moderation.Notices do
   end
 
   @doc "Default body for the notice a muted player receives."
-  @spec default_mute_message(Mute.t()) :: String.t()
-  def default_mute_message(%Mute{} = mute) do
+  @spec default_mute_message(Ban.t()) :: String.t()
+  def default_mute_message(%Ban{} = mute) do
     "You can no longer send messages in #{scope_phrase(mute.scope)}#{duration_phrase(mute.expires_at)}." <>
       reason_phrase(mute.reason)
   end
