@@ -421,6 +421,43 @@ defmodule Gamend.Quests do
     end
   end
 
+  @doc """
+  Moves `from_user_id`'s quest progress onto `to_user_id` for every quest
+  period the account has no row for, the way a guest's play joins the
+  account they log in to (`Gamend.Accounts.GuestMerge`). The account's own
+  rows are never touched: a period both played stays the account's, and
+  what was claimed stays claimed. Answers how many rows moved.
+  """
+  @spec merge_user_progress(Ecto.UUID.t(), Ecto.UUID.t()) :: non_neg_integer()
+  def merge_user_progress(from_user_id, to_user_id)
+      when is_binary(from_user_id) and is_binary(to_user_id) and from_user_id != to_user_id do
+    taken =
+      from(p in QuestProgress,
+        where: p.user_id == ^to_user_id,
+        select: {p.quest_key, p.period_key}
+      )
+      |> Repo.all()
+      |> MapSet.new()
+
+    ids =
+      from(p in QuestProgress,
+        where: p.user_id == ^from_user_id,
+        select: {p.id, p.quest_key, p.period_key}
+      )
+      |> Repo.all()
+      |> Enum.reject(fn {_id, quest_key, period_key} ->
+        MapSet.member?(taken, {quest_key, period_key})
+      end)
+      |> Enum.map(&elem(&1, 0))
+
+    {count, _} =
+      Repo.update_all(from(p in QuestProgress, where: p.id in ^ids),
+        set: [user_id: to_user_id, updated_at: DateTime.utc_now(:second)]
+      )
+
+    count
+  end
+
   # Once a period's row is completed/claimed it can never advance again, so
   # later events skip the advisory lock entirely via a cached marker. For
   # never-resetting quests (achievements) this makes the steady state free:

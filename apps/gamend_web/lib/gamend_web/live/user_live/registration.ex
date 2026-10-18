@@ -95,6 +95,8 @@ defmodule GamendWeb.UserLive.Registration do
      |> assign(:client_ip, client_ip)
      |> assign(:signup_groups, Preferences.signup_groups())
      |> assign(:notify, %{})
+     # Where a guest goes once registered (`after_registration/1`).
+     |> assign(:return_to, session["user_return_to"])
      |> assign_form(changeset), temporary_assigns: [form: nil]}
   end
 
@@ -129,6 +131,19 @@ defmodule GamendWeb.UserLive.Registration do
      |> assign(:notify, notify_params(params))
      |> assign_form(changeset)}
   end
+
+  # A guest's account is the one they just registered, with everything they
+  # did, and they are still signed in to it: back to the page that sent them
+  # here (`UserAuth.store_return_to/2`). Anyone else logs in once the email
+  # is confirmed.
+  defp after_registration(%{assigns: %{return_to: path, current_scope: scope}} = socket)
+       when is_binary(path) do
+    if Scope.user(scope),
+      do: redirect(socket, to: path),
+      else: push_navigate(socket, to: ~p"/users/log_in")
+  end
+
+  defp after_registration(socket), do: push_navigate(socket, to: ~p"/users/log_in")
 
   defp notify_params(%{"notify" => %{} = notify}), do: notify
   defp notify_params(_params), do: %{}
@@ -181,7 +196,7 @@ defmodule GamendWeb.UserLive.Registration do
              :info,
              gettext("Account created. Check your email for a link to confirm it.")
            )
-           |> push_navigate(to: ~p"/users/log_in")}
+           |> after_registration()}
         end
 
       {:error, %Ecto.Changeset{} = changeset} ->

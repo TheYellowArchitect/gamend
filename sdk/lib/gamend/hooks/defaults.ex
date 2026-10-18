@@ -189,6 +189,9 @@ defmodule Gamend.Hooks.Defaults do
       def after_ban_lifted(_ban), do: :ok
 
       @impl true
+      def merge_user_data(_guest, _user), do: :ok
+
+      @impl true
       def before_push_send(_user_id, message), do: {:ok, message}
 
       @impl true
@@ -340,6 +343,7 @@ defmodule Gamend.Hooks.Defaults do
                      after_report_resolved: 1,
                      after_ban_created: 1,
                      after_ban_lifted: 1,
+                     merge_user_data: 2,
                      before_push_send: 2,
                      after_push_sent: 3,
                      before_lobby_leave: 2,

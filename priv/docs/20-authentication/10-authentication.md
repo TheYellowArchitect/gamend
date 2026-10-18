@@ -125,6 +125,31 @@ The website signs in with a session cookie rather than JWTs. The windows are set
 | `GAMEND_AUTH_CHANGE_EMAIL_DAYS` | `7` | The link that confirms a changed email address. |
 | `GAMEND_AUTH_SUDO_MODE_MINUTES` | `10` | How recently a user must have signed in to open the settings that change their password or email. Submitting the form is allowed ten minutes more. |
 
+### A guest who signs in
+
+A guest (an account with no email and no provider, made for a visitor's first saved action) has two ways to an account. **Registering** turns the guest account itself into the real one, so everything stays. **Signing in to an account they already have** merges the guest's progress into that account before the guest account is deleted (`Gamend.Accounts.GuestMerge`). The account's own data is never overwritten or deleted:
+
+| What | How it joins the account |
+|---|---|
+| The host's own data | The `merge_user_data/2` hook runs first and merges what the host understands, by its own rules |
+| Other KV keys | Moved where the account has none; a key both have stays the account's |
+| Wallets, inventory | Added |
+| Leaderboard records | `best` boards keep the better score, `incr` boards add, `set` and `decr` only where the account has none |
+| Quest progress | Moved for quest periods the account has not played |
+| Activity days, analytics events, content reports, notifications | Moved |
+| `users.metadata`, `users.preferences` | Keys the account lacks |
+
+Sessions, push tokens, bans and lobby or party seats are not moved.
+
+### Coming back after signing in
+
+A reader who signs in comes back to the page they were on, by a password, an emailed link or a provider. When a sign-in page (`/users/log_in`, `/users/register`, under a locale prefix too) is opened, the `:browser` pipeline's `UserAuth.store_return_to/2` keeps where to come back to in the session as `:user_return_to`, which `log_in_user/3` redirects to:
+
+1. its `?return_to=<path>`, when the link names one. A protected page's redirect does (`require_authenticated_user/2`, `require_registered_user/2`), since that request's `Referer` is the page before it;
+2. else the page the link was on, from the `Referer` header (this site's host only). No page needs to pass anything.
+
+Only a path on this site counts (`UserAuth.safe_return_to/1`: one leading `/`, no host, no scheme, not a sign-in page). With neither, the session keeps what it had, so a failed password, which reloads the page, keeps it too. A guest who registers is still signed in to the same account, so the registration page sends them straight back. The sign-in pages are always loaded by a request, never over the socket (`GamendWeb.LiveNav` lists them as controller pages), so the `Referer` is always sent. A browser that strips it lands on the default page. Grants carry idempotency keys and the other steps only move what the account lacks, so a retried sign-in adds nothing twice.
+
 ## Failed password lockout
 
 The per-IP auth rate limit caps how fast one machine can guess, not guesses spread across many machines at one account. So failed passwords are also counted per email address: `GAMEND_AUTH_LOCKOUT_ATTEMPTS` failures (default `10`, `0` turns it off) within `GAMEND_AUTH_LOCKOUT_WINDOW_MINUTES` (default `15`) lock password sign-in for that address for `GAMEND_AUTH_LOCKOUT_MINUTES` (default `15`). The count lives in the database, so it holds across instances, and a correct password clears it.

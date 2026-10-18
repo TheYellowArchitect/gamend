@@ -16,8 +16,8 @@ defmodule GamendWeb.AuthPagesRenderTest do
   describe "unauthenticated users are redirected to login" do
     for {path, _label} <- @auth_routes do
       test "GET #{path} redirects unauthenticated", %{conn: conn} do
-        assert {:error, {:redirect, %{to: "/users/log_in"}}} =
-                 live(conn, unquote(path))
+        assert {:error, {:redirect, %{to: to}}} = live(conn, unquote(path))
+        assert to == "/users/log_in?" <> URI.encode_query(%{"return_to" => unquote(path)})
       end
     end
   end

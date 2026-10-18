@@ -13,7 +13,7 @@ let reply = task::wait(gamend::lobbies::quick_join(this.node, #{
 if e["kind"] == gamend::events::lobby::MEMBER_JOINED { }
 ```
 
-264 operations in 42 modules, and 92 realtime events.
+266 operations in 42 modules, and 92 realtime events.
 
 Beside the generated modules and `events.rn`, written by hand:
 
@@ -402,9 +402,11 @@ Leaderboards.
 | Function | Call | What it does |
 | --- | --- | --- |
 | `get_leaderboard(node, id)` | `GET /api/v1/leaderboards/{id}` | Get a leaderboard by ID |
-| `get_my_record(node, id)` | `GET /api/v1/leaderboards/{id}/records/me` | Get current user's record |
+| `get_my_record(node, id, options)` | `GET /api/v1/leaderboards/{id}/records/me` | Get current user's record |
+| `list_leaderboard_keys(node, id, options)` | `GET /api/v1/leaderboards/{id}/keys` | List a leaderboard's rankings |
 | `list_leaderboard_records(node, id, options)` | `GET /api/v1/leaderboards/{id}/records` | List leaderboard records |
 | `list_leaderboards(node, options)` | `GET /api/v1/leaderboards` | List leaderboards |
+| `list_records_above(node, id, options)` | `GET /api/v1/leaderboards/{id}/records/above` | List the records just ahead of a score |
 | `list_records_around_user(node, id, user_id, options)` | `GET /api/v1/leaderboards/{id}/records/around/{user_id}` | List records around a user |
 | `resolve_leaderboard_slugs(node, params)` | `POST /api/v1/leaderboards/resolve` | Resolve multiple slugs to active leaderboards |
 

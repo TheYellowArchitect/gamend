@@ -280,11 +280,11 @@ defmodule GamendWeb.AnonymousSessionTest do
 
       conn = guest() |> Scope.for_user() |> session_conn() |> UserAuth.require_registered_user([])
       assert conn.halted
-      assert redirected_to(conn) == ~p"/users/register"
+      assert redirected_to(conn) == "/users/register?return_to=%2F"
 
       conn = nil |> session_conn() |> UserAuth.require_registered_user([])
       assert conn.halted
-      assert redirected_to(conn) == ~p"/users/log_in"
+      assert redirected_to(conn) == "/users/log_in?return_to=%2F"
     end
   end
 end

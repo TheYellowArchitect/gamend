@@ -166,3 +166,14 @@ defmodule GamendWeb.Schemas.LeaderboardRecordResponse do
   @moduledoc "One leaderboard record under `data`."
   use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.LeaderboardRecord
 end
+
+defmodule GamendWeb.Schemas.LeaderboardKeysResponse do
+  @moduledoc "A leaderboard's keys (its rankings) under `data`."
+  use GamendWeb.Schemas.Envelope,
+    data: %OpenApiSpex.Schema{
+      title: "LeaderboardKeys",
+      type: :array,
+      items: %OpenApiSpex.Schema{type: :string},
+      example: ["match", "match|es_es", "match|fr"]
+    }
+end

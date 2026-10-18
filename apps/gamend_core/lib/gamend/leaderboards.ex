@@ -955,6 +955,37 @@ defmodule Gamend.Leaderboards do
   end
 
   @doc """
+  Moves `from_user_id`'s records onto `to_user_id`, the way a guest's play
+  joins the account they log in to (`Gamend.Accounts.GuestMerge`). The
+  account's records are never lowered or deleted, and no hook or quest event
+  fires: these scores were submitted once already.
+
+    * `best` boards keep the better of the two (the board's sort order).
+    * `incr` boards add the two up.
+    * `set` and `decr` boards take the guest's record only where the account
+      has none on that board and key.
+
+  A guest's records left behind go with the guest account. Answers how many
+  records reached the account.
+  """
+  @spec merge_user_records(Ecto.UUID.t(), Ecto.UUID.t()) :: non_neg_integer()
+  def merge_user_records(from_user_id, to_user_id)
+      when is_binary(from_user_id) and is_binary(to_user_id) and from_user_id != to_user_id do
+    from(r in Record, where: r.user_id == ^from_user_id, preload: [:leaderboard])
+    |> Repo.all()
+    |> Enum.count(fn %Record{leaderboard: board} = record ->
+      if board.operator in [:set, :decr] and get_record(board.id, to_user_id, record.key) do
+        false
+      else
+        match?(
+          {:ok, _},
+          do_submit_score(board, to_user_id, record.score, record.metadata, record.key)
+        )
+      end
+    end)
+  end
+
+  @doc """
   Gets a user's record with their rank (within its key: `key:`, default `""`).
   Returns `{:ok, record_with_rank}` or `{:error, :not_found}`.
   """

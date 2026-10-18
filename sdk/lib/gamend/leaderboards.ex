@@ -1038,6 +1038,32 @@ defmodule Gamend.Leaderboards do
   end
 
   @doc ~S"""
+    Moves `from_user_id`'s records onto `to_user_id`, the way a guest's play
+    joins the account they log in to (`Gamend.Accounts.GuestMerge`). The
+    account's records are never lowered or deleted, and no hook or quest event
+    fires: these scores were submitted once already.
+    
+      * `best` boards keep the better of the two (the board's sort order).
+      * `incr` boards add the two up.
+      * `set` and `decr` boards take the guest's record only where the account
+        has none on that board and key.
+    
+    A guest's records left behind go with the guest account. Answers how many
+    records reached the account.
+    
+  """
+  @spec merge_user_records(Ecto.UUID.t(), Ecto.UUID.t()) :: non_neg_integer()
+  def merge_user_records(_from_user_id, _to_user_id) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        0
+
+      _ ->
+        raise "Gamend.Leaderboards.merge_user_records/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     Resolves multiple slugs to their currently active leaderboards in a single query.
     
     Returns a map of `slug => %Leaderboard{}` for each slug that has an active

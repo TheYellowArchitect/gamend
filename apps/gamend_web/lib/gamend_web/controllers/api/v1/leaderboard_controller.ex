@@ -7,6 +7,7 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
   alias GamendWeb.Schemas
 
   alias GamendWeb.Schemas.{
+    LeaderboardKeysResponse,
     LeaderboardPage,
     LeaderboardRecordPage,
     LeaderboardRecordResponse,
@@ -18,6 +19,18 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
   alias OpenApiSpex.Schema
 
   tags(["Leaderboards"])
+
+  # A board can hold several rankings, one per `key` (`Gamend.Leaderboards`,
+  # *Keys*): every read below ranks within one, `""` (the default) unless
+  # `?key=` names another. A board declares its keys as views in its
+  # `metadata["views"]` (tabs and key filters; `GamendWeb.LeaderboardViews`).
+  @key_param [
+    in: :query,
+    schema: %Schema{type: :string, default: "", maxLength: 255},
+    description:
+      "The ranking to read on a board with several (`match`, `match|es_es`); " <>
+        "the default ranking when left out. A board's `metadata.views` names its keys."
+  ]
 
   # ---------------------------------------------------------------------------
   # List Leaderboards
@@ -215,7 +228,8 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
         in: :query,
         schema: %Schema{type: :integer, default: 25},
         description: "Page size (max 100)"
-      ]
+      ],
+      key: @key_param
     ],
     responses: [
       ok: {"List of records", "application/json", LeaderboardRecordPage},
@@ -230,9 +244,12 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
 
       leaderboard ->
         {page, page_size} = Pagination.params(params)
+        key = key_param(params)
 
-        records = Leaderboards.list_records(leaderboard.id, page: page, page_size: page_size)
-        total_count = Leaderboards.count_records(leaderboard.id)
+        records =
+          Leaderboards.list_records(leaderboard.id, key: key, page: page, page_size: page_size)
+
+        total_count = Leaderboards.count_records(leaderboard.id, key: key)
 
         reply_page(conn, Enum.map(records, &serialize_record/1), page, page_size, total_count)
     end
@@ -267,7 +284,8 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
         in: :query,
         schema: %Schema{type: :integer, default: 11},
         description: "Total number of records to return"
-      ]
+      ],
+      key: @key_param
     ],
     responses: [
       ok: {"Records around the user", "application/json", LeaderboardRecordPage},
@@ -287,7 +305,12 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
         not_found(conn)
 
       leaderboard ->
-        records = Leaderboards.list_records_around_user(leaderboard.id, user_id, limit: limit)
+        records =
+          Leaderboards.list_records_around_user(leaderboard.id, user_id,
+            limit: limit,
+            key: key_param(params)
+          )
+
         reply_page(conn, Enum.map(records, &serialize_record/1), 1, limit, length(records))
     end
   end
@@ -309,7 +332,8 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
         schema: %Schema{type: :string, format: :uuid},
         description: "Leaderboard ID",
         required: true
-      ]
+      ],
+      key: @key_param
     ],
     responses: [
       ok: {"User's record with rank", "application/json", LeaderboardRecordResponse},
@@ -320,7 +344,7 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
     security: [%{"authorization" => []}]
   )
 
-  def me(conn, %{"id" => id}) do
+  def me(conn, %{"id" => id} = params) do
     user_id = conn.assigns.current_scope.user_id
 
     case Leaderboards.get_leaderboard(to_string(id)) do
@@ -328,7 +352,7 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
         not_found(conn)
 
       leaderboard ->
-        case Leaderboards.get_user_record(leaderboard.id, user_id) do
+        case Leaderboards.get_user_record(leaderboard.id, user_id, key: key_param(params)) do
           {:ok, record} -> reply_data(conn, serialize_record(record))
           {:error, :not_found} -> reply_error(conn, :not_found, "record_not_found")
         end
@@ -336,8 +360,128 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
   end
 
   # ---------------------------------------------------------------------------
+  # Records Ahead of a Score
+  # ---------------------------------------------------------------------------
+
+  operation(:above,
+    operation_id: "list_records_above",
+    summary: "List the records just ahead of a score",
+    description: """
+    Return up to `limit` listed records whose score is strictly better than
+    `score` on one ranking (`key`), nearest first: the runs a player at that
+    score would overtake next, each with its `rank`. A tie is not ahead. It
+    needs no record of the caller's, so a first-timer or a guest (whose own
+    record is never listed) can read it. Answered as one complete page.
+    """,
+    parameters: [
+      id: [
+        in: :path,
+        schema: %Schema{type: :string, format: :uuid},
+        description: "Leaderboard ID",
+        required: true
+      ],
+      score: [
+        in: :query,
+        schema: %Schema{type: :integer},
+        description: "The score to look ahead of",
+        required: true
+      ],
+      limit: [
+        in: :query,
+        schema: %Schema{type: :integer, default: 3},
+        description: "How many records (max 100)"
+      ],
+      key: @key_param
+    ],
+    responses: [
+      ok:
+        {"Records ahead of the score, nearest first", "application/json", LeaderboardRecordPage},
+      bad_request: Schemas.error("`score` is missing or not an integer (missing_param)"),
+      not_found: Schemas.error("Leaderboard not found")
+    ]
+  )
+
+  def above(conn, %{"id" => id} = params) do
+    limit = Gamend.Limits.clamp_page_size(params["limit"], 3)
+
+    with {:ok, score} <- integer_param(params["score"]),
+         %{} = leaderboard <- Leaderboards.get_leaderboard(to_string(id)) do
+      records =
+        Leaderboards.list_records_above(leaderboard.id, score,
+          key: key_param(params),
+          limit: limit
+        )
+
+      reply_page(conn, Enum.map(records, &serialize_record/1), 1, limit, length(records))
+    else
+      :error -> reply_error(conn, :bad_request, "missing_param", "score must be an integer")
+      nil -> not_found(conn)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Keys
+  # ---------------------------------------------------------------------------
+
+  operation(:keys,
+    operation_id: "list_leaderboard_keys",
+    summary: "List a leaderboard's rankings",
+    description: """
+    Return the keys (rankings) the board holds listed records under, sorted;
+    with `prefix`, only those starting with it (`match|` lists every language
+    Word match has runs in). A key only guests have played is not listed.
+    """,
+    parameters: [
+      id: [
+        in: :path,
+        schema: %Schema{type: :string, format: :uuid},
+        description: "Leaderboard ID",
+        required: true
+      ],
+      prefix: [
+        in: :query,
+        schema: %Schema{type: :string, default: "", maxLength: 255},
+        description: "Only keys starting with this"
+      ]
+    ],
+    responses: [
+      ok: {"The board's keys", "application/json", LeaderboardKeysResponse},
+      not_found: Schemas.error("Leaderboard not found")
+    ]
+  )
+
+  def keys(conn, %{"id" => id} = params) do
+    case Leaderboards.get_leaderboard(to_string(id)) do
+      nil ->
+        not_found(conn)
+
+      leaderboard ->
+        prefix =
+          if is_binary(params["prefix"]), do: String.slice(params["prefix"], 0, 255), else: ""
+
+        reply_data(conn, Leaderboards.list_keys(leaderboard.id, prefix: prefix))
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Helpers
   # ---------------------------------------------------------------------------
+
+  # The ranking a read asks for: `?key=`, else the default `""`. A record's
+  # key is at most 255 characters, so a longer one names nothing.
+  defp key_param(%{"key" => key}) when is_binary(key), do: String.slice(key, 0, 255)
+  defp key_param(_params), do: ""
+
+  defp integer_param(value) when is_integer(value), do: {:ok, value}
+
+  defp integer_param(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> {:ok, int}
+      _ -> :error
+    end
+  end
+
+  defp integer_param(_value), do: :error
 
   defp not_found(conn), do: reply_error(conn, :not_found, "not_found")
 

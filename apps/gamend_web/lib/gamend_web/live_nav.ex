@@ -16,7 +16,9 @@ defmodule GamendWeb.LiveNav do
   link from a connected page is made a live link when the first route that
   matches the target is a LiveView in the page's own `live_session`, and the
   locale prefix does not change. A wrong guess costs one round trip: LiveView
-  answers a redirect it cannot mount by loading the page.
+  answers a redirect it cannot mount by loading the page. The sign-in pages
+  are listed as controller pages: they are always loaded by a request, which
+  carries the page the reader came from (`GamendWeb.UserAuth.store_return_to/2`).
 
   Locale copies of LiveView routes (`/ro/courses/:target`) exist so a socket
   can join at a prefixed URL; the table holds the unprefixed routes and says
@@ -96,8 +98,14 @@ defmodule GamendWeb.LiveNav do
   @spec path() :: String.t()
   def path, do: @path
 
-  defp live_session(%{metadata: %{phoenix_live_view: {_view, _action, _opts, %{name: name}}}}),
-    do: name
+  # A sign-in page is always a request, as if a controller page: only a
+  # request carries the page the link was on (`UserAuth.store_return_to/2`).
+  defp live_session(%{
+         path: path,
+         metadata: %{phoenix_live_view: {_view, _action, _opts, %{name: name}}}
+       }) do
+    unless GamendWeb.UserAuth.sign_in_page?(String.split(path, "/", trim: true)), do: name
+  end
 
   defp live_session(_route), do: nil
 

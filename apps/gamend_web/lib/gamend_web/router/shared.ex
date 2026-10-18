@@ -98,6 +98,7 @@ defmodule GamendWeb.Router.Shared do
         plug GamendWeb.Plugs.CaptchaCsp
         plug GamendWeb.Plugs.PageMeta
         plug :fetch_current_scope_for_user
+        plug :store_return_to
         plug GamendWeb.Plugs.ColorMode
       end
 
@@ -404,6 +405,8 @@ defmodule GamendWeb.Router.Shared do
         get "/leaderboards/:id", LeaderboardController, :show
         get "/leaderboards/:id/records", LeaderboardController, :records
         get "/leaderboards/:id/records/around/:user_id", LeaderboardController, :around
+        get "/leaderboards/:id/records/above", LeaderboardController, :above
+        get "/leaderboards/:id/keys", LeaderboardController, :keys
       end
     end
   end

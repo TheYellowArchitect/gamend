@@ -155,7 +155,7 @@ defmodule GamendWeb.UserLive.SettingsTest do
       assert {:error, redirect} = live(conn, ~p"/users/settings")
 
       assert {:redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/users/log_in"
+      assert path == "/users/log_in?return_to=%2Fusers%2Fsettings"
       assert %{"error" => "Failed"} = flash
     end
   end
@@ -576,7 +576,11 @@ defmodule GamendWeb.UserLive.SettingsTest do
       conn = build_conn()
       {:error, redirect} = live(conn, ~p"/users/settings/confirm_email/#{token}")
       assert {:redirect, %{to: path, flash: flash}} = redirect
-      assert path == ~p"/users/log_in"
+
+      assert path ==
+               "/users/log_in?" <>
+                 URI.encode_query(%{"return_to" => "/users/settings/confirm_email/#{token}"})
+
       assert %{"error" => message} = flash
       assert message == "Failed"
     end

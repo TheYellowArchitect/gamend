@@ -521,6 +521,16 @@ defmodule Gamend.Hooks do
   """
   @callback after_ban_lifted(ban()) :: any()
 
+  @doc """
+  Called when a guest (an account with no email and no provider) signs in to
+  an account they already have, before the guest account is deleted: merge
+  what you keep for the guest into the account, never overwriting the
+  account's. Delete a guest KV key once you have merged it; core then moves
+  every guest key the account lacks and merges wallets, items, leaderboards
+  and quest progress. Synchronous, up to 30 seconds.
+  """
+  @callback merge_user_data(guest :: user(), user :: user()) :: any()
+
   @callback before_push_send(user_id :: String.t(), message :: map()) :: hook_result(map())
   @callback after_push_sent(user_id :: String.t(), message :: map(), result :: map()) :: any()
 
@@ -579,6 +589,7 @@ defmodule Gamend.Hooks do
                       after_chat_message_reported: 1,
                       after_ban_created: 1,
                       after_ban_lifted: 1,
+                      merge_user_data: 2,
                       before_report_create: 1,
                       after_report_created: 1,
                       after_report_resolved: 1,

@@ -19,14 +19,22 @@ pub fn get_leaderboard(node, id) {
 
 /// Get current user's record
 /// `GET /api/v1/leaderboards/{id}/records/me`
-pub fn get_my_record(node, id) {
-    gamend::rest(node, "GET", `/api/v1/leaderboards/${id}/records/me`)
+pub fn get_my_record(node, id, options) {
+    let query = gamend::core::query(options, ["key"]);
+    gamend::rest(node, "GET", `/api/v1/leaderboards/${id}/records/me${query}`)
+}
+
+/// List a leaderboard's rankings
+/// `GET /api/v1/leaderboards/{id}/keys`
+pub fn list_leaderboard_keys(node, id, options) {
+    let query = gamend::core::query(options, ["prefix"]);
+    gamend::rest(node, "GET", `/api/v1/leaderboards/${id}/keys${query}`)
 }
 
 /// List leaderboard records
 /// `GET /api/v1/leaderboards/{id}/records`
 pub fn list_leaderboard_records(node, id, options) {
-    let query = gamend::core::query(options, ["page", "page_size"]);
+    let query = gamend::core::query(options, ["page", "page_size", "key"]);
     gamend::rest(node, "GET", `/api/v1/leaderboards/${id}/records${query}`)
 }
 
@@ -37,10 +45,20 @@ pub fn list_leaderboards(node, options) {
     gamend::rest(node, "GET", `/api/v1/leaderboards${query}`)
 }
 
+/// List the records just ahead of a score
+/// `GET /api/v1/leaderboards/{id}/records/above`
+pub fn list_records_above(node, id, options) {
+    if !gamend::core::given(options, "score") {
+        return gamend::core::missing("gamend::leaderboards::list_records_above", "score");
+    }
+    let query = gamend::core::query(options, ["score", "limit", "key"]);
+    gamend::rest(node, "GET", `/api/v1/leaderboards/${id}/records/above${query}`)
+}
+
 /// List records around a user
 /// `GET /api/v1/leaderboards/{id}/records/around/{user_id}`
 pub fn list_records_around_user(node, id, user_id, options) {
-    let query = gamend::core::query(options, ["limit"]);
+    let query = gamend::core::query(options, ["limit", "key"]);
     gamend::rest(node, "GET", `/api/v1/leaderboards/${id}/records/around/${user_id}${query}`)
 }
 

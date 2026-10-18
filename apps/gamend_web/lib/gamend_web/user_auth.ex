@@ -45,11 +45,16 @@ defmodule GamendWeb.UserAuth do
 
     conn = create_or_extend_session(conn, user, params)
 
-    # A guest who signs in to an account they already have keeps that
-    # account as it is: nothing is copied over, and the guest account, which
-    # nothing can reach again once this session is replaced, is deleted
-    # (through `Accounts.delete_user/1`, so plugins clean up after it).
-    if replaced_guest, do: Gamend.Async.run(fn -> Accounts.delete_user(replaced_guest) end)
+    # A guest who signs in to an account they already have brings what they
+    # did with them: it is merged into the account, never over it
+    # (`Accounts.GuestMerge`), in this request so the first page shows it.
+    # The guest account, which nothing can reach again once this session is
+    # replaced, is then deleted (through `Accounts.delete_user/1`, so plugins
+    # clean up after it).
+    if replaced_guest do
+      Accounts.GuestMerge.merge(replaced_guest, user)
+      Gamend.Async.run(fn -> Accounts.delete_user(replaced_guest) end)
+    end
 
     # Fire-and-forget login hook for non-token logins (magic-link tokens are
     # handled specially in Accounts.login_user_by_magic_link so they already
@@ -636,8 +641,7 @@ defmodule GamendWeb.UserAuth do
     else
       conn
       |> put_flash(:error, gettext("Failed"))
-      |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
+      |> redirect(to: sign_in_redirect(conn, ~p"/users/log_in"))
       |> halt()
     end
   end
@@ -658,8 +662,7 @@ defmodule GamendWeb.UserAuth do
 
       Scope.user(scope) ->
         conn
-        |> maybe_store_return_to()
-        |> redirect(to: ~p"/users/register")
+        |> redirect(to: sign_in_redirect(conn, ~p"/users/register"))
         |> halt()
 
       true ->
@@ -683,9 +686,69 @@ defmodule GamendWeb.UserAuth do
     end
   end
 
-  defp maybe_store_return_to(%{method: "GET"} = conn) do
-    put_session(conn, :user_return_to, current_path(conn))
+  # The sign-in page, told to come back to the page a GET asked for
+  # (`store_return_to/2`). The Referer would name the page before it.
+  defp sign_in_redirect(%{method: "GET"} = conn, page),
+    do: page <> "?" <> URI.encode_query(%{"return_to" => current_path(conn)})
+
+  defp sign_in_redirect(_conn, page), do: page
+
+  @doc """
+  Plug (`:browser`): where a sign-in page (`/users/log_in`,
+  `/users/register`, under a locale prefix too) sends the reader once signed
+  in, kept as the session's `:user_return_to` for `log_in_user/3` (password,
+  emailed link and provider alike): its `?return_to=<path>`, which a
+  protected page's redirect sets, else the page the link was on (the
+  `Referer`, this site only). With neither, the session keeps what it had,
+  so a failed password, which comes back to this page, keeps it too.
+
+  A sign-in page is therefore always loaded by a request: `GamendWeb.LiveNav`
+  never takes a link to one over the socket.
+  """
+  def store_return_to(%{method: "GET", path_info: path_info} = conn, _opts) do
+    with true <- sign_in_page?(path_info),
+         path when is_binary(path) <-
+           safe_return_to(conn.params["return_to"]) || referer_path(conn) do
+      put_session(conn, :user_return_to, path)
+    else
+      _ -> conn
+    end
   end
 
-  defp maybe_store_return_to(conn), do: conn
+  def store_return_to(conn, _opts), do: conn
+
+  # The path and query of the page a link on this site was on.
+  defp referer_path(%{host: host} = conn) do
+    with [referer | _] <- get_req_header(conn, "referer"),
+         %URI{host: ^host, path: path, query: query} <- URI.parse(referer) do
+      safe_return_to(if query, do: "#{path}?#{query}", else: path)
+    else
+      _ -> nil
+    end
+  end
+
+  @doc """
+  `path` when it names a page on this site to come back to: one leading
+  `/`, never `//` or a backslash (both read as another host), no scheme or
+  host, not a sign-in page itself. Else nil.
+  """
+  @spec safe_return_to(term()) :: String.t() | nil
+  def safe_return_to(path) when is_binary(path) and byte_size(path) <= 2048 do
+    with "/" <> rest <- path,
+         false <- String.starts_with?(rest, "/"),
+         false <- String.contains?(path, ["\\", "\r", "\n"]),
+         %URI{scheme: nil, host: nil, path: page} when is_binary(page) <- URI.parse(path),
+         false <- sign_in_page?(String.split(page, "/", trim: true)) do
+      path
+    else
+      _ -> nil
+    end
+  end
+
+  def safe_return_to(_path), do: nil
+
+  @doc "Whether path segments name a sign-in page: log in or register, any locale prefix."
+  @spec sign_in_page?([String.t()]) :: boolean()
+  def sign_in_page?(path_info),
+    do: Enum.take(path_info, -2) in [["users", "log_in"], ["users", "register"]]
 end

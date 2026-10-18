@@ -1194,20 +1194,29 @@ func lobbies_get_lobby(id: String) -> GamendResult:
 ### LEADERBOARDS
 
 ## List leaderboard records
-func leaderboards_list_leaderboard_records(id: String, page = 1, page_size = 25) -> GamendResult:
-	return await _call_api(LeaderboardsApi.new(_config), "list_leaderboard_records", [id, page, page_size])
+## `key` names one ranking on a board with several (its `metadata.views` lists them); "" is the default one.
+func leaderboards_list_leaderboard_records(id: String, page = 1, page_size = 25, key = "") -> GamendResult:
+	return await _call_api(LeaderboardsApi.new(_config), "list_leaderboard_records", [id, page, page_size, key])
 
 ## List leaderboards
 func leaderboards_list_leaderboards(slug = "", active = null, orderBy = "ends_at", startsAfter = null, startsBefore = null, endsAfter = null, endsBefore = null, page = 1, pageSize = 25) -> GamendResult:
 	return await _call_api(LeaderboardsApi.new(_config), "list_leaderboards", [slug, active, orderBy, startsAfter, startsBefore, endsAfter, endsBefore, page, pageSize])
 
 ## Get current user's record
-func leaderboards_get_my_record(id: String) -> GamendResult:
-	return await _call_api(LeaderboardsApi.new(_config), "get_my_record", [id])
+func leaderboards_get_my_record(id: String, key = "") -> GamendResult:
+	return await _call_api(LeaderboardsApi.new(_config), "get_my_record", [id, key])
 
 ## List records around a user
-func leaderboards_list_records_around_user(id: String, user_id: String, limit = 11) -> GamendResult:
-	return await _call_api(LeaderboardsApi.new(_config), "list_records_around_user", [id, user_id, limit])
+func leaderboards_list_records_around_user(id: String, user_id: String, limit = 11, key = "") -> GamendResult:
+	return await _call_api(LeaderboardsApi.new(_config), "list_records_around_user", [id, user_id, limit, key])
+
+## List the records just ahead of a score, nearest first
+func leaderboards_list_records_above(id: String, score: int, limit = 3, key = "") -> GamendResult:
+	return await _call_api(LeaderboardsApi.new(_config), "list_records_above", [id, score, limit, key])
+
+## List a leaderboard's keys (its rankings), optionally under a prefix
+func leaderboards_list_leaderboard_keys(id: String, prefix = "") -> GamendResult:
+	return await _call_api(LeaderboardsApi.new(_config), "list_leaderboard_keys", [id, prefix])
 
 ## Get a leaderboard by ID
 func leaderboards_get_leaderboard(id: String) -> GamendResult:

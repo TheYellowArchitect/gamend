@@ -812,6 +812,25 @@ defmodule Gamend.Quests do
   end
 
   @doc ~S"""
+    Moves `from_user_id`'s quest progress onto `to_user_id` for every quest
+    period the account has no row for, the way a guest's play joins the
+    account they log in to (`Gamend.Accounts.GuestMerge`). The account's own
+    rows are never touched: a period both played stays the account's, and
+    what was claimed stays claimed. Answers how many rows moved.
+    
+  """
+  @spec merge_user_progress(Ecto.UUID.t(), Ecto.UUID.t()) :: non_neg_integer()
+  def merge_user_progress(_from_user_id, _to_user_id) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        0
+
+      _ ->
+        raise "Gamend.Quests.merge_user_progress/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     The reset bucket a quest is in at `now`, on the date `now` carries (UTC,
     or a player's own zone with `:quest_clock` `:player`; see "Resets").
     

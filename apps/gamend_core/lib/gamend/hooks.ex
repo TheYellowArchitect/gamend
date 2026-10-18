@@ -287,6 +287,14 @@ defmodule Gamend.Hooks do
   @callback after_ban_created(Gamend.Bans.Ban.t()) :: any()
   @callback after_ban_lifted(Gamend.Bans.Ban.t()) :: any()
 
+  # A guest signs in to an account they already have
+  # (`Gamend.Accounts.GuestMerge`): the host merges what it understands into
+  # the account first, its own KV keys by its own rules, never overwriting
+  # the account's. A key it is done with it deletes from the guest; core then
+  # moves every guest key the account lacks and merges wallets, items,
+  # leaderboards and quests. Synchronous (30 s), before the guest is deleted.
+  @callback merge_user_data(guest :: User.t(), user :: User.t()) :: any()
+
   # Content reports (`Gamend.Reports`): a page, a word, anything a report kind
   # describes. `before_report_create/1` is a pipeline over the attrs about to
   # be inserted (string keys: kind, topic, subject_ref, subject, data,
@@ -574,6 +582,7 @@ defmodule Gamend.Hooks do
                       after_chat_message_reported: 1,
                       after_ban_created: 1,
                       after_ban_lifted: 1,
+                      merge_user_data: 2,
                       after_report_created: 1,
                       after_report_resolved: 1,
                       before_report_create: 1,
@@ -673,6 +682,7 @@ defmodule Gamend.Hooks do
       :after_chat_message_reported,
       :after_ban_created,
       :after_ban_lifted,
+      :merge_user_data,
       :before_report_create,
       :after_report_created,
       :after_report_resolved,
@@ -1744,6 +1754,9 @@ defmodule Gamend.Hooks.Default do
 
   @impl true
   def after_ban_lifted(_ban), do: :ok
+
+  @impl true
+  def merge_user_data(_guest, _user), do: :ok
 
   @impl true
   def before_push_send(_user_id, message), do: {:ok, message}
