@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-331 settings across 30 groups.
+332 settings across 30 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -372,6 +372,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_FEATURES_LIST_QUESTS` | boolean | `true` | Public GET /api/v1/quests* and the /quests page. |
 | `GAMEND_FEATURES_LIST_TOURNAMENTS` | boolean | `true` | Public GET /api/v1/tournaments* and the /tournaments pages. |
 | `GAMEND_FEATURES_LIST_USERS` | boolean | `true` | GET /api/v1/users and /users/:id. |
+| `GAMEND_FEATURES_LOCALE_FLAGS` | boolean | `true` | National flags in the site-language switcher (the navbar button and each language in its menu). Off, the button shows a language icon and the menu lists the languages by name only — for a host that must not show a flag, a sensitive one or any. Only the switcher: a host's own pages that draw `<.flag>` are untouched. |
 | `GAMEND_FEATURES_MAILBOX_PREVIEW` | boolean | `false` | Serve the in-browser mailbox at /dev/mailbox outside dev. Every sent email is readable there. |
 | `GAMEND_FEATURES_OPENAPI` | boolean | `true` | OpenAPI spec + Swagger UI. A complete map of your API — consider off in production. |
 | `GAMEND_FEATURES_PLAY` | boolean | `true` | The /play page, which hands a signed-in player a token for the game client. Off, it also closes every theme page and link marked `"feature": "play"` and every guide whose front matter says `feature: play` (a collection registered with `visible: {GamendWeb.Features, :doc_visible?}`): a host whose game is not out yet hides it from the site in one switch. The game client's API is untouched. |

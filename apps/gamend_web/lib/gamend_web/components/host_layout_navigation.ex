@@ -407,7 +407,7 @@ defmodule GamendWeb.HostLayoutNavigation do
     assigns =
       assign(assigns,
         label: locale_label(assigns.locale),
-        flag_code: locale_flag_code(assigns.locale),
+        flag_code: locale_flag(assigns.locale, locale_flags?()),
         locale_links:
           locale_links(assigns.current_path, assigns.current_query, assigns.known_locales)
       )
@@ -419,13 +419,13 @@ defmodule GamendWeb.HostLayoutNavigation do
             queues behind whatever that page is full of. --%>
       <%!-- A phone shows the flag alone, one icon, so `btn-ghost`. --%>
       <label for="lang-modal" class="btn gap-1 list-none btn-ghost cursor-pointer sm:hidden">
-        <.flag code={@flag_code} priority class="rounded-[2px] ring-1 ring-base-content/10" />
+        <.locale_mark flag_code={@flag_code} label={@label} />
         <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
       </label>
 
       <details class="dropdown dropdown-end hidden sm:block" data-navbar-dropdown>
         <summary class="btn btn-surface gap-1 list-none">
-          <.flag code={@flag_code} priority class="rounded-[2px] ring-1 ring-base-content/10" />
+          <.locale_mark flag_code={@flag_code} />
           {@label}
           <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
         </summary>
@@ -551,6 +551,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         <%!-- `deferred`: this row is in the document ~30 times over, in a
               dropdown and a sheet that are both closed. --%>
         <.flag
+          :if={@link.flag_code}
           code={@link.flag_code}
           deferred
           class="rounded-[2px] shadow-sm ring-1 ring-base-content/10"
@@ -1372,6 +1373,7 @@ defmodule GamendWeb.HostLayoutNavigation do
     # redirect", i.e. most of the crawl budget spent on nothing.
     crawlable? = LocalePath.localized_path?(base_path)
     default_locale = LocalePath.default_locale()
+    flags? = locale_flags?()
 
     Enum.map(known_locales, fn locale ->
       # BCP-47 in the URL (`/pt-BR`), not the gettext form (`/pt_BR`): that is
@@ -1409,7 +1411,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         label: Map.get(locale_labels, locale, locale),
         href: href,
         rel: unless(crawlable? and locale != default_locale, do: "nofollow"),
-        flag_code: locale_flag_code(locale)
+        flag_code: locale_flag(locale, flags?)
       }
     end)
   end
@@ -1423,6 +1425,30 @@ defmodule GamendWeb.HostLayoutNavigation do
     locale
     |> then(&Map.get(GamendWeb.HostLayouts.locale_labels(), &1, &1))
   end
+
+  attr :flag_code, :string, default: nil
+  attr :label, :string, default: nil, doc: "for a screen reader, where the mark stands alone"
+
+  # The switcher's button mark: the current language's flag, or a language
+  # icon when flags are switched off (`GamendWeb.Features`, `locale_flags`).
+  defp locale_mark(%{flag_code: nil} = assigns) do
+    ~H"""
+    <.icon name="hero-language" class="size-5" />
+    <span :if={@label} class="sr-only">{@label}</span>
+    """
+  end
+
+  defp locale_mark(assigns) do
+    ~H"""
+    <.flag code={@flag_code} priority class="rounded-[2px] ring-1 ring-base-content/10" />
+    """
+  end
+
+  defp locale_flags?, do: GamendWeb.Features.enabled?(:locale_flags)
+
+  # The flag drawn for `locale`, or nil when the host switched flags off.
+  defp locale_flag(_locale, false), do: nil
+  defp locale_flag(locale, true), do: locale_flag_code(locale)
 
   defp locale_flag_code("ar"), do: "sa"
   defp locale_flag_code("bg"), do: "bg"

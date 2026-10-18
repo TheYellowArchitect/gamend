@@ -111,6 +111,12 @@ defmodule GamendWeb.Features do
       "The /play page, which hands a signed-in player a token for the game client. Off, it also closes every theme page and link marked `\"feature\": \"play\"` and every guide whose front matter says `feature: play` (a collection registered with `visible: {GamendWeb.Features, :doc_visible?}`): a host whose game is not out yet hides it from the site in one switch. The game client's API is untouched."
   )
 
+  setting(:locale_flags, :boolean,
+    default: true,
+    doc:
+      "National flags in the site-language switcher (the navbar button and each language in its menu). Off, the button shows a language icon and the menu lists the languages by name only — for a host that must not show a flag, a sensitive one or any. Only the switcher: a host's own pages that draw `<.flag>` are untouched."
+  )
+
   setting(:list_matchmaking, :boolean,
     default: true,
     doc: "GET /api/v1/matchmaking/stats. Own-ticket endpoints stay."
