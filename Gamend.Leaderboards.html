@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1331">
+    <meta name="project" content="gamend_core v1.1.1332">
 
 
-    <title>Gamend.Leaderboards — gamend_core v1.1.1331</title>
+    <title>Gamend.Leaderboards — gamend_core v1.1.1332</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-82766E60.js"></script>
+    <script defer src="dist/sidebar_items-2FE24F26.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1331
+          v1.1.1332
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Leaderboards</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1331)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1332)</small>
 
     </h1>
 
@@ -454,6 +454,19 @@ is not ahead. Each record carries its <code class="inline">rank</code>.</p></div
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#merge_user_records/2" data-no-tooltip="" translate="no">merge_user_records(from_user_id, to_user_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Moves <code class="inline">from_user_id</code>'s records onto <code class="inline">to_user_id</code>, the way a guest's play
+joins the account they log in to (<a href="Gamend.Accounts.GuestMerge.html"><code class="inline">Gamend.Accounts.GuestMerge</code></a>). The
+account's records are never lowered or deleted, and no hook or quest event
+fires: these scores were submitted once already.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#resolve_slugs/1" data-no-tooltip="" translate="no">resolve_slugs(slugs)</a>
 
       </div>
@@ -559,7 +572,7 @@ is not ahead. Each record carries its <code class="inline">rank</code>.</p></div
       <h1 class="signature" translate="no">change_record(record, attrs \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1543" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1574" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -587,7 +600,7 @@ is not ahead. Each record carries its <code class="inline">rank</code>.</p></div
       <h1 class="signature" translate="no">count_all_records()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1278" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1309" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -677,7 +690,7 @@ is not ahead. Each record carries its <code class="inline">rank</code>.</p></div
       <h1 class="signature" translate="no">count_records(leaderboard_id, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1237" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1268" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -768,7 +781,7 @@ is not ahead. Each record carries its <code class="inline">rank</code>.</p></div
       <h1 class="signature" translate="no">delete_record(record)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1493" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1524" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -799,7 +812,7 @@ is not ahead. Each record carries its <code class="inline">rank</code>.</p></div
       <h1 class="signature" translate="no">delete_user_record(id_or_slug, user_id, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1512" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1543" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1070,7 +1083,7 @@ returns the most recently created one.</p>
       <h1 class="signature" translate="no">get_user_record(leaderboard_id, user_id, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L965" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L996" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1168,7 +1181,7 @@ the TTL.</p>
       <h1 class="signature" translate="no">list_keys(leaderboard_id, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1460" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1491" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1299,7 +1312,7 @@ runs in). A key only guests have played is not offered.</p>
       <h1 class="signature" translate="no">list_records(leaderboard_id, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1071" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1102" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1337,7 +1350,7 @@ the host keeps them off it (<a href="Gamend.AccountRequired.html"><code class="i
       <h1 class="signature" translate="no">list_records_above(leaderboard_id, score, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1401" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1432" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1375,7 +1388,7 @@ caller on the board. Labels' records are listed, like any.</p><h2 id="list_recor
       <h1 class="signature" translate="no">list_records_around_user(leaderboard_id, user_id, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1295" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L1326" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1393,6 +1406,39 @@ caller on the board. Labels' records are listed, like any.</p><h2 id="list_recor
       </div>
 
 <p>Lists records around a specific user (centered on their position).</p><p>Returns records above and below the user's rank.</p><h2 id="list_records_around_user/3-options" class="section-heading"><a href="#list_records_around_user/3-options" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Options</span></h2><ul><li><code class="inline">:limit</code> - Total number of records to return (default 11, centered on user)</li><li><code class="inline">:key</code> - The ranking (default <code class="inline">&quot;&quot;</code>)</li></ul>
+  </section>
+</section>
+<section class="detail" id="merge_user_records/2">
+
+  <div class="detail-header">
+    <a href="#merge_user_records/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">merge_user_records(from_user_id, to_user_id)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/leaderboards.ex#L972" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> merge_user_records(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>(), <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>Moves <code class="inline">from_user_id</code>'s records onto <code class="inline">to_user_id</code>, the way a guest's play
+joins the account they log in to (<a href="Gamend.Accounts.GuestMerge.html"><code class="inline">Gamend.Accounts.GuestMerge</code></a>). The
+account's records are never lowered or deleted, and no hook or quest event
+fires: these scores were submitted once already.</p><ul><li><code class="inline">best</code> boards keep the better of the two (the board's sort order).</li><li><code class="inline">incr</code> boards add the two up.</li><li><code class="inline">set</code> and <code class="inline">decr</code> boards take the guest's record only where the account
+has none on that board and key.</li></ul><p>A guest's records left behind go with the guest account. Answers how many
+records reached the account.</p>
   </section>
 </section>
 <section class="detail" id="resolve_slugs/1">
@@ -1576,9 +1622,9 @@ the operator applies per key.</p><pre><code class="makeup elixir" translate="no"
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1331">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1332">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1331">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1332">Hex Preview</a>
 
             </span>
 

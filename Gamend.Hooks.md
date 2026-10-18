@@ -125,6 +125,16 @@ to the player:
 @callback before_user_update(Gamend.Accounts.User.t(), map()) :: hook_result(map())
 ```
 
+# `merge_user_data`
+*optional* 
+
+```elixir
+@callback merge_user_data(
+  guest :: Gamend.Accounts.User.t(),
+  user :: Gamend.Accounts.User.t()
+) :: any()
+```
+
 # `validate_username`
 *optional* 
 

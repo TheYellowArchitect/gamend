@@ -467,6 +467,18 @@ the members of a group listed in full carry the size alone.
   (completed, waiting to be claimed) or `"done"` (completed or claimed)
 - `:page` / `:page_size`
 
+# `merge_user_progress`
+
+```elixir
+@spec merge_user_progress(Ecto.UUID.t(), Ecto.UUID.t()) :: non_neg_integer()
+```
+
+Moves `from_user_id`'s quest progress onto `to_user_id` for every quest
+period the account has no row for, the way a guest's play joins the
+account they log in to (`Gamend.Accounts.GuestMerge`). The account's own
+rows are never touched: a period both played stays the account's, and
+what was claimed stays claimed. Answers how many rows moved.
+
 # `period_key`
 
 ```elixir

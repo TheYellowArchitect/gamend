@@ -1,4 +1,4 @@
-# gamend_core v1.1.1331 - API Reference
+# gamend_core v1.1.1332 - API Reference
 
 ## Modules
 
@@ -97,6 +97,7 @@ hotlinking the provider.
   - [Gamend.Accounts.Broadcasts](Gamend.Accounts.Broadcasts.md): Telling connected clients a user changed: the `user:<id>` topic, and the
 member and friend topics that show that user to others.
   - [Gamend.Accounts.ConfirmationMailer](Gamend.Accounts.ConfirmationMailer.md): Sends a new account's confirmation email, off the request.
+  - [Gamend.Accounts.GuestMerge](Gamend.Accounts.GuestMerge.md): A guest's progress joins the account they log in to.
   - [Gamend.Accounts.Identities](Gamend.Accounts.Identities.md): How a person signs in without a password — Discord, Apple, Google, Facebook,
 GitHub, Steam or a device id — and linking those identities to an existing account or
 removing them from one.

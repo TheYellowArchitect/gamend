@@ -415,6 +415,25 @@ Returns records above and below the user's rank.
   * `:limit` - Total number of records to return (default 11, centered on user)
   * `:key` - The ranking (default `""`)
 
+# `merge_user_records`
+
+```elixir
+@spec merge_user_records(Ecto.UUID.t(), Ecto.UUID.t()) :: non_neg_integer()
+```
+
+Moves `from_user_id`'s records onto `to_user_id`, the way a guest's play
+joins the account they log in to (`Gamend.Accounts.GuestMerge`). The
+account's records are never lowered or deleted, and no hook or quest event
+fires: these scores were submitted once already.
+
+  * `best` boards keep the better of the two (the board's sort order).
+  * `incr` boards add the two up.
+  * `set` and `decr` boards take the guest's record only where the account
+    has none on that board and key.
+
+A guest's records left behind go with the guest account. Answers how many
+records reached the account.
+
 # `resolve_slugs`
 
 ```elixir
