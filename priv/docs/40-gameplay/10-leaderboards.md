@@ -77,7 +77,7 @@ A game client reads the same rankings over the API: `key` on
 
 | Endpoint | Answers |
 | --- | --- |
-| `GET /api/v1/leaderboards/{id}/keys?prefix=match` | the board's keys, the values a filter offers (`list_keys/2`) |
+| `GET /api/v1/leaderboards/{id}/keys?prefix=match` | the board's keys, the values a filter offers (`list_keys/2`), as `{"data": {"keys": [...]}}` |
 | `GET /api/v1/leaderboards/{id}/records/above?score=12&key=match&limit=3` | the listed records just ahead of a score, nearest first, with their ranks: who a player overtakes next (`list_records_above/3`) |
 
 A board's `metadata.views` (tabs and filters, see `GamendWeb.LeaderboardViews`)

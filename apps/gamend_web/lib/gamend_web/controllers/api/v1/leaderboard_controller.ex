@@ -459,7 +459,7 @@ defmodule GamendWeb.Api.V1.LeaderboardController do
         prefix =
           if is_binary(params["prefix"]), do: String.slice(params["prefix"], 0, 255), else: ""
 
-        reply_data(conn, Leaderboards.list_keys(leaderboard.id, prefix: prefix))
+        reply_data(conn, %{keys: Leaderboards.list_keys(leaderboard.id, prefix: prefix)})
     end
   end
 

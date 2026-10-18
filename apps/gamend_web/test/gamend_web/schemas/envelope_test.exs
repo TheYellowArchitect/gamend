@@ -8,9 +8,11 @@ defmodule GamendWeb.Schemas.EnvelopeTest do
   alias GamendWeb.Schemas.PageMeta
   alias OpenApiSpex.Schema
 
+  # No encoder: a test module is compiled after the protocols are
+  # consolidated, so a derived one has no effect and warns.
   defmodule Item do
     require OpenApiSpex
-    OpenApiSpex.schema(%{title: "Item", type: :object})
+    OpenApiSpex.schema(%{title: "Item", type: :object}, derive?: false)
   end
 
   test "a page is a list of its items and the page meta, both required" do

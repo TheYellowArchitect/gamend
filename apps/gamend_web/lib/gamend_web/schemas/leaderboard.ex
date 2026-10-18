@@ -167,13 +167,30 @@ defmodule GamendWeb.Schemas.LeaderboardRecordResponse do
   use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.LeaderboardRecord
 end
 
+defmodule GamendWeb.Schemas.LeaderboardKeys do
+  @moduledoc """
+  A leaderboard's keys (its rankings), sorted. An object, not a bare list:
+  a list under `data` is a page (R15), and the keys are few and never paged.
+  """
+  require OpenApiSpex
+  alias OpenApiSpex.Schema
+
+  OpenApiSpex.schema(%{
+    title: "LeaderboardKeys",
+    description: "The keys the board holds listed records under",
+    type: :object,
+    properties: %{
+      keys: %Schema{
+        type: :array,
+        items: %Schema{type: :string},
+        example: ["match", "match|es_es", "match|fr"]
+      }
+    },
+    required: [:keys]
+  })
+end
+
 defmodule GamendWeb.Schemas.LeaderboardKeysResponse do
   @moduledoc "A leaderboard's keys (its rankings) under `data`."
-  use GamendWeb.Schemas.Envelope,
-    data: %OpenApiSpex.Schema{
-      title: "LeaderboardKeys",
-      type: :array,
-      items: %OpenApiSpex.Schema{type: :string},
-      example: ["match", "match|es_es", "match|fr"]
-    }
+  use GamendWeb.Schemas.Envelope, data: GamendWeb.Schemas.LeaderboardKeys
 end
