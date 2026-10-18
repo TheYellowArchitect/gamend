@@ -13,7 +13,7 @@ let reply = task::wait(gamend::lobbies::quick_join(this.node, #{
 if e["kind"] == gamend::events::lobby::MEMBER_JOINED { }
 ```
 
-264 operations in 41 modules, and 90 realtime events.
+264 operations in 42 modules, and 92 realtime events.
 
 Beside the generated modules and `events.rn`, written by hand:
 
@@ -39,6 +39,16 @@ Admin – Analytics.
 | `get_analytics_snapshot(node)` | `GET /api/v1/admin/analytics/snapshot` | Live counters: players, lobbies, parties, quests, matchmaking, tournaments (admin) |
 | `get_analytics_summary(node, options)` | `GET /api/v1/admin/analytics` | DAU / WAU / MAU, D1 / D7 / D30 and payer conversion (admin) |
 
+## gamend::admin_bans
+
+Admin – Bans.
+
+| Function | Call | What it does |
+| --- | --- | --- |
+| `create_ban(node, params)` | `POST /api/v1/admin/bans` | Ban an IP address, an account or a chat sender (admin) |
+| `lift_ban(node, id)` | `DELETE /api/v1/admin/bans/{id}` | Lift a ban (admin) |
+| `list_bans(node, options)` | `GET /api/v1/admin/bans` | List bans (admin) |
+
 ## gamend::admin_chat
 
 Admin – Chat.
@@ -46,18 +56,15 @@ Admin – Chat.
 | Function | Call | What it does |
 | --- | --- | --- |
 | `create_chat_filter_word(node, params)` | `POST /api/v1/admin/chat/filter_words` | Add a blocklist word (admin) |
-| `create_chat_mute(node, params)` | `POST /api/v1/admin/chat/mutes` | Mute a player (admin) |
 | `delete_chat_conversation(node, options)` | `DELETE /api/v1/admin/chat/conversation` | Delete all messages in a conversation (admin) |
 | `delete_chat_filter_word(node, id)` | `DELETE /api/v1/admin/chat/filter_words/{id}` | Remove a blocklist word (admin) |
 | `delete_chat_filter_words_by_lang(node, options)` | `DELETE /api/v1/admin/chat/filter_words` | Remove an imported word list (admin) |
 | `delete_chat_message(node, id)` | `DELETE /api/v1/admin/chat/{id}` | Delete a chat message (admin) |
-| `delete_chat_mute(node, id)` | `DELETE /api/v1/admin/chat/mutes/{id}` | Lift a mute (admin) |
 | `delete_chat_report(node, id)` | `DELETE /api/v1/admin/chat/reports/{id}` | Delete a chat report (admin) |
 | `import_chat_filter_words(node, params)` | `POST /api/v1/admin/chat/filter_words/import` | Import a bundled word list (admin) |
 | `list_chat_filter_languages(node)` | `GET /api/v1/admin/chat/filter_words/languages` | Languages with a bundled word list (admin) |
 | `list_chat_filter_words(node, options)` | `GET /api/v1/admin/chat/filter_words` | List blocklist words (admin) |
 | `list_chat_messages(node, options)` | `GET /api/v1/admin/chat` | List all chat messages (admin) |
-| `list_chat_mutes(node, options)` | `GET /api/v1/admin/chat/mutes` | List chat mutes (admin) |
 | `list_chat_reports(node, options)` | `GET /api/v1/admin/chat/reports` | List chat reports (admin) |
 | `resolve_chat_report(node, id, params)` | `POST /api/v1/admin/chat/reports/{id}/resolve` | Resolve a chat report (admin) |
 | `test_chat_phrase(node, params)` | `POST /api/v1/admin/chat/filter_words/test` | Test a phrase against the filter (admin) |

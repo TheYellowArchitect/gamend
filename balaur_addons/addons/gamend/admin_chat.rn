@@ -20,15 +20,6 @@ pub fn create_chat_filter_word(node, params) {
     gamend::rest(node, "POST", "/api/v1/admin/chat/filter_words", params)
 }
 
-/// Mute a player (admin)
-/// `POST /api/v1/admin/chat/mutes`
-pub fn create_chat_mute(node, params) {
-    if !gamend::core::given(params, "user_id") {
-        return gamend::core::missing("gamend::admin_chat::create_chat_mute", "user_id");
-    }
-    gamend::rest(node, "POST", "/api/v1/admin/chat/mutes", params)
-}
-
 /// Delete all messages in a conversation (admin)
 /// `DELETE /api/v1/admin/chat/conversation`
 pub fn delete_chat_conversation(node, options) {
@@ -64,12 +55,6 @@ pub fn delete_chat_message(node, id) {
     gamend::rest(node, "DELETE", `/api/v1/admin/chat/${id}`)
 }
 
-/// Lift a mute (admin)
-/// `DELETE /api/v1/admin/chat/mutes/{id}`
-pub fn delete_chat_mute(node, id) {
-    gamend::rest(node, "DELETE", `/api/v1/admin/chat/mutes/${id}`)
-}
-
 /// Delete a chat report (admin)
 /// `DELETE /api/v1/admin/chat/reports/{id}`
 pub fn delete_chat_report(node, id) {
@@ -103,13 +88,6 @@ pub fn list_chat_filter_words(node, options) {
 pub fn list_chat_messages(node, options) {
     let query = gamend::core::query(options, ["sender_id", "chat_type", "chat_ref_id", "content", "sort_by", "page", "page_size"]);
     gamend::rest(node, "GET", `/api/v1/admin/chat${query}`)
-}
-
-/// List chat mutes (admin)
-/// `GET /api/v1/admin/chat/mutes`
-pub fn list_chat_mutes(node, options) {
-    let query = gamend::core::query(options, ["user_id", "scope", "scope_ref_id", "active", "page", "page_size"]);
-    gamend::rest(node, "GET", `/api/v1/admin/chat/mutes${query}`)
 }
 
 /// List chat reports (admin)

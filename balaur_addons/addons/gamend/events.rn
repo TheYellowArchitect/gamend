@@ -96,6 +96,8 @@ pub mod signaling {
 
 /// What arrives on `user` topics, as `decode` names it.
 pub mod user {
+    pub const ACCOUNT_BANNED = "account_banned";
+    pub const ACCOUNT_UNBANNED = "account_unbanned";
     pub const CHAT_MUTED = "chat_muted";
     pub const CHAT_UNMUTED = "chat_unmuted";
     pub const FRIEND_ADDED = "friend_added";
@@ -228,6 +230,8 @@ pub fn table() {
     ["user", "match_found", "match_found"],
     ["user", "chat_muted", "chat_muted"],
     ["user", "chat_unmuted", "chat_unmuted"],
+    ["user", "account_banned", "account_banned"],
+    ["user", "account_unbanned", "account_unbanned"],
     ["user", "tournament_updated", "tournament_updated"],
     ["user", "tournament_finished", "tournament_finished"],
     ["user", "tournament_match_ready", "tournament_match_ready"],
