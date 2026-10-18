@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1328">
+    <meta name="project" content="gamend_core v1.1.1330">
 
 
-    <title>Gamend.Chat.Moderation.Cache — gamend_core v1.1.1328</title>
+    <title>Gamend.Chat.Moderation.Cache — gamend_core v1.1.1330</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
+    <script defer src="dist/sidebar_items-82766E60.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1328
+          v1.1.1330
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Chat.<wbr />Moderation.<wbr />Cache</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1328)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1330)</small>
 
     </h1>
 
@@ -114,10 +114,11 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>Node-local hot path for chat moderation: the word blocklist and active mutes.</p><p>Mirrors the shape of <code class="inline">GamendWeb.Plugs.IpBan</code> — the database is the source of
-truth, ETS is the per-message read path, and PubSub carries changes to the
-other instances (applied by <a href="Gamend.Chat.Moderation.Sync.html"><code class="inline">Gamend.Chat.Moderation.Sync</code></a>, which also loads
-both tables at boot).</p><p>It lives in core rather than beside the IP-ban table in the web app because
+<p>Node-local hot path for chat moderation's word blocklist. (Mutes are chat
+bans, cached by <a href="Gamend.Bans.Cache.html"><code class="inline">Gamend.Bans.Cache</code></a>.)</p><p>The same shape as <a href="Gamend.Bans.Cache.html"><code class="inline">Gamend.Bans.Cache</code></a>: the database is the source of truth,
+ETS is the per-message read path, and PubSub carries changes to the other
+instances (applied by <a href="Gamend.Chat.Moderation.Sync.html"><code class="inline">Gamend.Chat.Moderation.Sync</code></a>, which also loads the
+list at boot).</p><p>It lives in core rather than beside the IP-ban table in the web app because
 the check runs inside <a href="Gamend.Chat.html#send_message/2"><code class="inline">Gamend.Chat.send_message/2</code></a>, before anything web-facing
 is involved.</p><p>Substring matching goes through a compiled binary pattern (Aho-Corasick), kept
 in <code class="inline">:persistent_term</code> so a 10k-word list costs one pass over the message
@@ -152,16 +153,6 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#delete_mute/3" data-no-tooltip="" translate="no">delete_mute(user_id, scope, scope_ref_id)</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Remove a mute locally and on the other instances.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
         <a href="#delete_word/1" data-no-tooltip="" translate="no">delete_word(word)</a>
 
       </div>
@@ -186,7 +177,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
 
       </div>
 
-        <div class="summary-synopsis"><p>Load the blocklist and every unexpired mute from the database into ETS.</p></div>
+        <div class="summary-synopsis"><p>Load the blocklist from the database into ETS.</p></div>
 
     </div>
 
@@ -202,41 +193,11 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#mute_count/0" data-no-tooltip="" translate="no">mute_count()</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Number of active mutes loaded on this node.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#muted?/3" data-no-tooltip="" translate="no">muted?(user_id, chat_type, chat_ref_id)</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Whether <code class="inline">user_id</code> is currently muted for the given chat.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
         <a href="#normalize/1" data-no-tooltip="" translate="no">normalize(text)</a>
 
       </div>
 
         <div class="summary-synopsis"><p>Normalized form of <code class="inline">text</code>, for callers that only have the cache aliased.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#put_mute/1" data-no-tooltip="" translate="no">put_mute(mute)</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Mirror a mute locally and on the other instances.</p></div>
 
     </div>
 
@@ -314,7 +275,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
       <h1 class="signature" translate="no">apply_remote(arg1, word)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L167" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L119" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -332,34 +293,6 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
 <p>Apply a change that originated on another instance.</p><p>Only touches ETS — the originating instance already persisted it.</p>
   </section>
 </section>
-<section class="detail" id="delete_mute/3">
-
-  <div class="detail-header">
-    <a href="#delete_mute/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">delete_mute(user_id, scope, scope_ref_id)</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L134" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> delete_mute(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>() | nil) :: :ok</pre>
-
-      </div>
-
-<p>Remove a mute locally and on the other instances.</p>
-  </section>
-</section>
 <section class="detail" id="delete_word/1">
 
   <div class="detail-header">
@@ -370,7 +303,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
       <h1 class="signature" translate="no">delete_word(word)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L89" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L83" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -398,7 +331,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
       <h1 class="signature" translate="no">init_table()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L37" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L35" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -426,7 +359,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
       <h1 class="signature" translate="no">load_persisted()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L155" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L108" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -441,7 +374,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
 
       </div>
 
-<p>Load the blocklist and every unexpired mute from the database into ETS.</p><p>Called at boot by <a href="Gamend.Chat.Moderation.Sync.html"><code class="inline">Gamend.Chat.Moderation.Sync</code></a>.</p>
+<p>Load the blocklist from the database into ETS.</p><p>Called at boot by <a href="Gamend.Chat.Moderation.Sync.html"><code class="inline">Gamend.Chat.Moderation.Sync</code></a>.</p>
   </section>
 </section>
 <section class="detail" id="lookup_word/1">
@@ -454,7 +387,7 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
       <h1 class="signature" translate="no">lookup_word(word)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L57" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L51" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -472,64 +405,6 @@ going through <a href="#put_word/1"><code class="inline">put_word/1</code></a> p
 <p>Look up the severity and match mode of <code class="inline">word</code> (already normalized).</p><p>Returns <code class="inline">nil</code> when the word is not on the blocklist.</p>
   </section>
 </section>
-<section class="detail" id="mute_count/0">
-
-  <div class="detail-header">
-    <a href="#mute_count/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">mute_count()</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L142" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> mute_count() :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
-
-      </div>
-
-<p>Number of active mutes loaded on this node.</p>
-  </section>
-</section>
-<section class="detail" id="muted?/3">
-
-  <div class="detail-header">
-    <a href="#muted?/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">muted?(user_id, chat_type, chat_ref_id)</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L116" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> muted?(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>() | nil) :: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>()</pre>
-
-      </div>
-
-<p>Whether <code class="inline">user_id</code> is currently muted for the given chat.</p><p>A <code class="inline">&quot;global&quot;</code> mute covers every chat type including friend DMs; a scoped mute
-only covers its own room. Expired entries are dropped on read, so enforcement
-never depends on the sweep having run.</p>
-  </section>
-</section>
 <section class="detail" id="normalize/1">
 
   <div class="detail-header">
@@ -540,7 +415,7 @@ never depends on the sweep having run.</p>
       <h1 class="signature" translate="no">normalize(text)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L270" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L179" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -558,34 +433,6 @@ never depends on the sweep having run.</p>
 <p>Normalized form of <code class="inline">text</code>, for callers that only have the cache aliased.</p>
   </section>
 </section>
-<section class="detail" id="put_mute/1">
-
-  <div class="detail-header">
-    <a href="#put_mute/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">put_mute(mute)</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L126" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> put_mute(<a href="Gamend.Chat.Mute.html#t:t/0">Gamend.Chat.Mute.t</a>()) :: :ok</pre>
-
-      </div>
-
-<p>Mirror a mute locally and on the other instances.</p>
-  </section>
-</section>
 <section class="detail" id="put_word/1">
 
   <div class="detail-header">
@@ -596,7 +443,7 @@ never depends on the sweep having run.</p>
       <h1 class="signature" translate="no">put_word(word)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L79" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L73" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -624,7 +471,7 @@ never depends on the sweep having run.</p>
       <h1 class="signature" translate="no">reload_words()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L101" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L95" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -653,7 +500,7 @@ other instances reload too — the alternative is one message per word.</p>
       <h1 class="signature" translate="no">substring_pattern()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L68" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L62" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -681,7 +528,7 @@ other instances reload too — the alternative is one message per word.</p>
       <h1 class="signature" translate="no">topic()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L33" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L31" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -709,7 +556,7 @@ other instances reload too — the alternative is one message per word.</p>
       <h1 class="signature" translate="no">word_count()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L72" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L66" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -736,9 +583,9 @@ other instances reload too — the alternative is one message per word.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1330">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1330">Hex Preview</a>
 
             </span>
 

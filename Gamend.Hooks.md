@@ -55,13 +55,6 @@ Receives the function name and the argument list.
 @callback after_user_logged_in(Gamend.Accounts.User.t()) :: any()
 ```
 
-# `after_user_muted`
-*optional* 
-
-```elixir
-@callback after_user_muted(Gamend.Chat.Mute.t()) :: any()
-```
-
 # `after_user_offline`
 *optional* 
 
@@ -754,6 +747,20 @@ Hooks may accept either a map or keyword list for convenience.
 
 A veto-only hook: `{:error, reason}` rejects, anything else allows. The
 return never rewrites the args, so a bare `:ok` is the usual "allow".
+
+# `after_ban_created`
+*optional* 
+
+```elixir
+@callback after_ban_created(Gamend.Bans.Ban.t()) :: any()
+```
+
+# `after_ban_lifted`
+*optional* 
+
+```elixir
+@callback after_ban_lifted(Gamend.Bans.Ban.t()) :: any()
+```
 
 # `after_report_created`
 *optional* 

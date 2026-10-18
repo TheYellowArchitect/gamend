@@ -19,7 +19,7 @@ chat reports" alert rather than one per report.
 # `default_mute_message`
 
 ```elixir
-@spec default_mute_message(Gamend.Chat.Mute.t()) :: String.t()
+@spec default_mute_message(Gamend.Bans.Ban.t()) :: String.t()
 ```
 
 Default body for the notice a muted player receives.

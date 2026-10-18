@@ -14,7 +14,7 @@ reachable (e.g. during a rolling restart on an unmigrated table). Every failed
 attempt logs an error, so a missing `bans` table stays loudly visible.
 
 Ended bans are kept as history and deleted by `Gamend.Retention`, so there is
-no sweep here: `Cache.banned?/2` drops an expired entry as it reads it.
+no sweep here: `Cache.active?/1` drops an expired entry as it reads it.
 
 # `child_spec`
 

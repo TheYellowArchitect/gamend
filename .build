@@ -43,6 +43,7 @@ Gamend.Apple.html
 Gamend.Async.html
 Gamend.Bans.Ban.html
 Gamend.Bans.Cache.html
+Gamend.Bans.ExpiryWorker.html
 Gamend.Bans.Sync.html
 Gamend.Bans.html
 Gamend.Broadcast.html
@@ -62,7 +63,6 @@ Gamend.Chat.Moderation.Normalizer.html
 Gamend.Chat.Moderation.Notices.html
 Gamend.Chat.Moderation.Sync.html
 Gamend.Chat.Moderation.html
-Gamend.Chat.Mute.html
 Gamend.Chat.ReadCursor.html
 Gamend.Chat.Report.html
 Gamend.Chat.Reports.html
@@ -255,8 +255,8 @@ dist/lato-latin-700-normal-2XVSBPG4.woff2
 dist/lato-latin-ext-400-normal-N27NCBWW.woff2
 dist/lato-latin-ext-700-normal-Q2L5DVMW.woff2
 dist/remixicon-ZWU5GQ4X.woff2
-dist/search_data-9DECFCD0.js
-dist/sidebar_items-CC44FC55.js
+dist/search_data-A6BAF16B.js
+dist/sidebar_items-82766E60.js
 index.html
 readme.html
 search.html

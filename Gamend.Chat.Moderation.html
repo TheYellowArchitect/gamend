@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1328">
+    <meta name="project" content="gamend_core v1.1.1330">
 
 
-    <title>Gamend.Chat.Moderation — gamend_core v1.1.1328</title>
+    <title>Gamend.Chat.Moderation — gamend_core v1.1.1330</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
+    <script defer src="dist/sidebar_items-82766E60.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1328
+          v1.1.1330
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Chat.<wbr />Moderation</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1328)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1330)</small>
 
     </h1>
 
@@ -118,9 +118,9 @@ gamend_core
 against every outgoing message, and mutes that silence a sender globally or
 in one lobby/group/party. Both are checked in <a href="Gamend.Chat.html#send_message/2"><code class="inline">Gamend.Chat.send_message/2</code></a>
 before the message is persisted, so nothing unmoderated reaches the database
-or PubSub.</p><p>Reports live in <a href="Gamend.Chat.Reports.html"><code class="inline">Gamend.Chat.Reports</code></a>.</p><p>Writes go to the database first and are then mirrored into
+or PubSub. A mute is a chat ban (<a href="Gamend.Bans.html"><code class="inline">Gamend.Bans</code></a>, kind <code class="inline">:chat</code>).</p><p>Reports live in <a href="Gamend.Chat.Reports.html"><code class="inline">Gamend.Chat.Reports</code></a>.</p><p>Blocklist writes go to the database first and are then mirrored into
 <a href="Gamend.Chat.Moderation.Cache.html"><code class="inline">Gamend.Chat.Moderation.Cache</code></a> (ETS + PubSub), which is what the per-message
-path actually reads.</p>
+path actually reads; mutes are cached by <a href="Gamend.Bans.Cache.html"><code class="inline">Gamend.Bans.Cache</code></a>.</p>
     </section>
 
 </div>
@@ -249,16 +249,6 @@ path actually reads.</p>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#list_active_mutes/0" data-no-tooltip="" translate="no">list_active_mutes()</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Every unexpired mute, for the boot load.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
         <a href="#list_filter_words/2" data-no-tooltip="" translate="no">list_filter_words(filters \\ %{}, opts \\ [])</a>
 
       </div>
@@ -273,8 +263,8 @@ path actually reads.</p>
 
       </div>
 
-        <div class="summary-synopsis"><p>List mutes. Filters: <code class="inline">:user_id</code>, <code class="inline">:scope</code>, <code class="inline">:scope_ref_id</code>, <code class="inline">:active</code> (when
-true, only unexpired mutes).</p></div>
+        <div class="summary-synopsis"><p>List mutes, newest first. Filters: <code class="inline">:user_id</code>, <code class="inline">:scope</code>, <code class="inline">:scope_ref_id</code>,
+<code class="inline">:active</code> (when true, only mutes in force).</p></div>
 
     </div>
 
@@ -300,21 +290,11 @@ true, only unexpired mutes).</p></div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#purge_expired_mutes/0" data-no-tooltip="" translate="no">purge_expired_mutes()</a>
+        <a href="#unmute_user/4" data-no-tooltip="" translate="no">unmute_user(user_id, scope, scope_ref_id \\ nil, by \\ nil)</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Delete mutes whose <code class="inline">expires_at</code> has passed. Returns the number removed.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#unmute_user/3" data-no-tooltip="" translate="no">unmute_user(user_id, scope, scope_ref_id \\ nil)</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Remove a mute. Returns <code class="inline">{:ok, count}</code> — 0 when the user was not muted.</p></div>
+        <div class="summary-synopsis"><p>Lift a mute. Returns <code class="inline">{:ok, count}</code> — 0 when the user was not muted.</p></div>
 
     </div>
 
@@ -352,7 +332,7 @@ true, only unexpired mutes).</p></div>
       <h1 class="signature" translate="no">bundled_languages()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L257" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L258" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -381,7 +361,7 @@ until an admin imports it.</p>
       <h1 class="signature" translate="no">check_content(content)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L45" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L46" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -418,7 +398,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">count_filter_words(filters \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L159" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L160" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -448,7 +428,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">count_mutes(filters \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L428" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L406" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -476,7 +456,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">create_filter_word(attrs)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L174" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L175" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -506,7 +486,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">delete_filter_word(word)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L199" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L200" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -535,7 +515,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">delete_filter_words_by_lang(lang)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L207" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L208" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -563,7 +543,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">get_filter_word(id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L165" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L166" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -591,7 +571,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">get_mute(id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L410" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L389" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -602,7 +582,7 @@ covers) it is blocked rather than sent through half-masked.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> get_mute(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>()) :: <a href="Gamend.Chat.Mute.html#t:t/0">Gamend.Chat.Mute.t</a>() | nil</pre>
+          <pre translate="no"><span class="attribute">@spec</span> get_mute(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>()) :: <a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>() | nil</pre>
 
       </div>
 
@@ -619,7 +599,7 @@ covers) it is blocked rather than sent through half-masked.</p>
       <h1 class="signature" translate="no">hits(content)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L87" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L88" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -650,7 +630,7 @@ runtime path would do.</p>
       <h1 class="signature" translate="no">import_bundled_list(lang, severity \\ &quot;block&quot;)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L279" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L280" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -671,34 +651,6 @@ applies and duplicates are skipped. Returns <code class="inline">{:ok, imported_
 <code class="inline">{:error, :unknown_language | :too_many_filter_words}</code>.</p>
   </section>
 </section>
-<section class="detail" id="list_active_mutes/0">
-
-  <div class="detail-header">
-    <a href="#list_active_mutes/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">list_active_mutes()</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L434" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> list_active_mutes() :: [<a href="Gamend.Chat.Mute.html#t:t/0">Gamend.Chat.Mute.t</a>()]</pre>
-
-      </div>
-
-<p>Every unexpired mute, for the boot load.</p>
-  </section>
-</section>
 <section class="detail" id="list_filter_words/2">
 
     <span id="list_filter_words/0"></span>
@@ -713,7 +665,7 @@ applies and duplicates are skipped. Returns <code class="inline">{:ok, imported_
       <h1 class="signature" translate="no">list_filter_words(filters \\ %{}, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L149" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L150" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -745,7 +697,7 @@ applies and duplicates are skipped. Returns <code class="inline">{:ok, imported_
       <h1 class="signature" translate="no">list_mutes(filters \\ %{}, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L417" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L401" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -756,12 +708,12 @@ applies and duplicates are skipped. Returns <code class="inline">{:ok, imported_
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> list_mutes(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="Gamend.Chat.Mute.html#t:t/0">Gamend.Chat.Mute.t</a>()]</pre>
+          <pre translate="no"><span class="attribute">@spec</span> list_mutes(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>()]</pre>
 
       </div>
 
-<p>List mutes. Filters: <code class="inline">:user_id</code>, <code class="inline">:scope</code>, <code class="inline">:scope_ref_id</code>, <code class="inline">:active</code> (when
-true, only unexpired mutes).</p>
+<p>List mutes, newest first. Filters: <code class="inline">:user_id</code>, <code class="inline">:scope</code>, <code class="inline">:scope_ref_id</code>,
+<code class="inline">:active</code> (when true, only mutes in force).</p>
   </section>
 </section>
 <section class="detail" id="mute_user/4">
@@ -776,7 +728,7 @@ true, only unexpired mutes).</p>
       <h1 class="signature" translate="no">mute_user(user_id, scope, scope_ref_id, attrs \\ %{})</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L354" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L361" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -788,13 +740,15 @@ true, only unexpired mutes).</p>
       <div class="specs">
 
           <pre translate="no"><span class="attribute">@spec</span> mute_user(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>() | nil, <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()) ::
-  {:ok, <a href="Gamend.Chat.Mute.html#t:t/0">Gamend.Chat.Mute.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+  {:ok, <a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
 
       </div>
 
 <p>Mute <code class="inline">user_id</code>.</p><p><code class="inline">scope</code> is <code class="inline">&quot;global&quot;</code> (every chat, <code class="inline">scope_ref_id</code> nil) or one of <code class="inline">&quot;lobby&quot;</code>,
 <code class="inline">&quot;group&quot;</code>, <code class="inline">&quot;party&quot;</code> with the room id as <code class="inline">scope_ref_id</code>. <code class="inline">attrs</code> may carry
-<code class="inline">expires_at</code> (nil means permanent), <code class="inline">reason</code> and <code class="inline">muted_by</code>.</p><p>Re-muting an already-muted user replaces the existing mute, so a moderator
+<code class="inline">expires_at</code> (nil means permanent), <code class="inline">reason</code>, <code class="inline">muted_by</code> (who did it) and
+<code class="inline">source</code> (<code class="inline">:admin</code>, <code class="inline">:room</code> for a room's own authority, <code class="inline">:plugin</code> by
+default; see <a href="Gamend.Bans.Ban.html"><code class="inline">Gamend.Bans.Ban</code></a>).</p><p>Re-muting an already-muted user replaces the existing mute, so a moderator
 can extend or shorten one without unmuting first.</p>
   </section>
 </section>
@@ -808,7 +762,7 @@ can extend or shorten one without unmuting first.</p>
       <h1 class="signature" translate="no">muted?(user_id, chat_type, chat_ref_id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L340" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L345" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -826,48 +780,21 @@ can extend or shorten one without unmuting first.</p>
 <p>Whether <code class="inline">user_id</code> is currently muted for the given chat (ETS read).</p>
   </section>
 </section>
-<section class="detail" id="purge_expired_mutes/0">
-
-  <div class="detail-header">
-    <a href="#purge_expired_mutes/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">purge_expired_mutes()</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L446" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> purge_expired_mutes() :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
-
-      </div>
-
-<p>Delete mutes whose <code class="inline">expires_at</code> has passed. Returns the number removed.</p><p>Hygiene only — <a href="#muted?/3"><code class="inline">muted?/3</code></a> already ignores expired entries, so a missed sweep
-never lets a mute outlive its expiry.</p>
-  </section>
-</section>
-<section class="detail" id="unmute_user/3">
+<section class="detail" id="unmute_user/4">
 
     <span id="unmute_user/2"></span>
 
+    <span id="unmute_user/3"></span>
+
   <div class="detail-header">
-    <a href="#unmute_user/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#unmute_user/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">unmute_user(user_id, scope, scope_ref_id \\ nil)</h1>
+      <h1 class="signature" translate="no">unmute_user(user_id, scope, scope_ref_id \\ nil, by \\ nil)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L384" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L380" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -878,12 +805,12 @@ never lets a mute outlive its expiry.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> unmute_user(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>() | nil) ::
+          <pre translate="no"><span class="attribute">@spec</span> unmute_user(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>() | nil, <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>() | nil) ::
   {:ok, <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()}</pre>
 
       </div>
 
-<p>Remove a mute. Returns <code class="inline">{:ok, count}</code> — 0 when the user was not muted.</p>
+<p>Lift a mute. Returns <code class="inline">{:ok, count}</code> — 0 when the user was not muted.</p>
   </section>
 </section>
 <section class="detail" id="update_filter_word/2">
@@ -896,7 +823,7 @@ never lets a mute outlive its expiry.</p>
       <h1 class="signature" translate="no">update_filter_word(word, attrs)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L185" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation.ex#L186" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -924,9 +851,9 @@ never lets a mute outlive its expiry.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1330">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1330">Hex Preview</a>
 
             </span>
 

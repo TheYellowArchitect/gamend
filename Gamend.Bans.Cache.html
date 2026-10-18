@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1328">
+    <meta name="project" content="gamend_core v1.1.1330">
 
 
-    <title>Gamend.Bans.Cache — gamend_core v1.1.1328</title>
+    <title>Gamend.Bans.Cache — gamend_core v1.1.1330</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
+    <script defer src="dist/sidebar_items-82766E60.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1328
+          v1.1.1330
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Bans.<wbr />Cache</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1328)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1330)</small>
 
     </h1>
 
@@ -114,8 +114,9 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>Node-local hot path for <a href="Gamend.Bans.html"><code class="inline">Gamend.Bans</code></a>: every active ban in ETS, keyed
-<code class="inline">{kind, subject}</code>, read on each request an IP ban covers.</p><p>The database is the source of truth; this mirrors it, and PubSub carries each
+<p>Node-local hot path for <a href="Gamend.Bans.html"><code class="inline">Gamend.Bans</code></a>: every active ban in ETS, keyed by its
+target (<a href="Gamend.Bans.Ban.html#target/4"><code class="inline">Gamend.Bans.Ban.target/4</code></a>, <code class="inline">{kind, subject, scope}</code>), read on each
+request an IP ban covers and each chat message a mute covers.</p><p>The database is the source of truth; this mirrors it, and PubSub carries each
 change to the other instances, where <a href="Gamend.Bans.Sync.html"><code class="inline">Gamend.Bans.Sync</code></a> applies it (and loads
 the table at boot). An entry past its end is dropped as it is read, so a ban
 never outlives its expiry whether or not anything sweeps.</p>
@@ -137,6 +138,16 @@ never outlives its expiry whether or not anything sweeps.</p>
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#active?/1" data-no-tooltip="" translate="no">active?(target)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Whether <code class="inline">target</code> has an active ban on this node.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#apply_remote/2" data-no-tooltip="" translate="no">apply_remote(arg1, key)</a>
 
       </div>
@@ -147,21 +158,11 @@ never outlives its expiry whether or not anything sweeps.</p>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#banned?/2" data-no-tooltip="" translate="no">banned?(kind, subject)</a>
+        <a href="#delete/1" data-no-tooltip="" translate="no">delete(target)</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Whether <code class="inline">subject</code> has an active ban of <code class="inline">kind</code> on this node.</p></div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#delete/2" data-no-tooltip="" translate="no">delete(kind, subject)</a>
-
-      </div>
-
-        <div class="summary-synopsis"><p>Remove a ban locally and on the other instances.</p></div>
+        <div class="summary-synopsis"><p>Remove a target's ban locally and on the other instances.</p></div>
 
     </div>
 
@@ -230,6 +231,34 @@ never outlives its expiry whether or not anything sweeps.</p>
     </h2>
 
     <div class="functions-list">
+<section class="detail" id="active?/1">
+
+  <div class="detail-header">
+    <a href="#active?/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">active?(target)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L35" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> active?(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">tuple</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>()</pre>
+
+      </div>
+
+<p>Whether <code class="inline">target</code> has an active ban on this node.</p>
+  </section>
+</section>
 <section class="detail" id="apply_remote/2">
 
   <div class="detail-header">
@@ -240,7 +269,7 @@ never outlives its expiry whether or not anything sweeps.</p>
       <h1 class="signature" translate="no">apply_remote(arg1, key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L105" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L106" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -258,17 +287,17 @@ never outlives its expiry whether or not anything sweeps.</p>
 <p>Apply a change that originated on another instance.</p><p>Only touches ETS — the originating instance already persisted it.</p>
   </section>
 </section>
-<section class="detail" id="banned?/2">
+<section class="detail" id="delete/1">
 
   <div class="detail-header">
-    <a href="#banned?/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#delete/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">banned?(kind, subject)</h1>
+      <h1 class="signature" translate="no">delete(target)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L34" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L66" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -279,39 +308,11 @@ never outlives its expiry whether or not anything sweeps.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> banned?(<a href="Gamend.Bans.Ban.html#t:kind/0">Gamend.Bans.Ban.kind</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> delete(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">tuple</a>()) :: :ok</pre>
 
       </div>
 
-<p>Whether <code class="inline">subject</code> has an active ban of <code class="inline">kind</code> on this node.</p>
-  </section>
-</section>
-<section class="detail" id="delete/2">
-
-  <div class="detail-header">
-    <a href="#delete/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">delete(kind, subject)</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L65" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> delete(<a href="Gamend.Bans.Ban.html#t:kind/0">Gamend.Bans.Ban.kind</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok</pre>
-
-      </div>
-
-<p>Remove a ban locally and on the other instances.</p>
+<p>Remove a target's ban locally and on the other instances.</p>
   </section>
 </section>
 <section class="detail" id="init_table/0">
@@ -324,7 +325,7 @@ never outlives its expiry whether or not anything sweeps.</p>
       <h1 class="signature" translate="no">init_table()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L24" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L25" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -354,7 +355,7 @@ never outlives its expiry whether or not anything sweeps.</p>
       <h1 class="signature" translate="no">list(only_kind \\ nil)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L76" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L77" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -385,7 +386,7 @@ never outlives its expiry whether or not anything sweeps.</p>
       <h1 class="signature" translate="no">load_persisted()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L92" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L93" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -413,7 +414,7 @@ never outlives its expiry whether or not anything sweeps.</p>
       <h1 class="signature" translate="no">put(ban)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L57" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L58" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -441,7 +442,7 @@ never outlives its expiry whether or not anything sweeps.</p>
       <h1 class="signature" translate="no">topic()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L20" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L21" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -468,9 +469,9 @@ never outlives its expiry whether or not anything sweeps.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1330">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1330">Hex Preview</a>
 
             </span>
 

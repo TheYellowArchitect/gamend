@@ -1,12 +1,13 @@
 # `Gamend.Chat.Moderation.Cache`
 [🔗](https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/chat/moderation/cache.ex#L1)
 
-Node-local hot path for chat moderation: the word blocklist and active mutes.
+Node-local hot path for chat moderation's word blocklist. (Mutes are chat
+bans, cached by `Gamend.Bans.Cache`.)
 
-Mirrors the shape of `GamendWeb.Plugs.IpBan` — the database is the source of
-truth, ETS is the per-message read path, and PubSub carries changes to the
-other instances (applied by `Gamend.Chat.Moderation.Sync`, which also loads
-both tables at boot).
+The same shape as `Gamend.Bans.Cache`: the database is the source of truth,
+ETS is the per-message read path, and PubSub carries changes to the other
+instances (applied by `Gamend.Chat.Moderation.Sync`, which also loads the
+list at boot).
 
 It lives in core rather than beside the IP-ban table in the web app because
 the check runs inside `Gamend.Chat.send_message/2`, before anything web-facing
@@ -27,14 +28,6 @@ going through `put_word/1` per row.
 Apply a change that originated on another instance.
 
 Only touches ETS — the originating instance already persisted it.
-
-# `delete_mute`
-
-```elixir
-@spec delete_mute(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: :ok
-```
-
-Remove a mute locally and on the other instances.
 
 # `delete_word`
 
@@ -58,7 +51,7 @@ Ensure the ETS tables exist (called once at app startup).
 @spec load_persisted() :: :ok
 ```
 
-Load the blocklist and every unexpired mute from the database into ETS.
+Load the blocklist from the database into ETS.
 
 Called at boot by `Gamend.Chat.Moderation.Sync`.
 
@@ -72,26 +65,6 @@ Look up the severity and match mode of `word` (already normalized).
 
 Returns `nil` when the word is not on the blocklist.
 
-# `mute_count`
-
-```elixir
-@spec mute_count() :: non_neg_integer()
-```
-
-Number of active mutes loaded on this node.
-
-# `muted?`
-
-```elixir
-@spec muted?(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) :: boolean()
-```
-
-Whether `user_id` is currently muted for the given chat.
-
-A `"global"` mute covers every chat type including friend DMs; a scoped mute
-only covers its own room. Expired entries are dropped on read, so enforcement
-never depends on the sweep having run.
-
 # `normalize`
 
 ```elixir
@@ -99,14 +72,6 @@ never depends on the sweep having run.
 ```
 
 Normalized form of `text`, for callers that only have the cache aliased.
-
-# `put_mute`
-
-```elixir
-@spec put_mute(Gamend.Chat.Mute.t()) :: :ok
-```
-
-Mirror a mute locally and on the other instances.
 
 # `put_word`
 

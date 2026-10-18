@@ -7,13 +7,13 @@ The enforcement side of chat moderation: an admin-managed blocklist checked
 against every outgoing message, and mutes that silence a sender globally or
 in one lobby/group/party. Both are checked in `Gamend.Chat.send_message/2`
 before the message is persisted, so nothing unmoderated reaches the database
-or PubSub.
+or PubSub. A mute is a chat ban (`Gamend.Bans`, kind `:chat`).
 
 Reports live in `Gamend.Chat.Reports`.
 
-Writes go to the database first and are then mirrored into
+Blocklist writes go to the database first and are then mirrored into
 `Gamend.Chat.Moderation.Cache` (ETS + PubSub), which is what the per-message
-path actually reads.
+path actually reads; mutes are cached by `Gamend.Bans.Cache`.
 
 # `bundled_languages`
 
@@ -101,7 +101,7 @@ Fetch one blocklist entry.
 # `get_mute`
 
 ```elixir
-@spec get_mute(Ecto.UUID.t()) :: Gamend.Chat.Mute.t() | nil
+@spec get_mute(Ecto.UUID.t()) :: Gamend.Bans.Ban.t() | nil
 ```
 
 Fetch one mute.
@@ -130,14 +130,6 @@ Every word goes through the normal changeset, so `max_chat_filter_word_len`
 applies and duplicates are skipped. Returns `{:ok, imported_count}` or
 `{:error, :unknown_language | :too_many_filter_words}`.
 
-# `list_active_mutes`
-
-```elixir
-@spec list_active_mutes() :: [Gamend.Chat.Mute.t()]
-```
-
-Every unexpired mute, for the boot load.
-
 # `list_filter_words`
 
 ```elixir
@@ -149,24 +141,26 @@ List blocklist entries. Filters: `:word`, `:severity`, `:lang`.
 # `list_mutes`
 
 ```elixir
-@spec list_mutes(map(), keyword()) :: [Gamend.Chat.Mute.t()]
+@spec list_mutes(map(), keyword()) :: [Gamend.Bans.Ban.t()]
 ```
 
-List mutes. Filters: `:user_id`, `:scope`, `:scope_ref_id`, `:active` (when
-true, only unexpired mutes).
+List mutes, newest first. Filters: `:user_id`, `:scope`, `:scope_ref_id`,
+`:active` (when true, only mutes in force).
 
 # `mute_user`
 
 ```elixir
 @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-  {:ok, Gamend.Chat.Mute.t()} | {:error, term()}
+  {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
 ```
 
 Mute `user_id`.
 
 `scope` is `"global"` (every chat, `scope_ref_id` nil) or one of `"lobby"`,
 `"group"`, `"party"` with the room id as `scope_ref_id`. `attrs` may carry
-`expires_at` (nil means permanent), `reason` and `muted_by`.
+`expires_at` (nil means permanent), `reason`, `muted_by` (who did it) and
+`source` (`:admin`, `:room` for a room's own authority, `:plugin` by
+default; see `Gamend.Bans.Ban`).
 
 Re-muting an already-muted user replaces the existing mute, so a moderator
 can extend or shorten one without unmuting first.
@@ -179,25 +173,14 @@ can extend or shorten one without unmuting first.
 
 Whether `user_id` is currently muted for the given chat (ETS read).
 
-# `purge_expired_mutes`
-
-```elixir
-@spec purge_expired_mutes() :: non_neg_integer()
-```
-
-Delete mutes whose `expires_at` has passed. Returns the number removed.
-
-Hygiene only — `muted?/3` already ignores expired entries, so a missed sweep
-never lets a mute outlive its expiry.
-
 # `unmute_user`
 
 ```elixir
-@spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) ::
+@spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, Ecto.UUID.t() | nil) ::
   {:ok, non_neg_integer()}
 ```
 
-Remove a mute. Returns `{:ok, count}` — 0 when the user was not muted.
+Lift a mute. Returns `{:ok, count}` — 0 when the user was not muted.
 
 # `update_filter_word`
 

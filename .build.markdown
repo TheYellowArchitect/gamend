@@ -42,6 +42,7 @@ Gamend.Apple.md
 Gamend.Async.md
 Gamend.Bans.Ban.md
 Gamend.Bans.Cache.md
+Gamend.Bans.ExpiryWorker.md
 Gamend.Bans.Sync.md
 Gamend.Bans.md
 Gamend.Broadcast.md
@@ -61,7 +62,6 @@ Gamend.Chat.Moderation.Normalizer.md
 Gamend.Chat.Moderation.Notices.md
 Gamend.Chat.Moderation.Sync.md
 Gamend.Chat.Moderation.md
-Gamend.Chat.Mute.md
 Gamend.Chat.ReadCursor.md
 Gamend.Chat.Report.md
 Gamend.Chat.Reports.md

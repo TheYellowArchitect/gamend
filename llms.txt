@@ -1,4 +1,4 @@
-# gamend_core v1.1.1328 - Table of Contents
+# gamend_core v1.1.1330 - Table of Contents
 
 > Core functionality for Gamend, including user management, authentication, friends, matchmaking, and more.
 
@@ -48,11 +48,15 @@ nothing but a device or a browser, `Gamend.Accounts.User.anonymous?/1`).
 A visitor with no account is in none of them: the daily counters count
 them, no row does.
 - [Gamend.ApiConventions](Gamend.ApiConventions.md): Mechanical checks for the conventions in `docs/specs/api-conventions.md`.
-- [Gamend.Bans](Gamend.Bans.md): Bans: an IP address or an account kept out for a while, or for good.
-- [Gamend.Bans.Ban](Gamend.Bans.Ban.md): One ban: an IP address or an account kept out until `expires_at` (`nil` is
-permanent), or until an admin lifts it.
-- [Gamend.Bans.Cache](Gamend.Bans.Cache.md): Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed
-`{kind, subject}`, read on each request an IP ban covers.
+- [Gamend.Bans](Gamend.Bans.md): Bans: an IP address, an account or a chat sender kept out for a while, or
+for good.
+- [Gamend.Bans.Ban](Gamend.Bans.Ban.md): One ban: an IP address, an account or a chat sender kept out until
+`expires_at` (`nil` is permanent), or until someone lifts it.
+- [Gamend.Bans.Cache](Gamend.Bans.Cache.md): Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed by its
+target (`Gamend.Bans.Ban.target/4`, `{kind, subject, scope}`), read on each
+request an IP ban covers and each chat message a mute covers.
+- [Gamend.Bans.ExpiryWorker](Gamend.Bans.ExpiryWorker.md): Tells of a ban's end when it runs out (`Gamend.Bans.expire/1`): the
+`after_ban_lifted/1` hook, and `account_unbanned` for an account.
 - [Gamend.Bans.Sync](Gamend.Bans.Sync.md): Keeps the node-local ban table (`Gamend.Bans.Cache`) in step with the
 database and the other app instances.
 - [Gamend.Broadcast](Gamend.Broadcast.md): PubSub broadcasts that must never take the caller down with them.
@@ -180,14 +184,15 @@ each answer before something proceeds.
 blocklist.
   - [Gamend.Chat.Message](Gamend.Chat.Message.md): Ecto schema for the `chat_messages` table.
   - [Gamend.Chat.Moderation](Gamend.Chat.Moderation.md): Chat word filter and mutes.
-  - [Gamend.Chat.Moderation.Cache](Gamend.Chat.Moderation.Cache.md): Node-local hot path for chat moderation: the word blocklist and active mutes.
+  - [Gamend.Chat.Moderation.Cache](Gamend.Chat.Moderation.Cache.md): Node-local hot path for chat moderation's word blocklist. (Mutes are chat
+bans, cached by `Gamend.Bans.Cache`.)
   - [Gamend.Chat.Moderation.Normalizer](Gamend.Chat.Moderation.Normalizer.md): Canonical form for chat filter matching.
   - [Gamend.Chat.Moderation.Notices](Gamend.Chat.Moderation.Notices.md): The notifications chat moderation sends: alerting admins that a report landed,
 warning a player, telling a player they were muted, and telling a reporter
 what came of their report.
-  - [Gamend.Chat.Moderation.Sync](Gamend.Chat.Moderation.Sync.md): Keeps the node-local chat-moderation ETS tables in sync with the database and
-the other app instances, and sweeps expired mutes.
-  - [Gamend.Chat.Mute](Gamend.Chat.Mute.md): Ecto schema for the `chat_mutes` table — a silenced chat sender.
+  - [Gamend.Chat.Moderation.Sync](Gamend.Chat.Moderation.Sync.md): Keeps the node-local word blocklist (`Gamend.Chat.Moderation.Cache`) in sync
+with the database and the other app instances. Mutes are chat bans, kept in
+step by `Gamend.Bans.Sync`.
   - [Gamend.Chat.ReadCursor](Gamend.Chat.ReadCursor.md): Ecto schema for the `chat_read_cursors` table.
   - [Gamend.Chat.Report](Gamend.Chat.Report.md): Ecto schema for the `chat_reports` table — a player- or filter-filed report
 about a chat message.

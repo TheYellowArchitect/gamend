@@ -260,7 +260,7 @@ Returns a list of `%Message{}` structs ordered by `inserted_at` descending
 # `list_mutes`
 
 ```elixir
-@spec list_mutes(map(), keyword()) :: [Gamend.Chat.Mute.t()]
+@spec list_mutes(map(), keyword()) :: [Gamend.Bans.Ban.t()]
 ```
 
 List mutes. Filters: `:user_id`, `:scope`, `:scope_ref_id`, `:active`.
@@ -288,13 +288,16 @@ Uses an upsert to create or update the read cursor.
 
 ```elixir
 @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-  {:ok, Gamend.Chat.Mute.t()} | {:error, term()}
+  {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
 ```
 
 Mute `user_id` in `scope` (`"global"`, `"lobby"`, `"group"` or `"party"`).
 
 `scope_ref_id` is the room id, or `nil` for a global mute. `attrs` may carry
-`expires_at` (nil means permanent), `reason` and `muted_by`.
+`expires_at` (nil means permanent), `reason`, `muted_by` and `source`
+(`:plugin` by default). A mute is a chat ban (`Gamend.Bans`, kind `:chat`):
+it is kept as history when it ends, and fires `after_ban_created` and
+`after_ban_lifted`.
 
 # `muted?`
 
@@ -390,11 +393,12 @@ Subscribe to chat events for a party.
 # `unmute_user`
 
 ```elixir
-@spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil) ::
+@spec unmute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, Ecto.UUID.t() | nil) ::
   {:ok, non_neg_integer()}
 ```
 
-Lift a mute. Returns `{:ok, count}` — 0 when the user was not muted.
+Lift a mute; `by` is who lifted it. Returns `{:ok, count}` — 0 when the user
+was not muted.
 
 # `unsubscribe_friend_chat`
 

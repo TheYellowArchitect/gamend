@@ -1,13 +1,22 @@
 # `Gamend.Bans.Cache`
 [🔗](https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/cache.ex#L1)
 
-Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed
-`{kind, subject}`, read on each request an IP ban covers.
+Node-local hot path for `Gamend.Bans`: every active ban in ETS, keyed by its
+target (`Gamend.Bans.Ban.target/4`, `{kind, subject, scope}`), read on each
+request an IP ban covers and each chat message a mute covers.
 
 The database is the source of truth; this mirrors it, and PubSub carries each
 change to the other instances, where `Gamend.Bans.Sync` applies it (and loads
 the table at boot). An entry past its end is dropped as it is read, so a ban
 never outlives its expiry whether or not anything sweeps.
+
+# `active?`
+
+```elixir
+@spec active?(tuple()) :: boolean()
+```
+
+Whether `target` has an active ban on this node.
 
 # `apply_remote`
 
@@ -19,21 +28,13 @@ Apply a change that originated on another instance.
 
 Only touches ETS — the originating instance already persisted it.
 
-# `banned?`
-
-```elixir
-@spec banned?(Gamend.Bans.Ban.kind(), String.t()) :: boolean()
-```
-
-Whether `subject` has an active ban of `kind` on this node.
-
 # `delete`
 
 ```elixir
-@spec delete(Gamend.Bans.Ban.kind(), String.t()) :: :ok
+@spec delete(tuple()) :: :ok
 ```
 
-Remove a ban locally and on the other instances.
+Remove a target's ban locally and on the other instances.
 
 # `init_table`
 

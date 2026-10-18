@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1328">
+    <meta name="project" content="gamend_core v1.1.1330">
 
 
-    <title>Gamend.Bans.Ban — gamend_core v1.1.1328</title>
+    <title>Gamend.Bans.Ban — gamend_core v1.1.1330</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
+    <script defer src="dist/sidebar_items-82766E60.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1328
+          v1.1.1330
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Bans.<wbr />Ban</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1328)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1330)</small>
 
     </h1>
 
@@ -114,12 +114,16 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>One ban: an IP address or an account kept out until <code class="inline">expires_at</code> (<code class="inline">nil</code> is
-permanent), or until an admin lifts it.</p><p>A row is kept after it ends, lifted or expired, so a target's history reads
+<p>One ban: an IP address, an account or a chat sender kept out until
+<code class="inline">expires_at</code> (<code class="inline">nil</code> is permanent), or until someone lifts it.</p><p>A row is kept after it ends, lifted or expired, so a target's history reads
 as its rows; retention deletes ended rows after <code class="inline">bans_days</code>. A ban is active
-while <code class="inline">lifted_at</code> is nil and <code class="inline">expires_at</code> is nil or still ahead.</p><ul><li><code class="inline">kind</code> — <code class="inline">:ip</code> (<code class="inline">subject</code> is the address, an IPv6 one as its /64) or
-<code class="inline">:account</code> (<code class="inline">subject</code> is the user id, also in <code class="inline">user_id</code>).</li><li><code class="inline">reason</code> — why, in the words the banned player is shown.</li><li><code class="inline">source</code> — who placed it: <code class="inline">:admin</code> (the admin pages), <code class="inline">:api</code> (the admin
-API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">:system</code>.</li><li><code class="inline">banned_by</code> / <code class="inline">lifted_by</code> — the admin who placed or lifted it, when one did.</li></ul>
+while <code class="inline">lifted_at</code> is nil and <code class="inline">expires_at</code> is nil or still ahead.</p><ul><li><code class="inline">kind</code> — <code class="inline">:ip</code> (<code class="inline">subject</code> is the address, an IPv6 one as its /64),
+<code class="inline">:account</code> (<code class="inline">subject</code> is the user id, also in <code class="inline">user_id</code>) or <code class="inline">:chat</code>, a
+mute (<code class="inline">subject</code> and <code class="inline">user_id</code> are the muted player).</li><li><code class="inline">scope</code> / <code class="inline">scope_ref_id</code> — a chat ban's reach: <code class="inline">&quot;global&quot;</code> (every chat,
+friend DMs included; no room id) or <code class="inline">&quot;lobby&quot;</code>, <code class="inline">&quot;group&quot;</code> or <code class="inline">&quot;party&quot;</code>
+with that room's id. Nil for the other kinds.</li><li><code class="inline">reason</code> — why, in the words the banned player is shown.</li><li><code class="inline">source</code> — who placed it: <code class="inline">:admin</code> (the admin pages), <code class="inline">:api</code> (the admin
+API), <code class="inline">:room</code> (a lobby host, group admin or party leader, in their own
+room), <code class="inline">:plugin</code> (a game hook) or <code class="inline">:system</code>.</li><li><code class="inline">banned_by</code> / <code class="inline">lifted_by</code> — the person who placed or lifted it, when one did.</li></ul>
     </section>
 
 </div>
@@ -170,11 +174,43 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#scopes/0" data-no-tooltip="" translate="no">scopes()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The reaches a chat ban may have.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#sources/0" data-no-tooltip="" translate="no">sources()</a>
 
       </div>
 
         <div class="summary-synopsis"><p>Who may place a ban.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#target/1" data-no-tooltip="" translate="no">target(ban)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p><a href="#target/4"><code class="inline">target/4</code></a> of a ban.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#target/4" data-no-tooltip="" translate="no">target(kind, subject, scope, ref)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The key a ban is cached and replaced under: <code class="inline">{kind, subject, scope}</code>, the
+scope nil for an IP or account ban, <code class="inline">&quot;global&quot;</code> or <code class="inline">{room_kind, room_id}</code> for
+a chat ban.</p></div>
 
     </div>
 
@@ -202,7 +238,7 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
       <h1 class="signature" translate="no">kind()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L26" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L32" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -213,7 +249,7 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@type</span> kind() :: :ip | :account</pre>
+          <pre translate="no"><span class="attribute">@type</span> kind() :: :ip | :account | :chat</pre>
 
       </div>
 
@@ -230,7 +266,7 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
       <h1 class="signature" translate="no">t()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L27" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L33" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -253,6 +289,8 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
   lifted_by: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
   lifted_by_user: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
   reason: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  scope: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  scope_ref_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
   source: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
   subject: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
   updated_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
@@ -288,7 +326,7 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
       <h1 class="signature" translate="no">kinds()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L46" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L54" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -306,6 +344,34 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
 <p>The kinds of ban.</p>
   </section>
 </section>
+<section class="detail" id="scopes/0">
+
+  <div class="detail-header">
+    <a href="#scopes/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">scopes()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L62" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> scopes() :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
+
+      </div>
+
+<p>The reaches a chat ban may have.</p>
+  </section>
+</section>
 <section class="detail" id="sources/0">
 
   <div class="detail-header">
@@ -316,7 +382,7 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
       <h1 class="signature" translate="no">sources()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L50" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L58" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -334,6 +400,64 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
 <p>Who may place a ban.</p>
   </section>
 </section>
+<section class="detail" id="target/1">
+
+  <div class="detail-header">
+    <a href="#target/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">target(ban)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L76" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> target(<a href="#t:t/0">t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">tuple</a>()</pre>
+
+      </div>
+
+<p><a href="#target/4"><code class="inline">target/4</code></a> of a ban.</p>
+  </section>
+</section>
+<section class="detail" id="target/4">
+
+  <div class="detail-header">
+    <a href="#target/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">target(kind, subject, scope, ref)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans/ban.ex#L70" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> target(<a href="#t:kind/0">kind</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">tuple</a>()</pre>
+
+      </div>
+
+<p>The key a ban is cached and replaced under: <code class="inline">{kind, subject, scope}</code>, the
+scope nil for an IP or account ban, <code class="inline">&quot;global&quot;</code> or <code class="inline">{room_kind, room_id}</code> for
+a chat ban.</p>
+  </section>
+</section>
 
     </div>
   </section>
@@ -343,9 +467,9 @@ API), <code class="inline">:plugin</code> (a game hook) or <code class="inline">
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1330">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1330">Hex Preview</a>
 
             </span>
 

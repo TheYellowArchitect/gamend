@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1328">
+    <meta name="project" content="gamend_core v1.1.1330">
 
 
-    <title>Gamend.Bans — gamend_core v1.1.1328</title>
+    <title>Gamend.Bans — gamend_core v1.1.1330</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-CC44FC55.js"></script>
+    <script defer src="dist/sidebar_items-82766E60.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1328
+          v1.1.1330
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Bans</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1328)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1330)</small>
 
     </h1>
 
@@ -114,22 +114,36 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>Bans: an IP address or an account kept out for a while, or for good.</p><p>The <code class="inline">bans</code> table is the source of truth and keeps every ban after it ends,
+<p>Bans: an IP address, an account or a chat sender kept out for a while, or
+for good.</p><p>The <code class="inline">bans</code> table is the source of truth and keeps every ban after it ends,
 so a target's history is its rows. <a href="Gamend.Bans.Cache.html"><code class="inline">Gamend.Bans.Cache</code></a> holds the active ones
 in ETS for the per-request check (<a href="#banned?/2"><code class="inline">banned?/2</code></a>), and carries each change to
 the other instances over PubSub (<a href="Gamend.Bans.Sync.html"><code class="inline">Gamend.Bans.Sync</code></a> applies them there and
 loads the table at boot).</p><p>Placing a ban on a target that already has one ends the old one (lifted by
 whoever placed the new one) and starts the new one, so a target has at most
-one active ban.</p><pre><code class="makeup elixir" translate="no"><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">ban</span><span class="p" data-group-id="group-1">(</span><span class="ss">:ip</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.2.3.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">expires_at</span><span class="p">:</span><span class="w"> </span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">expires_after</span><span class="p" data-group-id="group-2">(</span><span class="nc">:timer</span><span class="o">.</span><span class="n">hours</span><span class="p" data-group-id="group-3">(</span><span class="mi">24</span><span class="p" data-group-id="group-3">)</span><span class="p" data-group-id="group-2">)</span><span class="p" data-group-id="group-1">)</span><span class="w">
+one active ban. A target is the kind, the subject and, for a chat ban, its
+reach (<a href="Gamend.Bans.Ban.html#target/4"><code class="inline">Gamend.Bans.Ban.target/4</code></a>): a global mute and a mute in one lobby are
+two targets.</p><pre><code class="makeup elixir" translate="no"><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">ban</span><span class="p" data-group-id="group-1">(</span><span class="ss">:ip</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.2.3.4&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">expires_at</span><span class="p">:</span><span class="w"> </span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">expires_after</span><span class="p" data-group-id="group-2">(</span><span class="nc">:timer</span><span class="o">.</span><span class="n">hours</span><span class="p" data-group-id="group-3">(</span><span class="mi">24</span><span class="p" data-group-id="group-3">)</span><span class="p" data-group-id="group-2">)</span><span class="p" data-group-id="group-1">)</span><span class="w">
 </span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">ban</span><span class="p" data-group-id="group-4">(</span><span class="ss">:account</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="ss">expires_at</span><span class="p">:</span><span class="w"> </span><span class="n">in_a_week</span><span class="p">,</span><span class="w"> </span><span class="ss">reason</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Cheating&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">by</span><span class="p">:</span><span class="w"> </span><span class="n">admin</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="group-4">)</span><span class="w">
-</span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">lift</span><span class="p" data-group-id="group-5">(</span><span class="ss">:account</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="ss">by</span><span class="p">:</span><span class="w"> </span><span class="n">admin</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="group-5">)</span><span class="w">
-</span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">banned?</span><span class="p" data-group-id="group-6">(</span><span class="ss">:ip</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.2.3.4&quot;</span><span class="p" data-group-id="group-6">)</span></code></pre><p>An IP ban's subject is the address as the web layer keys it (an IPv6 one as
-its /64, <code class="inline">GamendWeb.Plugs.IpBan</code>); an account ban's is the user id.</p><h2 id="module-account-bans" class="section-heading"><a href="#module-account-bans" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Account bans</span></h2><p>A banned account still signs in, and can read and delete itself; everything
+</span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">ban</span><span class="p" data-group-id="group-5">(</span><span class="ss">:chat</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="ss">scope</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;lobby&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">scope_ref_id</span><span class="p">:</span><span class="w"> </span><span class="n">lobby</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="ss">source</span><span class="p">:</span><span class="w"> </span><span class="ss">:room</span><span class="p" data-group-id="group-5">)</span><span class="w">
+</span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">lift</span><span class="p" data-group-id="group-6">(</span><span class="ss">:account</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="ss">by</span><span class="p">:</span><span class="w"> </span><span class="n">admin</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="group-6">)</span><span class="w">
+</span><span class="nc">Gamend.Bans</span><span class="o">.</span><span class="n">banned?</span><span class="p" data-group-id="group-7">(</span><span class="ss">:ip</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.2.3.4&quot;</span><span class="p" data-group-id="group-7">)</span></code></pre><p>An IP ban's subject is the address as the web layer keys it (an IPv6 one as
+its /64, <code class="inline">GamendWeb.Plugs.IpBan</code>); an account or chat ban's is the user id.</p><h2 id="module-chat-bans-mutes" class="section-heading"><a href="#module-chat-bans-mutes" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Chat bans (mutes)</span></h2><p>A chat ban silences a sender everywhere (<code class="inline">scope: &quot;global&quot;</code>, friend DMs
+included) or in one lobby, group or party (<code class="inline">scope</code> and <code class="inline">scope_ref_id</code>).
+<a href="Gamend.Chat.html#mute_user/4"><code class="inline">Gamend.Chat.mute_user/4</code></a> and <code class="inline">unmute_user/3</code> are chat's way in, with the
+room rules; <a href="#muted?/3"><code class="inline">muted?/3</code></a> is the per-message check. Placing and lifting one
+tells the player <code class="inline">{:chat_muted, ban}</code> and <code class="inline">{:chat_unmuted, ...}</code>, the user
+channel's <code class="inline">chat_muted</code> and <code class="inline">chat_unmuted</code>.</p><h2 id="module-account-bans" class="section-heading"><a href="#module-account-bans" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Account bans</span></h2><p>A banned account still signs in, and can read and delete itself; everything
 else refuses it (the web layer: <code class="inline">GamendWeb.Plugs.AccountBan</code> on the API, the
 channels, <code class="inline">GamendWeb.UserAuth</code> on the website). Placing and lifting one
 tells the account on its user topic, <code class="inline">{:account_banned, ban}</code> and
 <code class="inline">{:account_unbanned, user_id}</code>, which the user channel passes on as the
-<code class="inline">account_banned</code> and <code class="inline">account_unbanned</code> events.</p>
+<code class="inline">account_banned</code> and <code class="inline">account_unbanned</code> events.</p><h2 id="module-hooks-and-plugins" class="section-heading"><a href="#module-hooks-and-plugins" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Hooks and plugins</span></h2><p>A plugin bans and lifts with these functions (<code class="inline">source: :plugin</code>), and hears
+of every ban through two fire-and-forget hooks: <code class="inline">after_ban_created/1</code>, and
+<code class="inline">after_ban_lifted/1</code> once for every ban that ends, lifted, replaced or
+expired. A ban with an end schedules a job for it (<a href="Gamend.Bans.ExpiryWorker.html"><code class="inline">Gamend.Bans.ExpiryWorker</code></a>),
+so an expiry is told like a lift: the hook, and <code class="inline">account_unbanned</code> or
+<code class="inline">chat_unmuted</code>.</p>
     </section>
 
 </div>
@@ -159,11 +173,12 @@ so it is cheap to ask on every request.</p></div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#active/2" data-no-tooltip="" translate="no">active(kind, subject)</a>
+        <a href="#active/3" data-no-tooltip="" translate="no">active(kind, subject, opts \\ [])</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>The active ban on <code class="inline">subject</code>, or nil: for showing its end and reason.</p></div>
+        <div class="summary-synopsis"><p>The active ban on <code class="inline">subject</code>, or nil: for showing its end and reason. A chat
+ban names its reach with <code class="inline">:scope</code> and <code class="inline">:scope_ref_id</code>.</p></div>
 
     </div>
 
@@ -193,7 +208,41 @@ so it is cheap to ask on every request.</p></div>
 
       </div>
 
-        <div class="summary-synopsis"><p>Whether <code class="inline">subject</code> is banned now: an ETS read, no query.</p></div>
+        <div class="summary-synopsis"><p>Whether an IP or account <code class="inline">subject</code> is banned now: an ETS read, no query.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#banned_user_ids/0" data-no-tooltip="" translate="no">banned_user_ids()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The ids of the accounts banned now, as a subquery: <a href="Gamend.Accounts.Search.html"><code class="inline">Gamend.Accounts.Search</code></a>'s <code class="inline">banned</code> facet.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#count/1" data-no-tooltip="" translate="no">count(filters \\ %{})</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>How many bans <a href="#list/2"><code class="inline">list/2</code></a> would page through.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#expire/1" data-no-tooltip="" translate="no">expire(ban)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Tells of a ban that ran out: drops it from the cache, tells the player
+(<code class="inline">account_unbanned</code>, <code class="inline">chat_unmuted</code>) and runs <code class="inline">after_ban_lifted/1</code>. Run by
+<a href="Gamend.Bans.ExpiryWorker.html"><code class="inline">Gamend.Bans.ExpiryWorker</code></a> at <code class="inline">expires_at</code>. <code class="inline">:noop</code> for a ban lifted or
+replaced first (that already told), <code class="inline">{:not_yet, seconds}</code> for one still in
+force.</p></div>
 
     </div>
 
@@ -209,11 +258,11 @@ so it is cheap to ask on every request.</p></div>
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#history/2" data-no-tooltip="" translate="no">history(kind \\ nil, opts \\ [])</a>
+        <a href="#get/1" data-no-tooltip="" translate="no">get(id)</a>
 
       </div>
 
-        <div class="summary-synopsis"><p>Bans of one kind or all, ended ones too, newest first. <code class="inline">:limit</code> (100) caps it.</p></div>
+        <div class="summary-synopsis"><p>One ban, with its users, or nil.</p></div>
 
     </div>
 
@@ -223,8 +272,35 @@ so it is cheap to ask on every request.</p></div>
 
       </div>
 
-        <div class="summary-synopsis"><p>Ends the active ban on <code class="inline">subject</code>, if it has one. <code class="inline">:by</code> is the admin's user id.
-Answers the bans it ended (none, or one).</p></div>
+        <div class="summary-synopsis"><p>Ends the active ban on <code class="inline">subject</code>, if it has one. <code class="inline">:by</code> is the person's user
+id; a chat ban names its reach with <code class="inline">:scope</code> and <code class="inline">:scope_ref_id</code>. Answers the
+bans it ended (none, or one).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#lift_ban/2" data-no-tooltip="" translate="no">lift_ban(ban, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Ends this ban's target's active ban: the ban itself while it is in force (a
+target banned again since has a newer one, which this lifts). <code class="inline">opts</code> as for
+<a href="#lift/3"><code class="inline">lift/3</code></a>: <code class="inline">:by</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list/2" data-no-tooltip="" translate="no">list(filters \\ %{}, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Bans, ended ones too, newest first, with the banned user and the people who
+placed and lifted them. Filters (string or atom keys): <code class="inline">kind</code> (<code class="inline">:ip</code>,
+<code class="inline">:account</code> or <code class="inline">:chat</code>, or the string), <code class="inline">user_id</code>, <code class="inline">subject</code>, <code class="inline">scope</code>,
+<code class="inline">scope_ref_id</code>, and <code class="inline">active</code> (true: only the bans in force). <code class="inline">opts</code> are
+<a href="Gamend.Query.html#page/2"><code class="inline">Gamend.Query.page/2</code></a>'s: <code class="inline">page</code>, <code class="inline">page_size</code>.</p></div>
 
     </div>
 
@@ -235,6 +311,17 @@ Answers the bans it ended (none, or one).</p></div>
       </div>
 
         <div class="summary-synopsis"><p>Every active ban, of one kind or all, newest first.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#muted?/3" data-no-tooltip="" translate="no">muted?(user_id, chat_type, chat_ref_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Whether <code class="inline">user_id</code> may not send in this chat: muted everywhere, or in this
+lobby, group or party. An ETS read, run on every outgoing message.</p></div>
 
     </div>
 
@@ -274,7 +361,7 @@ Run by <a href="Gamend.Retention.html"><code class="inline">Gamend.Retention</co
       <h1 class="signature" translate="no">account_ban(user_id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L115" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L210" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -293,17 +380,19 @@ Run by <a href="Gamend.Retention.html"><code class="inline">Gamend.Retention</co
 so it is cheap to ask on every request.</p>
   </section>
 </section>
-<section class="detail" id="active/2">
+<section class="detail" id="active/3">
+
+    <span id="active/2"></span>
 
   <div class="detail-header">
-    <a href="#active/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#active/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">active(kind, subject)</h1>
+      <h1 class="signature" translate="no">active(kind, subject, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L101" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L193" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -314,11 +403,13 @@ so it is cheap to ask on every request.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> active(<a href="Gamend.Bans.Ban.html#t:kind/0">Gamend.Bans.Ban.kind</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>() | nil</pre>
+          <pre translate="no"><span class="attribute">@spec</span> active(<a href="Gamend.Bans.Ban.html#t:kind/0">Gamend.Bans.Ban.kind</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) ::
+  <a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>() | nil</pre>
 
       </div>
 
-<p>The active ban on <code class="inline">subject</code>, or nil: for showing its end and reason.</p>
+<p>The active ban on <code class="inline">subject</code>, or nil: for showing its end and reason. A chat
+ban names its reach with <code class="inline">:scope</code> and <code class="inline">:scope_ref_id</code>.</p>
   </section>
 </section>
 <section class="detail" id="active?/1">
@@ -331,7 +422,7 @@ so it is cheap to ask on every request.</p>
       <h1 class="signature" translate="no">active?(ban)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L143" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L260" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -361,7 +452,7 @@ so it is cheap to ask on every request.</p>
       <h1 class="signature" translate="no">ban(kind, subject, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L50" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L77" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -377,9 +468,12 @@ so it is cheap to ask on every request.</p>
 
       </div>
 
-<p>Bans <code class="inline">subject</code> until <code class="inline">:expires_at</code> (a <a href="https://elixir.hexdocs.pm/DateTime.html"><code class="inline">DateTime</code></a>, <code class="inline">nil</code> for permanent).</p><p>Options: <code class="inline">:expires_at</code>, <code class="inline">:reason</code> (shown to the banned player), <code class="inline">:source</code>
-(<code class="inline">:admin</code> by default, see <a href="Gamend.Bans.Ban.html"><code class="inline">Gamend.Bans.Ban</code></a>) and <code class="inline">:by</code> (the admin's user id).
-The ban applies on this instance at once and on the others within moments.</p>
+<p>Bans <code class="inline">subject</code> until <code class="inline">:expires_at</code> (a <a href="https://elixir.hexdocs.pm/DateTime.html"><code class="inline">DateTime</code></a>, <code class="inline">nil</code> for permanent).</p><p>Options: <code class="inline">:expires_at</code> (a <a href="https://elixir.hexdocs.pm/DateTime.html"><code class="inline">DateTime</code></a> or an ISO 8601 string), <code class="inline">:reason</code>
+(shown to the banned player), <code class="inline">:source</code> (<code class="inline">:admin</code> by default, see
+<a href="Gamend.Bans.Ban.html"><code class="inline">Gamend.Bans.Ban</code></a>), <code class="inline">:by</code> (the person's user id), and for a chat ban
+<code class="inline">:scope</code> and <code class="inline">:scope_ref_id</code>. The ban applies on this instance at once and on
+the others within moments.</p><p>An account ban needs an existing user that is not an admin: banning an admin
+would let one admin lock another (or themselves) out of the console.</p>
   </section>
 </section>
 <section class="detail" id="banned?/2">
@@ -392,7 +486,7 @@ The ban applies on this instance at once and on the others within moments.</p>
       <h1 class="signature" translate="no">banned?(kind, subject)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L97" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L174" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -407,7 +501,97 @@ The ban applies on this instance at once and on the others within moments.</p>
 
       </div>
 
-<p>Whether <code class="inline">subject</code> is banned now: an ETS read, no query.</p>
+<p>Whether an IP or account <code class="inline">subject</code> is banned now: an ETS read, no query.</p>
+  </section>
+</section>
+<section class="detail" id="banned_user_ids/0">
+
+  <div class="detail-header">
+    <a href="#banned_user_ids/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">banned_user_ids()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L251" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> banned_user_ids() :: <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Query.html#t:t/0">Ecto.Query.t</a>()</pre>
+
+      </div>
+
+<p>The ids of the accounts banned now, as a subquery: <a href="Gamend.Accounts.Search.html"><code class="inline">Gamend.Accounts.Search</code></a>'s <code class="inline">banned</code> facet.</p>
+  </section>
+</section>
+<section class="detail" id="count/1">
+
+    <span id="count/0"></span>
+
+  <div class="detail-header">
+    <a href="#count/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">count(filters \\ %{})</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L243" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> count(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>How many bans <a href="#list/2"><code class="inline">list/2</code></a> would page through.</p>
+  </section>
+</section>
+<section class="detail" id="expire/1">
+
+  <div class="detail-header">
+    <a href="#expire/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">expire(ban)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L157" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> expire(<a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>()) :: :ok | :noop | {:not_yet, <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>()}</pre>
+
+      </div>
+
+<p>Tells of a ban that ran out: drops it from the cache, tells the player
+(<code class="inline">account_unbanned</code>, <code class="inline">chat_unmuted</code>) and runs <code class="inline">after_ban_lifted/1</code>. Run by
+<a href="Gamend.Bans.ExpiryWorker.html"><code class="inline">Gamend.Bans.ExpiryWorker</code></a> at <code class="inline">expires_at</code>. <code class="inline">:noop</code> for a ban lifted or
+replaced first (that already told), <code class="inline">{:not_yet, seconds}</code> for one still in
+force.</p>
   </section>
 </section>
 <section class="detail" id="expires_after/1">
@@ -420,7 +604,7 @@ The ban applies on this instance at once and on the others within moments.</p>
       <h1 class="signature" translate="no">expires_after(ttl_ms)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L152" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L269" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -438,21 +622,17 @@ The ban applies on this instance at once and on the others within moments.</p>
 <p>The <code class="inline">expires_at</code> for a ban lasting <code class="inline">ttl_ms</code> from now; nil for <code class="inline">:infinity</code>.</p>
   </section>
 </section>
-<section class="detail" id="history/2">
-
-    <span id="history/0"></span>
-
-    <span id="history/1"></span>
+<section class="detail" id="get/1">
 
   <div class="detail-header">
-    <a href="#history/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#get/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">history(kind \\ nil, opts \\ [])</h1>
+      <h1 class="signature" translate="no">get(id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L133" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L247" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -463,11 +643,11 @@ The ban applies on this instance at once and on the others within moments.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> history(<a href="Gamend.Bans.Ban.html#t:kind/0">Gamend.Bans.Ban.kind</a>() | nil, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>()]</pre>
+          <pre translate="no"><span class="attribute">@spec</span> get(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>()) :: <a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>() | nil</pre>
 
       </div>
 
-<p>Bans of one kind or all, ended ones too, newest first. <code class="inline">:limit</code> (100) caps it.</p>
+<p>One ban, with its users, or nil.</p>
   </section>
 </section>
 <section class="detail" id="lift/3">
@@ -482,7 +662,7 @@ The ban applies on this instance at once and on the others within moments.</p>
       <h1 class="signature" translate="no">lift(kind, subject, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L82" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L132" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -498,8 +678,77 @@ The ban applies on this instance at once and on the others within moments.</p>
 
       </div>
 
-<p>Ends the active ban on <code class="inline">subject</code>, if it has one. <code class="inline">:by</code> is the admin's user id.
-Answers the bans it ended (none, or one).</p>
+<p>Ends the active ban on <code class="inline">subject</code>, if it has one. <code class="inline">:by</code> is the person's user
+id; a chat ban names its reach with <code class="inline">:scope</code> and <code class="inline">:scope_ref_id</code>. Answers the
+bans it ended (none, or one).</p>
+  </section>
+</section>
+<section class="detail" id="lift_ban/2">
+
+    <span id="lift_ban/1"></span>
+
+  <div class="detail-header">
+    <a href="#lift_ban/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">lift_ban(ban, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L123" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> lift_ban(<a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: {:ok, [<a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>()]}</pre>
+
+      </div>
+
+<p>Ends this ban's target's active ban: the ban itself while it is in force (a
+target banned again since has a newer one, which this lifts). <code class="inline">opts</code> as for
+<a href="#lift/3"><code class="inline">lift/3</code></a>: <code class="inline">:by</code>.</p>
+  </section>
+</section>
+<section class="detail" id="list/2">
+
+    <span id="list/0"></span>
+
+    <span id="list/1"></span>
+
+  <div class="detail-header">
+    <a href="#list/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list(filters \\ %{}, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L232" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> list(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="Gamend.Bans.Ban.html#t:t/0">Gamend.Bans.Ban.t</a>()]</pre>
+
+      </div>
+
+<p>Bans, ended ones too, newest first, with the banned user and the people who
+placed and lifted them. Filters (string or atom keys): <code class="inline">kind</code> (<code class="inline">:ip</code>,
+<code class="inline">:account</code> or <code class="inline">:chat</code>, or the string), <code class="inline">user_id</code>, <code class="inline">subject</code>, <code class="inline">scope</code>,
+<code class="inline">scope_ref_id</code>, and <code class="inline">active</code> (true: only the bans in force). <code class="inline">opts</code> are
+<a href="Gamend.Query.html#page/2"><code class="inline">Gamend.Query.page/2</code></a>'s: <code class="inline">page</code>, <code class="inline">page_size</code>.</p>
   </section>
 </section>
 <section class="detail" id="list_active/1">
@@ -514,7 +763,7 @@ Answers the bans it ended (none, or one).</p>
       <h1 class="signature" translate="no">list_active(kind \\ nil)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L121" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L216" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -532,6 +781,35 @@ Answers the bans it ended (none, or one).</p>
 <p>Every active ban, of one kind or all, newest first.</p>
   </section>
 </section>
+<section class="detail" id="muted?/3">
+
+  <div class="detail-header">
+    <a href="#muted?/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">muted?(user_id, chat_type, chat_ref_id)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L182" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> muted?(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil) :: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>()</pre>
+
+      </div>
+
+<p>Whether <code class="inline">user_id</code> may not send in this chat: muted everywhere, or in this
+lobby, group or party. An ETS read, run on every outgoing message.</p>
+  </section>
+</section>
 <section class="detail" id="prune/1">
 
   <div class="detail-header">
@@ -542,7 +820,7 @@ Answers the bans it ended (none, or one).</p>
       <h1 class="signature" translate="no">prune(days)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L163" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/bans.ex#L280" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -571,9 +849,9 @@ Run by <a href="Gamend.Retention.html"><code class="inline">Gamend.Retention</co
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1328">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1330">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1328">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1330">Hex Preview</a>
 
             </span>
 
