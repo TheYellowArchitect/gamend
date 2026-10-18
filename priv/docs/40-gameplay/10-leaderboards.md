@@ -71,6 +71,18 @@ Gamend.Leaderboards.list_records(board.id,
 Make the key the finest grain a reader may want: a coarser view is a `meta:`
 filter over keys, a finer one cannot be made after the fact.
 
+A game client reads the same rankings over the API: `key` on
+`GET /api/v1/leaderboards/{id}/records`, `/records/around/{user_id}` and
+`/records/me` picks one (left out, `""`). Two more reads go with it:
+
+| Endpoint | Answers |
+| --- | --- |
+| `GET /api/v1/leaderboards/{id}/keys?prefix=match` | the board's keys, the values a filter offers (`list_keys/2`) |
+| `GET /api/v1/leaderboards/{id}/records/above?score=12&key=match&limit=3` | the listed records just ahead of a score, nearest first, with their ranks: who a player overtakes next (`list_records_above/3`) |
+
+A board's `metadata.views` (tabs and filters, see `GamendWeb.LeaderboardViews`)
+names which keys it holds. A guest is in no list, as on the website.
+
 ## Hidden boards
 
 `hidden: true` keeps a board out of the public listings (`/leaderboards`, the

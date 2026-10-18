@@ -57,7 +57,8 @@ defmodule GamendWeb.PresentationPage do
   0.64 ms of a 1.9 ms home page, 57 KB of a 102 KB document.
 
   The value carries a fingerprint of the inputs, so an edited theme cannot
-  serve a stale body: a changed `page` map hashes differently and re-renders.
+  serve a stale body: a changed `page` map hashes differently and re-renders,
+  and so does a host's `:presentation_memo_input` (see `host_component/1`).
   The fingerprint lives in the value rather than the key so the key set stays
   bounded -- a theme edit overwrites its entry instead of stranding the old
   one. It is a fingerprint rather than the inputs themselves because a cache
@@ -88,7 +89,7 @@ defmodule GamendWeb.PresentationPage do
     # variants on disk, and those can be cut after boot (see
     # `GamendWeb.ResponsiveImages`) without the page map changing at all.
     fingerprint =
-      :erlang.phash2({page_map, background_icons, ProjectStatic.generation()})
+      :erlang.phash2({page_map, background_icons, ProjectStatic.generation(), memo_input()})
 
     key = {__MODULE__, :body, locale, path}
 
@@ -116,6 +117,21 @@ defmodule GamendWeb.PresentationPage do
       end
 
     put_csrf_token(html)
+  end
+
+  # What a host component draws from besides the config and the locale (a
+  # count that moves once a day): `config :gamend_web,
+  # :presentation_memo_input, {Module, :function}`, a zero-arity function
+  # whose answer joins the fingerprint, so the memo renders again when it
+  # changes. Called on every visitor's request: it must answer from a cache.
+  defp memo_input do
+    case Application.get_env(:gamend_web, :presentation_memo_input) do
+      {module, function} when is_atom(module) and is_atom(function) ->
+        apply(module, function, [])
+
+      _ ->
+        nil
+    end
   end
 
   # A form on a memoised page (a host component's: the home's language
@@ -196,17 +212,23 @@ defmodule GamendWeb.PresentationPage do
               image fills it edge to edge behind a scrim with the title over
               the top. Without it the hero keeps media in its own column. --%>
         <.hero_cover :if={hero_cover?(@hero)} hero={@hero} sections={@sections} />
-        <section :if={!hero_cover?(@hero)} class="relative min-h-dvh">
-          <div class="relative z-10 flex min-h-dvh items-center px-6 pb-12 pt-24 sm:px-8 lg:px-12">
+        <section :if={!hero_cover?(@hero)} class={["relative", hero_height_class(@hero)]}>
+          <div class={["relative z-10 flex px-6 pt-24 sm:px-8 lg:px-12", hero_frame_class(@hero)]}>
             <div class={[
               "mx-auto grid w-full items-center gap-8 lg:gap-12",
               content_width_class(),
-              grid_class(@hero, "hero")
+              grid_class(@hero, "hero"),
+              mobile_fit?(@hero) &&
+                "max-md:flex max-md:flex-1 max-md:basis-0 max-md:flex-col max-md:items-stretch"
             ]}>
               <%!-- A hero may draw a host component where its picture goes
                     (`"component"`, the way a section does): a language
                     picker beside the claim, say. --%>
-              <div class={media_order_class(@hero)}>
+              <div class={[
+                media_order_class(@hero),
+                mobile_fit?(@hero) &&
+                  "max-md:flex max-md:min-h-64 max-md:flex-1 max-md:basis-0 max-md:flex-col"
+              ]}>
                 <.host_component
                   :if={has_component?(@hero)}
                   section={@hero}
@@ -656,7 +678,10 @@ defmodule GamendWeb.PresentationPage do
 
   For a visitor it renders inside `cached_body/4`'s memo with a nil scope,
   so there it must depend on the config and the locale only: a gettext call
-  is fine (the memo is per locale), a clock or a random source is not. A
+  is fine (the memo is per locale), a clock or a random source is not. Data
+  that moves rarely (a count redone nightly) is fine once the host names it
+  in `config :gamend_web, :presentation_memo_input, {Module, :function}`,
+  which joins the memo's fingerprint. A
   signed-in reader's page is `personal_body/3`, rendered per request with
   their scope, so a component may draw their own things there (the
   languages they opened last) and nothing of it is memoised. A name the
@@ -1104,6 +1129,28 @@ defmodule GamendWeb.PresentationPage do
       {"wide", _} -> "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]"
       _ -> "md:grid-cols-2"
     end
+  end
+
+  # A hero's `"mobile_fit": "screen"`: below `md` the hero is one screen
+  # tall and the text leaves the rest to the media column (down to 16rem),
+  # which a host component fills (a picker that scrolls inside itself), so
+  # the claim, the component and the chevron under them are the first
+  # screen. `svh`, the screen with the browser's bars showing: `dvh` grows
+  # as the bars hide on scroll, and the component grew with it, under the
+  # reader's finger. `pb-20` keeps the chevron off the component. Every
+  # level grows from `basis-0` (0px), not `flex-1`'s 0%: with only a
+  # min-height above it a percentage basis is the content's height, and the
+  # component would grow to its whole list. From `md` up it is the hero as
+  # ever, centred.
+  defp mobile_fit?(hero), do: Map.get(hero, "mobile_fit") == "screen"
+
+  defp hero_height_class(hero),
+    do: if(mobile_fit?(hero), do: "min-h-svh md:min-h-dvh", else: "min-h-dvh")
+
+  defp hero_frame_class(hero) do
+    if mobile_fit?(hero),
+      do: "min-h-svh flex-col pb-20 md:min-h-dvh md:flex-row md:items-center md:pb-12",
+      else: "min-h-dvh items-center pb-12"
   end
 
   # `svh`, not `dvh`: section heights set the page's total height, and `dvh`

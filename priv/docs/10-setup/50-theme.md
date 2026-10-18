@@ -186,6 +186,8 @@ Set image.light for the default presentation image, image.dark for a dark-mode v
 
 Set media_width for the image/text column ratio. Set media_size to hero or section when a hero should use hero-sized or section-sized media.
 
+Set a hero's mobile_fit to screen when its media column holds a host component that scrolls inside itself (a picker). On a phone the hero is then one screen tall, the text on top and the component given the height left, so the claim, the component and the scroll-down chevron are the first screen. From the md breakpoint up the hero is unchanged.
+
 Presentation media is visual only. Use buttons for links and calls to action.
 
 Edit assets/css/app.css when you want to change the full base stylesheet. The compiled bundle is written to priv/static/assets/css/app.css. Use priv/static/theme.css for a small layer of token or color overrides without forking the whole base CSS.
