@@ -111,6 +111,8 @@ defmodule Gamend.GDScript.API do
       "valid_password?" => [2]
     },
     "Analytics" => %{
+      "activation" => [0, 1, 2],
+      "active_days" => [0, 1, 2],
       "active_users" => [2, 3],
       "count" => [1, 2, 3],
       "count_totals" => [1, 2, 3],
@@ -123,7 +125,9 @@ defmodule Gamend.GDScript.API do
       "families" => [0, 1, 2, 3],
       "feature_summary" => [0, 1, 2],
       "flush" => [0],
+      "funnel" => [0, 1, 2],
       "mau" => [0, 1, 2],
+      "money" => [0, 1, 2],
       "new_users" => [2],
       "payers_since" => [1, 2],
       "people_by_dimension" => [2, 3, 4, 5],
@@ -134,7 +138,8 @@ defmodule Gamend.GDScript.API do
       "snapshot" => [0],
       "summary" => [0, 1, 2],
       "track" => [1, 2, 3],
-      "wau" => [0, 1, 2]
+      "wau" => [0, 1, 2],
+      "weekly_cohorts" => [0, 1, 2]
     },
     "Bans" => %{
       "account_ban" => [1],

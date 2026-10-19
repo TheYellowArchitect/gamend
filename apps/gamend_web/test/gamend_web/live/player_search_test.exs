@@ -45,7 +45,8 @@ defmodule GamendWeb.PlayerSearchTest do
       assert html =~ "Ada Lovelace"
       refute html =~ "Grace Hopper"
       # rank 2 of the whole board, not "1" because she is the only match left
-      assert html =~ ~r|<td class="font-mono">\s*<span[^>]*>\s*2\s*</span>|
+      # (the rank cell is `<.leaderboard_rank>`: a round font-mono badge)
+      assert html =~ ~r|<td>\s*<span class="[^"]*font-mono[^"]*">\s*2\s*</span>|
     end
 
     test "search is case-insensitive and matches partial names", %{

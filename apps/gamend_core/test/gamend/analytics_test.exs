@@ -175,7 +175,11 @@ defmodule Gamend.AnalyticsTest do
       assert summary.new_users_30d == 5
       assert summary.dau == 1
       assert summary.mau == 3
-      assert_in_delta summary.stickiness, 1 / 3, 1.0e-9
+      # The 7 full days before today: 2 accounts seen yesterday, none on the
+      # 6 before, so 2 / 7 a day over the MAU of 3.
+      assert_in_delta summary.dau_7d_avg, 2 / 7, 1.0e-9
+      assert_in_delta summary.stickiness, 2 / 21, 1.0e-9
+      assert summary.d1_cohort == 4
       assert summary.payers_30d == 0
       assert summary.conversion_30d == 0.0
     end

@@ -1182,7 +1182,7 @@ defmodule Gamend.Leaderboards do
   # writer on one node), in a transaction with no time limit: a fill reads
   # every season's rows and `Repo.stream/2` needs the transaction.
   defp with_all_time_lock(slug, fun) do
-    Repo.transaction(
+    Gamend.AfterCommit.transaction(
       fn ->
         AdvisoryLock.lock("leaderboard_all_time", slug)
         fun.()

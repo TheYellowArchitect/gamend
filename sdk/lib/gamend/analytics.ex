@@ -44,6 +44,51 @@ defmodule Gamend.Analytics do
   @type rate() :: float() | nil
 
   @doc ~S"""
+    Activation, when the host declares it (`Catalog.overview/0`'s
+    `activation`): of the accounts made in the 30 days ending on `today` (from
+    `retention_since` on), how many reported one of its events on the day
+    they were made, and D1 for those that did and those that did not
+    (cohorts before today only). `%{label, new, activated, rate,
+    d1_activated, d1_activated_cohort, d1_other, d1_other_cohort}`, or nil
+    with no activation declared. Options: `segment:` (`segments/0`).
+    
+  """
+  @spec activation(
+          Date.t(),
+          keyword()
+        ) :: map() | nil
+  def activation(_today \\ Date.utc_today(), _opts \\ []) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        nil
+
+      _ ->
+        raise "Gamend.Analytics.activation/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    The accounts seen in the 30 days ending on `today`, by how many of those
+    days each was seen: `[%{label, min, max, users}]`, one day first. Most of
+    a young game's MAU is seen once; this says how many came back at all.
+    Options: `segment:` (`segments/0`).
+    
+  """
+  @spec active_days(
+          Date.t(),
+          keyword()
+        ) :: [map()]
+  def active_days(_today \\ Date.utc_today(), _opts \\ []) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        []
+
+      _ ->
+        raise "Gamend.Analytics.active_days/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     Distinct users seen on any day in `from..to` (inclusive, UTC dates).
     Options: `segment:` (`segments/0`).
     
@@ -117,12 +162,14 @@ defmodule Gamend.Analytics do
 
   @doc ~S"""
     One row per UTC day for the last `days` days ending on `today`, oldest
-    first: `%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}`.
-    `wau` / `mau` are the distinct users of the 7 / 30 days ending on that day,
-    and `stickiness` is `active ÷ mau` of that day, so each row reads as the
-    headline would have on it. A retention rate is `nil` when the cohort is
-    empty or the horizon day has not happened yet. Options: `segment:`
-    (`segments/0`).
+    first: `%{day, active, new_active, returning, wau, mau, stickiness,
+    new_users, d1, d7, d30}`. `new_active` are the accounts made that day and
+    seen on it, `returning` the rest of `active`. `wau` / `mau` are the
+    distinct users of the 7 / 30 days ending on that day, and `stickiness` is
+    `active ÷ mau` of that day. A retention rate is `nil` when the cohort is
+    empty, the horizon day has not happened yet, or the cohort is older than
+    `retention_since` (`Gamend.Analytics.Catalog.overview/0`). Options:
+    `segment:` (`segments/0`).
     
   """
   @spec daily_series(pos_integer(), Date.t(), keyword()) :: [map()]
@@ -270,6 +317,25 @@ defmodule Gamend.Analytics do
   end
 
   @doc ~S"""
+    The host's funnel (`Catalog.overview/0`) over the `days` days ending on
+    `today`: `[%{label, source, unit, value, of_previous}]`, `unit` `:events`
+    for a counter's total (a visitor counts there, each time) and `:people`
+    otherwise, `of_previous` the step's share of the one before: nil first,
+    and nil where the unit changes (events and people do not divide).
+    
+  """
+  @spec funnel(pos_integer(), Date.t()) :: [map()]
+  def funnel(_days \\ 30, _today \\ Date.utc_today()) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        []
+
+      _ ->
+        raise "Gamend.Analytics.funnel/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     Monthly active users: distinct users seen in the 30 days ending on `day`.
   """
   @spec mau(
@@ -283,6 +349,28 @@ defmodule Gamend.Analytics do
 
       _ ->
         raise "Gamend.Analytics.mau/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    Money over the `days` days ending on `today`, for the Overview: checkouts
+    opened, purchases fulfilled, checkouts refused or failed and webhook
+    deliveries that failed or were refused (`Gamend.Payments.Counters`),
+    revenue by currency (completed production purchases, minor units),
+    payers, and the free trials when the host names their keys
+    (`Catalog.overview/0`'s `trial_keys`): `%{started, running, taken, paid,
+    conversion}`, `paid` the people with a completed purchase after their
+    trial began.
+    
+  """
+  @spec money(pos_integer(), Date.t()) :: map()
+  def money(_days \\ 30, _today \\ Date.utc_today()) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        %{}
+
+      _ ->
+        raise "Gamend.Analytics.money/2 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -433,11 +521,15 @@ defmodule Gamend.Analytics do
   end
 
   @doc ~S"""
-    Headline numbers as of `today`: DAU / WAU / MAU, stickiness (DAU ÷ MAU),
-    new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
-    of the last 60 days that is old enough to have reached
-    the horizon, and payer conversion (distinct users with a completed purchase
-    in the last 30 days ÷ MAU). Options: `segment:` (`segments/0`).
+    Headline numbers as of `today`: DAU (today so far) / WAU / MAU,
+    stickiness (`dau_7d_avg`, the average DAU of the 7 full days before today,
+    ÷ MAU: today's DAU is partial until midnight), new users
+    in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort of the
+    last 60 days that is old enough to have reached the
+    horizon and not older than `retention_since` (`Catalog.overview/0`), each
+    with its pool's size (`d1_cohort`, …), and payer conversion (distinct users
+    with a completed purchase in the last 30 days ÷ MAU). Options: `segment:`
+    (`segments/0`).
     
   """
   @spec summary(
@@ -509,6 +601,29 @@ defmodule Gamend.Analytics do
 
       _ ->
         raise "Gamend.Analytics.wau/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    Retention by sign-up week, the last 8 weeks (Monday
+    first) from `retention_since` on, newest first: `[%{week, from, size,
+    cells}]`, each cell `%{week: k, users, rate}` the share of the week's
+    accounts seen in their own week k after sign-up (days 7k to 7k + 6 after
+    their sign-up day). A cell is `rate: nil` until every account of the week
+    has lived through it. Options: `segment:` (`segments/0`).
+    
+  """
+  @spec weekly_cohorts(
+          Date.t(),
+          keyword()
+        ) :: [map()]
+  def weekly_cohorts(_today \\ Date.utc_today(), _opts \\ []) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        []
+
+      _ ->
+        raise "Gamend.Analytics.weekly_cohorts/2 is a stub - only available at runtime on Gamend"
     end
   end
 end

@@ -41,6 +41,24 @@ defmodule Gamend.Analytics.Catalog do
   `[%{id: "traffic", label: "Traffic", path: "/admin/analytics/traffic"}]`.
   A host page draws the same bar with
   `GamendWeb.AdminLive.AnalyticsComponents.analytics_header/1`.
+
+  `overview/0` (optional) tells the Overview what this game's numbers mean
+  (`overview/0` below has the keys and the defaults):
+
+      @impl Gamend.Analytics.Catalog
+      def overview do
+        %{
+          retention_since: ~D[2026-10-14],
+          activation: %{label: "Finished a round", events: ["web.game.finished"]},
+          funnel: [
+            %{label: "Search visits", source: {:counter, "web.visit.ref:google"}},
+            %{label: "Accounts made", source: :new_accounts},
+            %{label: "Paid", source: :payers}
+          ],
+          trial_keys: ["pro_trial"],
+          bands: %{d1: {0.08, 0.2}}
+        }
+      end
   """
 
   @type group :: %{
@@ -64,10 +82,50 @@ defmodule Gamend.Analytics.Catalog do
 
   @type tab :: %{id: String.t(), label: String.t(), path: String.t()}
 
+  @typedoc """
+  A funnel step's count: a counter's (or several counters') total over the
+  window, the accounts made in it, those of them registered now, the people
+  given an entitlement key in it, or the payers in it.
+  """
+  @type funnel_source ::
+          {:counter, String.t() | [String.t()]}
+          | :new_accounts
+          | :registered
+          | {:entitlement, String.t() | [String.t()]}
+          | :payers
+
+  @typedoc "A rate's bands: low under the first, fair up to the second, good from it."
+  @type band :: {float(), float()}
+
+  @type overview :: %{
+          retention_since: Date.t() | nil,
+          activation: %{label: String.t(), events: [String.t()]} | nil,
+          funnel: [%{label: String.t(), source: funnel_source()}],
+          trial_keys: [String.t()],
+          bands: %{atom() => band()}
+        }
+
   @callback groups() :: [map()]
   @callback events() :: [map()]
   @callback tabs() :: [map()]
-  @optional_callbacks tabs: 0
+  @callback overview() :: map()
+  @optional_callbacks tabs: 0, overview: 0
+
+  # Consumer app benchmarks (median app DAU ÷ MAU about 14%, top quarter
+  # 20%; D1 25-26%, D7 11-13%, D30 5-7% across mobile apps): low under the
+  # first number, fair up to the second, good from it.
+  @default_bands %{
+    stickiness: {0.10, 0.20},
+    d1: {0.10, 0.25},
+    d7: {0.05, 0.12},
+    d30: {0.02, 0.06}
+  }
+
+  @default_funnel [
+    %{label: "Accounts made", source: :new_accounts},
+    %{label: "Registered", source: :registered},
+    %{label: "Paid", source: :payers}
+  ]
 
   @core_groups [
     %{
@@ -107,6 +165,45 @@ defmodule Gamend.Analytics.Catalog do
     |> Enum.map(fn tab ->
       %{id: to_string(tab.id), label: to_string(tab.label), path: to_string(tab.path)}
     end)
+  end
+
+  @doc """
+  What the Overview needs to know about this game, the host's
+  (`c:overview/0`) over the defaults:
+
+    * `retention_since` — the first sign-up day whose activity is counted in
+      full (`Gamend.Analytics.record_activity/2`): earlier cohorts read low
+      and are left out of D1 / D7 / D30 and the weekly cohorts. nil: every
+      cohort counts.
+    * `activation` — `%{label, events}`: a new account is activated when it
+      reports one of `events` on the day it was made. nil: no card.
+    * `funnel` — the steps, in order (`t:funnel_source/0`). Default:
+      accounts made, registered, paid.
+    * `trial_keys` — the entitlement keys that are a free trial. Default none.
+    * `bands` — per rate (`:stickiness`, `:d1`, `:d7`, `:d30`), `{fair, good}`;
+      the host's replace core's one by one.
+  """
+  @spec overview() :: overview()
+  def overview do
+    host = Map.new(host_call(:overview, %{}))
+
+    %{
+      retention_since: Map.get(host, :retention_since),
+      activation:
+        case Map.get(host, :activation) do
+          %{events: [_ | _] = events} = activation ->
+            %{label: to_string(Map.get(activation, :label, "Activated")), events: events}
+
+          _none ->
+            nil
+        end,
+      funnel:
+        host
+        |> Map.get(:funnel, @default_funnel)
+        |> Enum.map(&%{label: to_string(&1.label), source: &1.source}),
+      trial_keys: host |> Map.get(:trial_keys, []) |> Enum.map(&to_string/1),
+      bands: Map.merge(@default_bands, Map.get(host, :bands, %{}))
+    }
   end
 
   @doc "One name's entry: the declared one, else one derived from the name."

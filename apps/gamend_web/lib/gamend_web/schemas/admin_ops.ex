@@ -215,15 +215,34 @@ defmodule GamendWeb.Schemas.AnalyticsSummary do
         enum: ["all", "registered", "guest"],
         description: "Which accounts the numbers count"
       },
-      dau: %Schema{type: :integer},
+      dau: %Schema{type: :integer, description: "Seen today so far (UTC)"},
       wau: %Schema{type: :integer},
       mau: %Schema{type: :integer},
-      stickiness: @rate,
+      dau_7d_avg: %Schema{
+        type: :number,
+        format: :float,
+        description: "Average DAU of the 7 full days before today"
+      },
+      stickiness: %Schema{
+        type: :number,
+        format: :float,
+        nullable: true,
+        description: "dau_7d_avg ÷ mau"
+      },
       new_users_7d: %Schema{type: :integer},
       new_users_30d: %Schema{type: :integer},
+      retention_since: %Schema{
+        type: :string,
+        format: :date,
+        nullable: true,
+        description: "The first sign-up day D1 / D7 / D30 pool (activity counted in full from it)"
+      },
       d1: @rate,
+      d1_cohort: %Schema{type: :integer, description: "Accounts the D1 pools"},
       d7: @rate,
+      d7_cohort: %Schema{type: :integer, description: "Accounts the D7 pools"},
       d30: @rate,
+      d30_cohort: %Schema{type: :integer, description: "Accounts the D30 pools"},
       payers_30d: %Schema{type: :integer},
       conversion_30d: @rate
     },
@@ -233,12 +252,17 @@ defmodule GamendWeb.Schemas.AnalyticsSummary do
       :dau,
       :wau,
       :mau,
+      :dau_7d_avg,
       :stickiness,
       :new_users_7d,
       :new_users_30d,
+      :retention_since,
       :d1,
+      :d1_cohort,
       :d7,
+      :d7_cohort,
       :d30,
+      :d30_cohort,
       :payers_30d,
       :conversion_30d
     ]
@@ -261,6 +285,8 @@ defmodule GamendWeb.Schemas.AnalyticsDay do
     properties: %{
       day: %Schema{type: :string, format: :date},
       active: %Schema{type: :integer},
+      new_active: %Schema{type: :integer, description: "Accounts made on the day and seen on it"},
+      returning: %Schema{type: :integer, description: "active less new_active"},
       wau: %Schema{
         type: :integer,
         description: "Distinct players of the 7 days ending on the day"
@@ -280,7 +306,19 @@ defmodule GamendWeb.Schemas.AnalyticsDay do
       d7: @rate,
       d30: @rate
     },
-    required: [:day, :active, :wau, :mau, :stickiness, :new_users, :d1, :d7, :d30]
+    required: [
+      :day,
+      :active,
+      :new_active,
+      :returning,
+      :wau,
+      :mau,
+      :stickiness,
+      :new_users,
+      :d1,
+      :d7,
+      :d30
+    ]
   })
 end
 

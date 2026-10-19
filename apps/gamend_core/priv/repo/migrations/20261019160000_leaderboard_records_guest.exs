@@ -33,7 +33,7 @@ defmodule Gamend.Repo.Migrations.LeaderboardRecordsGuest do
   """
   use Ecto.Migration
 
-  import Ecto.Query, only: [from: 2, subquery: 1]
+  import Ecto.Query, only: [from: 2]
 
   @disable_ddl_transaction true
   @disable_migration_lock true

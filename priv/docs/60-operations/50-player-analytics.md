@@ -13,8 +13,8 @@ numbers appear as soon as players log in.
 
 | Family | Numbers | Source |
 |---|---|---|
-| Activity | DAU / WAU / MAU (distinct users seen today / last 7 / last 30 days), stickiness (DAU ÷ MAU), new users per UTC day | `user_activity_days`, `users.inserted_at` |
-| Retention | D1 / D7 / D30 — of the users who registered on day *C*, the share seen again on **exactly** *C+1* / *C+7* / *C+30*; pooled over the last 60 days of cohorts that have reached the horizon | same |
+| Activity | DAU / WAU / MAU (distinct users seen today so far / last 7 / last 30 days), stickiness (the average DAU of the 7 full days before today ÷ MAU), new users per UTC day, new against returning per day, how many of the last 30 days each account came (`active_days/2`) | `user_activity_days`, `users.inserted_at` |
+| Retention | D1 / D7 / D30 — of the users who registered on day *C*, the share seen again on **exactly** *C+1* / *C+7* / *C+30*; pooled over the last 60 days of cohorts that have reached the horizon and are not older than the catalogue's `retention_since`, with the pool's size (`d1_cohort`, …); by sign-up week, the share seen in their own weeks 1 to 4 (`weekly_cohorts/2`) | same |
 | Payers | Distinct users with a completed purchase in the last 30 days, and that ÷ MAU | `purchases` |
 | Snapshot | Live counters from every context — players, lobbies, parties, quests, signaling, matchmaking queue, tournaments — composed once, cached a minute | the contexts' `stats/0` |
 | Economy flow | Currency granted / spent per UTC day per ledger `reason` — whatever labels your game passes, e.g. `match_reward`, `store_purchase` | `ledger_entries` |
@@ -64,7 +64,7 @@ the first week". A dash means no cohort has reached that horizon yet, rather tha
 
 | Tab | Shows |
 |---|---|
-| Overview | DAU / WAU / MAU, stickiness, D1 / D7 / D30, payers; charts of active and new accounts and stickiness per day; the per-day table (each day's own WAU / MAU / stickiness) |
+| Overview | DAU / WAU / MAU, stickiness, D1 / D7 / D30 (rated Low / Fair / Good against the catalogue's bands, the meaning on hover), payers; charts of active accounts, returning and new, and of new accounts; return visits, activation, weekly cohorts, the funnel and money; what the numbers mean; the per-day table |
 | Features | Every event, grouped by the catalogue: accounts today / 7 / 30 days, first-timers and their D1 / D7 / D30, events |
 | Explore | One event, a group or all, over 7 / 30 / 90 days: filters on any dimension, events and accounts per day (and the counter, visitors included), averages and rates of its numbers, a breakdown by any dimension, the rows page by page |
 | People | One account: kind, days seen (13 weeks), events by name and one by one, coin ledger |
@@ -77,9 +77,17 @@ implementing `Gamend.Analytics.Catalog`: `groups/0` (id, label, the name
 prefixes a group files), `events/0` (name, group, label, `dims` and
 `measures` with labels, `rates` like `{"score", "total", "Score"}`, `kind`
 `:event` or `:counter`) and, optionally, `tabs/0` for its own pages, which
-draw `GamendWeb.AdminLive.AnalyticsComponents.analytics_header/1`. Without
-one, every name is filed under its first two segments and labelled with
-itself. `Gamend.Analytics.Explore` is the query side, usable from a host's
+draw `GamendWeb.AdminLive.AnalyticsComponents.analytics_header/1`, and
+`overview/0` for what the Overview's numbers mean in this game:
+`retention_since` (the first sign-up day whose visits were all counted;
+older cohorts read low and are left out of retention), `activation`
+(`%{label, events}`: an account that reports one of them on its first day
+is activated), `funnel` (steps of `{:counter, keys}`, `:new_accounts`,
+`:registered`, `{:entitlement, keys}` or `:payers`), `trial_keys` and
+`bands` (`%{d1: {fair, good}}`, over core's consumer-app defaults:
+stickiness 10% / 20%, D1 10% / 25%, D7 5% / 12%, D30 2% / 6%). Without a
+catalogue, every name is filed under its first two segments and labelled
+with itself. `Gamend.Analytics.Explore` is the query side, usable from a host's
 own pages.
 
 Reporting a counter from a plugin:
@@ -98,8 +106,8 @@ Never raises; a bad key is dropped. Call it from paths that already write
 | Endpoint | Returns |
 |---|---|
 | `GET /api/v1/stats` (public, gated by `GAMEND_FEATURES_PUBLIC_STATS`) | The snapshot: players, activity, lobbies, parties, quests, signaling, matchmaking queue, tournaments |
-| `GET /api/v1/admin/analytics?segment=all` | Summary: DAU / WAU / MAU, stickiness, new users, D1 / D7 / D30, payers |
-| `GET /api/v1/admin/analytics/daily?days=30&segment=all` | Per-day rows, oldest first: `active`, `wau`, `mau`, `stickiness`, `new_users`, `d1`, `d7`, `d30` |
+| `GET /api/v1/admin/analytics?segment=all` | Summary: DAU / WAU / MAU, `dau_7d_avg`, stickiness, new users, `retention_since`, D1 / D7 / D30 with their pool sizes, payers |
+| `GET /api/v1/admin/analytics/daily?days=30&segment=all` | Per-day rows, oldest first: `active`, `new_active`, `returning`, `wau`, `mau`, `stickiness`, `new_users`, `d1`, `d7`, `d30` |
 | `GET /api/v1/admin/analytics/snapshot` | The snapshot, regardless of the public gate |
 | `GET /api/v1/admin/analytics/economy?days=7&currency=coins` | `totals` per `{currency, reason}` and per-day `flow` |
 | `GET /api/v1/admin/analytics/counts?key=level.*&days=7` | Counter totals and per-day series by key or prefix |

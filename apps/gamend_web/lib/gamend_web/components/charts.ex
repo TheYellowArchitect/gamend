@@ -1,9 +1,11 @@
 defmodule GamendWeb.Charts do
   @moduledoc """
-  Small charts drawn on the server: a column per day (`bars/1`), a line for a
-  rate (`line/1`) and a sparkline (`spark/1`). No JavaScript and no chart
-  library; one series each, in the theme's `primary`, so a chart needs no
-  legend (its title says what it plots) and follows the dark theme.
+  Small charts drawn on the server: a column per day (`bars/1`), a column
+  of parts per day (`stacked/1`), a line for a rate (`line/1`) and a
+  sparkline (`spark/1`). No JavaScript and no chart library; in the theme's
+  `primary`, so they follow the dark theme. One series each, so a chart
+  needs no legend (its title says what it plots), except `stacked/1`, whose
+  parts are shades of it and named in a legend.
 
   Every point is `{label, value}` (a `Date` label is printed `MM-DD`), oldest
   first. Hovering a column shows its label and value; the numbers themselves
@@ -56,6 +58,76 @@ defmodule GamendWeb.Charts do
     </figure>
     """
   end
+
+  attr :id, :string, required: true
+  attr :title, :string, required: true
+  attr :series, :list, required: true, doc: "the parts' names, bottom first (two at most)"
+
+  attr :points, :list,
+    required: true,
+    doc: "`[{label, [value]}]`, a value per part, oldest first"
+
+  attr :summary, :string, default: nil
+  attr :class, :any, default: nil
+
+  @doc "A column per point made of its parts, bottom first, with a legend naming them."
+  def stacked(assigns) do
+    totals = Enum.map(assigns.points, fn {label, values} -> {label, sum_parts(values)} end)
+    max = totals |> Enum.map(&value_of/1) |> scale_max(:count)
+
+    columns =
+      Enum.map(assigns.points, fn {label, values} ->
+        parts = Enum.zip(assigns.series, values)
+
+        %{
+          parts: values |> Enum.map(&height(&1, max)) |> Enum.with_index(),
+          text:
+            "#{label(label)}: " <>
+              Enum.map_join(parts, ", ", fn {name, value} ->
+                "#{name} #{format(value, :count)}"
+              end)
+        }
+      end)
+
+    assigns = assign(assigns, max: max, columns: columns, totals: totals)
+
+    ~H"""
+    <figure id={@id} class={["min-w-0 space-y-1", @class]}>
+      <figcaption class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <.eyebrow tag="span">{@title}</.eyebrow>
+        <span class="flex flex-wrap items-center gap-x-3 text-xs text-muted">
+          <span :for={{name, i} <- Enum.with_index(@series)} class="inline-flex items-center gap-1">
+            <span class={["inline-block size-2.5 rounded-sm", part_class(i)]} aria-hidden="true" />
+            {name}
+          </span>
+          <span :if={@summary} class="text-sm tabular-nums">{@summary}</span>
+        </span>
+      </figcaption>
+      <.frame max={@max} format={:count} points={@totals}>
+        <div class="absolute inset-0 flex items-end gap-[2px]" role="img" aria-label={@title}>
+          <div
+            :for={col <- @columns}
+            class="group relative flex h-full min-w-0 flex-1 flex-col-reverse items-center"
+          >
+            <div
+              :for={{height, i} <- col.parts}
+              :if={height}
+              class={["w-full max-w-6", part_class(i)]}
+              style={"height: #{height}%"}
+            />
+            <.hover_label text={col.text} />
+          </div>
+        </div>
+      </.frame>
+    </figure>
+    """
+  end
+
+  defp sum_parts(values), do: values |> Enum.map(&(&1 || 0)) |> Enum.sum()
+
+  # The parts' shades, bottom first: the bottom one solid, the next faint.
+  defp part_class(0), do: "bg-primary/80 group-hover:bg-primary"
+  defp part_class(_i), do: "bg-primary/30 group-hover:bg-primary/50"
 
   attr :id, :string, required: true
   attr :title, :string, required: true

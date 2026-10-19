@@ -91,17 +91,68 @@ defmodule GamendWeb.AdminLive.AnalyticsComponents do
   attr :value, :any, required: true
   attr :desc, :string, default: nil
   attr :id, :string, default: nil
+  attr :band, :atom, default: nil, values: [nil, :low, :fair, :good], doc: "`band/2`'s verdict"
 
-  @doc "One headline number."
+  attr :hint, :string,
+    default: nil,
+    doc:
+      "what the number means and its bands: the tile's hover text and its accessible description"
+
+  @doc "One headline number, with its band and its meaning on hover when it has them."
   def stat(assigns) do
     ~H"""
     <.panel compact id={@id}>
-      <.eyebrow tag="div">{@title}</.eyebrow>
-      <div class="text-2xl font-bold">{@value}</div>
-      <div :if={@desc} class="text-xs text-muted">{@desc}</div>
+      <div title={@hint}>
+        <.eyebrow tag="div">{@title}</.eyebrow>
+        <div class="flex flex-wrap items-baseline gap-x-2">
+          <span class="text-2xl font-bold">{@value}</span>
+          <.band_chip band={@band} />
+        </div>
+        <div :if={@desc} class="text-xs text-muted">{@desc}</div>
+      </div>
     </.panel>
     """
   end
+
+  attr :band, :atom, default: nil, values: [nil, :low, :fair, :good]
+
+  @doc "A rate's verdict as a small chip: Low, Fair or Good (`band/2`); nothing for nil."
+  def band_chip(assigns) do
+    ~H"""
+    <span
+      :if={@band}
+      class={["badge badge-soft badge-sm", band_class(@band)]}
+      data-band={@band}
+    >
+      {band_label(@band)}
+    </span>
+    """
+  end
+
+  @doc """
+  A rate's verdict against its bands `{fair, good}`
+  (`Gamend.Analytics.Catalog.overview/0`): `:low` under `fair`, `:fair` up
+  to `good`, `:good` from it; nil for no rate or no bands.
+  """
+  @spec band(number() | nil, {number(), number()} | nil) :: :low | :fair | :good | nil
+  def band(nil, _bands), do: nil
+  def band(_rate, nil), do: nil
+  def band(rate, {_fair, good}) when rate >= good, do: :good
+  def band(rate, {fair, _good}) when rate >= fair, do: :fair
+  def band(_rate, _bands), do: :low
+
+  @doc "The bands in words: \"good from 20%, fair from 10%\"."
+  @spec band_text({number(), number()} | nil) :: String.t()
+  def band_text(nil), do: ""
+  def band_text({fair, good}), do: "Good from #{pct(good)}, fair from #{pct(fair)}, low under it."
+
+  defp band_class(:good), do: "badge-success"
+  defp band_class(:fair), do: "badge-warning"
+  defp band_class(:low), do: "badge-error"
+
+  defp band_label(:good), do: "Good"
+  defp band_label(:fair), do: "Fair"
+  defp band_label(:low), do: "Low"
 
   @doc "A rate in 0..1 as a percent, `nil` as a dash."
   @spec pct(number() | nil) :: String.t()

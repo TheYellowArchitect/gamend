@@ -29,9 +29,10 @@ defmodule GamendWeb.AdminLive.AnalyticsTest do
     # Nothing has reached a D7 yet: rendered as a dash, never as 0%.
     assert html =~ "—"
 
-    html = lv |> element("a", "90 days") |> render_click()
+    lv |> element("a", "90 days") |> render_click()
     assert_patch(lv, ~p"/admin/analytics?days=90")
-    assert length(Regex.scan(~r/<td class="font-mono">/, html)) == 90
+    days = lv |> element("#analytics-days") |> render()
+    assert length(Regex.scan(~r/<td class="font-mono">/, days)) == 90
   end
 
   test "features, counters and the rows of an event", %{conn: conn} do
