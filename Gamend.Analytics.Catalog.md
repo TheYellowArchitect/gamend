@@ -43,11 +43,37 @@ counted, and kept as a row for an account) or `:counter` (counted only,
 A host page draws the same bar with
 `GamendWeb.AdminLive.AnalyticsComponents.analytics_header/1`.
 
+`overview/0` (optional) tells the Overview what this game's numbers mean
+(`overview/0` below has the keys and the defaults):
+
+    @impl Gamend.Analytics.Catalog
+    def overview do
+      %{
+        retention_since: ~D[2026-10-14],
+        activation: %{label: "Finished a round", events: ["web.game.finished"]},
+        funnel: [
+          %{label: "Search visits", source: {:counter, "web.visit.ref:google"}},
+          %{label: "Accounts made", source: :new_accounts},
+          %{label: "Paid", source: :payers}
+        ],
+        trial_keys: ["pro_trial"],
+        bands: %{d1: {0.08, 0.2}}
+      }
+    end
+
 # `groups`
 
 ```elixir
 @callback groups() :: [map()]
 ```
+
+# `band`
+
+```elixir
+@type band() :: {float(), float()}
+```
+
+A rate's bands: low under the first, fair up to the second, good from it.
 
 # `event`
 
@@ -65,6 +91,21 @@ A host page draws the same bar with
 }
 ```
 
+# `funnel_source`
+
+```elixir
+@type funnel_source() ::
+  {:counter, String.t() | [String.t()]}
+  | :new_accounts
+  | :registered
+  | {:entitlement, String.t() | [String.t()]}
+  | :payers
+```
+
+A funnel step's count: a counter's (or several counters') total over the
+window, the accounts made in it, those of them registered now, the people
+given an entitlement key in it, or the payers in it.
+
 # `group`
 
 ```elixir
@@ -73,6 +114,18 @@ A host page draws the same bar with
   label: String.t(),
   description: String.t() | nil,
   prefixes: [String.t()]
+}
+```
+
+# `overview`
+
+```elixir
+@type overview() :: %{
+  retention_since: Date.t() | nil,
+  activation: %{label: String.t(), events: [String.t()]} | nil,
+  funnel: [%{label: String.t(), source: funnel_source()}],
+  trial_keys: [String.t()],
+  bands: %{required(atom()) =&gt; band()}
 }
 ```
 
@@ -86,6 +139,13 @@ A host page draws the same bar with
 
 ```elixir
 @callback events() :: [map()]
+```
+
+# `overview`
+*optional* 
+
+```elixir
+@callback overview() :: map()
 ```
 
 # `tabs`
@@ -147,6 +207,27 @@ a core group's id replaces it.
 ```
 
 The host's catalogue module, or nil.
+
+# `overview`
+
+```elixir
+@spec overview() :: overview()
+```
+
+What the Overview needs to know about this game, the host's
+(`c:overview/0`) over the defaults:
+
+  * `retention_since` — the first sign-up day whose activity is counted in
+    full (`Gamend.Analytics.record_activity/2`): earlier cohorts read low
+    and are left out of D1 / D7 / D30 and the weekly cohorts. nil: every
+    cohort counts.
+  * `activation` — `%{label, events}`: a new account is activated when it
+    reports one of `events` on the day it was made. nil: no card.
+  * `funnel` — the steps, in order (`t:funnel_source/0`). Default:
+    accounts made, registered, paid.
+  * `trial_keys` — the entitlement keys that are a free trial. Default none.
+  * `bands` — per rate (`:stickiness`, `:d1`, `:d7`, `:d30`), `{fair, good}`;
+    the host's replace core's one by one.
 
 # `tabs`
 

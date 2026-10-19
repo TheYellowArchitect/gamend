@@ -43,6 +43,31 @@ public stats page.
 @type rate() :: float() | nil
 ```
 
+# `activation`
+
+```elixir
+@spec activation(Date.t(), keyword()) :: map() | nil
+```
+
+Activation, when the host declares it (`Catalog.overview/0`'s
+`activation`): of the accounts made in the 30 days ending on `today` (from
+`retention_since` on), how many reported one of its events on the day
+they were made, and D1 for those that did and those that did not
+(cohorts before today only). `%{label, new, activated, rate,
+d1_activated, d1_activated_cohort, d1_other, d1_other_cohort}`, or nil
+with no activation declared. Options: `segment:` (`segments/0`).
+
+# `active_days`
+
+```elixir
+@spec active_days(Date.t(), keyword()) :: [map()]
+```
+
+The accounts seen in the 30 days ending on `today`, by how many of those
+days each was seen: `[%{label, min, max, users}]`, one day first. Most of
+a young game's MAU is seen once; this says how many came back at all.
+Options: `segment:` (`segments/0`).
+
 # `active_users`
 
 ```elixir
@@ -95,12 +120,14 @@ match a prefix (`"level.started.lang:*"`).
 ```
 
 One row per UTC day for the last `days` days ending on `today`, oldest
-first: `%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}`.
-`wau` / `mau` are the distinct users of the 7 / 30 days ending on that day,
-and `stickiness` is `active ÷ mau` of that day, so each row reads as the
-headline would have on it. A retention rate is `nil` when the cohort is
-empty or the horizon day has not happened yet. Options: `segment:`
-(`segments/0`).
+first: `%{day, active, new_active, returning, wau, mau, stickiness,
+new_users, d1, d7, d30}`. `new_active` are the accounts made that day and
+seen on it, `returning` the rest of `active`. `wau` / `mau` are the
+distinct users of the 7 / 30 days ending on that day, and `stickiness` is
+`active ÷ mau` of that day. A retention rate is `nil` when the cohort is
+empty, the horizon day has not happened yet, or the cohort is older than
+`retention_since` (`Gamend.Analytics.Catalog.overview/0`). Options:
+`segment:` (`segments/0`).
 
 # `dashboard_stats`
 
@@ -177,6 +204,18 @@ Options: `segment:` (`segments/0`, default `:all`).
 
 Writes everything `Gamend.Analytics.Buffer` has gathered, now, in the caller's process.
 
+# `funnel`
+
+```elixir
+@spec funnel(pos_integer(), Date.t()) :: [map()]
+```
+
+The host's funnel (`Catalog.overview/0`) over the `days` days ending on
+`today`: `[%{label, source, unit, value, of_previous}]`, `unit` `:events`
+for a counter's total (a visitor counts there, each time) and `:people`
+otherwise, `of_previous` the step's share of the one before: nil first,
+and nil where the unit changes (events and people do not divide).
+
 # `mau`
 
 ```elixir
@@ -184,6 +223,21 @@ Writes everything `Gamend.Analytics.Buffer` has gathered, now, in the caller's p
 ```
 
 Monthly active users: distinct users seen in the 30 days ending on `day`.
+
+# `money`
+
+```elixir
+@spec money(pos_integer(), Date.t()) :: map()
+```
+
+Money over the `days` days ending on `today`, for the Overview: checkouts
+opened, purchases fulfilled, checkouts refused or failed and webhook
+deliveries that failed or were refused (`Gamend.Payments.Counters`),
+revenue by currency (completed production purchases, minor units),
+payers, and the free trials when the host names their keys
+(`Catalog.overview/0`'s `trial_keys`): `%{started, running, taken, paid,
+conversion}`, `paid` the people with a completed purchase after their
+trial began.
 
 # `new_users`
 
@@ -283,11 +337,15 @@ drift between two pages.
 @spec summary(Date.t(), keyword()) :: map()
 ```
 
-Headline numbers as of `today`: DAU / WAU / MAU, stickiness (DAU ÷ MAU),
-new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
-of the last 60 days that is old enough to have reached
-the horizon, and payer conversion (distinct users with a completed purchase
-in the last 30 days ÷ MAU). Options: `segment:` (`segments/0`).
+Headline numbers as of `today`: DAU (today so far) / WAU / MAU,
+stickiness (`dau_7d_avg`, the average DAU of the 7 full days before today,
+÷ MAU: today's DAU is partial until midnight), new users
+in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort of the
+last 60 days that is old enough to have reached the
+horizon and not older than `retention_since` (`Catalog.overview/0`), each
+with its pool's size (`d1_cohort`, …), and payer conversion (distinct users
+with a completed purchase in the last 30 days ÷ MAU). Options: `segment:`
+(`segments/0`).
 
 # `track`
 
@@ -330,6 +388,19 @@ name or field is dropped with a warning, the rest is kept.
 ```
 
 Weekly active users: distinct users seen in the 7 days ending on `day`.
+
+# `weekly_cohorts`
+
+```elixir
+@spec weekly_cohorts(Date.t(), keyword()) :: [map()]
+```
+
+Retention by sign-up week, the last 8 weeks (Monday
+first) from `retention_since` on, newest first: `[%{week, from, size,
+cells}]`, each cell `%{week: k, users, rate}` the share of the week's
+accounts seen in their own week k after sign-up (days 7k to 7k + 6 after
+their sign-up day). A cell is `rate: nil` until every account of the week
+has lived through it. Options: `segment:` (`segments/0`).
 
 ---
 

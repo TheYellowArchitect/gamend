@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1337">
+    <meta name="project" content="gamend_core v1.1.1338">
 
 
-    <title>Gamend.Analytics — gamend_core v1.1.1337</title>
+    <title>Gamend.Analytics — gamend_core v1.1.1338</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-F240CFC9.js"></script>
+    <script defer src="dist/sidebar_items-7B372141.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1337
+          v1.1.1338
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Analytics</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1337)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1338)</small>
 
     </h1>
 
@@ -171,6 +171,34 @@ public stats page.</p>
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#activation/2" data-no-tooltip="" translate="no">activation(today \\ Date.utc_today(), opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Activation, when the host declares it (<code class="inline">Catalog.overview/0</code>'s
+<code class="inline">activation</code>): of the accounts made in the 30 days ending on <code class="inline">today</code> (from
+<code class="inline">retention_since</code> on), how many reported one of its events on the day
+they were made, and D1 for those that did and those that did not
+(cohorts before today only). <code class="inline">%{label, new, activated, rate, d1_activated, d1_activated_cohort, d1_other, d1_other_cohort}</code>, or nil
+with no activation declared. Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#active_days/2" data-no-tooltip="" translate="no">active_days(today \\ Date.utc_today(), opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The accounts seen in the 30 days ending on <code class="inline">today</code>, by how many of those
+days each was seen: <code class="inline">[%{label, min, max, users}]</code>, one day first. Most of
+a young game's MAU is seen once; this says how many came back at all.
+Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#active_users/3" data-no-tooltip="" translate="no">active_users(from, to, opts \\ [])</a>
 
       </div>
@@ -222,12 +250,13 @@ match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</
       </div>
 
         <div class="summary-synopsis"><p>One row per UTC day for the last <code class="inline">days</code> days ending on <code class="inline">today</code>, oldest
-first: <code class="inline">%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}</code>.
-<code class="inline">wau</code> / <code class="inline">mau</code> are the distinct users of the 7 / 30 days ending on that day,
-and <code class="inline">stickiness</code> is <code class="inline">active ÷ mau</code> of that day, so each row reads as the
-headline would have on it. A retention rate is <code class="inline">nil</code> when the cohort is
-empty or the horizon day has not happened yet. Options: <code class="inline">segment:</code>
-(<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
+first: <code class="inline">%{day, active, new_active, returning, wau, mau, stickiness, new_users, d1, d7, d30}</code>. <code class="inline">new_active</code> are the accounts made that day and
+seen on it, <code class="inline">returning</code> the rest of <code class="inline">active</code>. <code class="inline">wau</code> / <code class="inline">mau</code> are the
+distinct users of the 7 / 30 days ending on that day, and <code class="inline">stickiness</code> is
+<code class="inline">active ÷ mau</code> of that day. A retention rate is <code class="inline">nil</code> when the cohort is
+empty, the horizon day has not happened yet, or the cohort is older than
+<code class="inline">retention_since</code> (<a href="Gamend.Analytics.Catalog.html#overview/0"><code class="inline">Gamend.Analytics.Catalog.overview/0</code></a>). Options:
+<code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
@@ -312,11 +341,41 @@ with what <a href="#summary/1"><code class="inline">summary/1</code></a> says of
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#funnel/2" data-no-tooltip="" translate="no">funnel(days \\ 30, today \\ Date.utc_today())</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The host's funnel (<code class="inline">Catalog.overview/0</code>) over the <code class="inline">days</code> days ending on
+<code class="inline">today</code>: <code class="inline">[%{label, source, unit, value, of_previous}]</code>, <code class="inline">unit</code> <code class="inline">:events</code>
+for a counter's total (a visitor counts there, each time) and <code class="inline">:people</code>
+otherwise, <code class="inline">of_previous</code> the step's share of the one before: nil first,
+and nil where the unit changes (events and people do not divide).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#mau/2" data-no-tooltip="" translate="no">mau(day \\ Date.utc_today(), opts \\ [])</a>
 
       </div>
 
         <div class="summary-synopsis"><p>Monthly active users: distinct users seen in the 30 days ending on <code class="inline">day</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#money/2" data-no-tooltip="" translate="no">money(days \\ 30, today \\ Date.utc_today())</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Money over the <code class="inline">days</code> days ending on <code class="inline">today</code>, for the Overview: checkouts
+opened, purchases fulfilled, checkouts refused or failed and webhook
+deliveries that failed or were refused (<a href="Gamend.Payments.Counters.html"><code class="inline">Gamend.Payments.Counters</code></a>),
+revenue by currency (completed production purchases, minor units),
+payers, and the free trials when the host names their keys
+(<code class="inline">Catalog.overview/0</code>'s <code class="inline">trial_keys</code>): <code class="inline">%{started, running, taken, paid, conversion}</code>, <code class="inline">paid</code> the people with a completed purchase after their
+trial began.</p></div>
 
     </div>
 
@@ -414,11 +473,15 @@ a missing user (deleted mid-request) is a silent no-op, like the
 
       </div>
 
-        <div class="summary-synopsis"><p>Headline numbers as of <code class="inline">today</code>: DAU / WAU / MAU, stickiness (DAU ÷ MAU),
-new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
-of the last 60 days that is old enough to have reached
-the horizon, and payer conversion (distinct users with a completed purchase
-in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
+        <div class="summary-synopsis"><p>Headline numbers as of <code class="inline">today</code>: DAU (today so far) / WAU / MAU,
+stickiness (<code class="inline">dau_7d_avg</code>, the average DAU of the 7 full days before today,
+÷ MAU: today's DAU is partial until midnight), new users
+in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort of the
+last 60 days that is old enough to have reached the
+horizon and not older than <code class="inline">retention_since</code> (<code class="inline">Catalog.overview/0</code>), each
+with its pool's size (<code class="inline">d1_cohort</code>, …), and payer conversion (distinct users
+with a completed purchase in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code>
+(<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
 
     </div>
 
@@ -446,6 +509,20 @@ disagree.</p></div>
 
     </div>
 
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#weekly_cohorts/2" data-no-tooltip="" translate="no">weekly_cohorts(today \\ Date.utc_today(), opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Retention by sign-up week, the last 8 weeks (Monday
+first) from <code class="inline">retention_since</code> on, newest first: <code class="inline">[%{week, from, size, cells}]</code>, each cell <code class="inline">%{week: k, users, rate}</code> the share of the week's
+accounts seen in their own week k after sign-up (days 7k to 7k + 6 after
+their sign-up day). A cell is <code class="inline">rate: nil</code> until every account of the week
+has lived through it. Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p></div>
+
+    </div>
+
 </div>
 
   </section>
@@ -470,7 +547,7 @@ disagree.</p></div>
       <h1 class="signature" translate="no">rate()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L68" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L81" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -501,6 +578,78 @@ disagree.</p></div>
     </h2>
 
     <div class="functions-list">
+<section class="detail" id="activation/2">
+
+    <span id="activation/0"></span>
+
+    <span id="activation/1"></span>
+
+  <div class="detail-header">
+    <a href="#activation/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">activation(today \\ Date.utc_today(), opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L1127" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> activation(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>() | nil</pre>
+
+      </div>
+
+<p>Activation, when the host declares it (<code class="inline">Catalog.overview/0</code>'s
+<code class="inline">activation</code>): of the accounts made in the 30 days ending on <code class="inline">today</code> (from
+<code class="inline">retention_since</code> on), how many reported one of its events on the day
+they were made, and D1 for those that did and those that did not
+(cohorts before today only). <code class="inline">%{label, new, activated, rate, d1_activated, d1_activated_cohort, d1_other, d1_other_cohort}</code>, or nil
+with no activation declared. Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
+  </section>
+</section>
+<section class="detail" id="active_days/2">
+
+    <span id="active_days/0"></span>
+
+    <span id="active_days/1"></span>
+
+  <div class="detail-header">
+    <a href="#active_days/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">active_days(today \\ Date.utc_today(), opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L1012" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> active_days(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+
+      </div>
+
+<p>The accounts seen in the 30 days ending on <code class="inline">today</code>, by how many of those
+days each was seen: <code class="inline">[%{label, min, max, users}]</code>, one day first. Most of
+a young game's MAU is seen once; this says how many came back at all.
+Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
+  </section>
+</section>
 <section class="detail" id="active_users/3">
 
     <span id="active_users/2"></span>
@@ -513,7 +662,7 @@ disagree.</p></div>
       <h1 class="signature" translate="no">active_users(from, to, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L774" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L787" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -546,7 +695,7 @@ Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class
       <h1 class="signature" translate="no">count(key, n \\ 1, now \\ DateTime.utc_now())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L144" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L157" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -584,7 +733,7 @@ raises; a bad key is dropped with a warning.</p>
       <h1 class="signature" translate="no">count_totals(key, days \\ 7, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L219" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L232" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -616,7 +765,7 @@ raises; a bad key is dropped with a warning.</p>
       <h1 class="signature" translate="no">counts(key, days \\ 7, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L195" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L208" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -654,7 +803,7 @@ match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</
       <h1 class="signature" translate="no">daily_series(days \\ 30, today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L807" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L822" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -670,12 +819,13 @@ match a prefix (<code class="inline">&quot;level.started.lang:*&quot;</code>).</
       </div>
 
 <p>One row per UTC day for the last <code class="inline">days</code> days ending on <code class="inline">today</code>, oldest
-first: <code class="inline">%{day, active, wau, mau, stickiness, new_users, d1, d7, d30}</code>.
-<code class="inline">wau</code> / <code class="inline">mau</code> are the distinct users of the 7 / 30 days ending on that day,
-and <code class="inline">stickiness</code> is <code class="inline">active ÷ mau</code> of that day, so each row reads as the
-headline would have on it. A retention rate is <code class="inline">nil</code> when the cohort is
-empty or the horizon day has not happened yet. Options: <code class="inline">segment:</code>
-(<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
+first: <code class="inline">%{day, active, new_active, returning, wau, mau, stickiness, new_users, d1, d7, d30}</code>. <code class="inline">new_active</code> are the accounts made that day and
+seen on it, <code class="inline">returning</code> the rest of <code class="inline">active</code>. <code class="inline">wau</code> / <code class="inline">mau</code> are the
+distinct users of the 7 / 30 days ending on that day, and <code class="inline">stickiness</code> is
+<code class="inline">active ÷ mau</code> of that day. A retention rate is <code class="inline">nil</code> when the cohort is
+empty, the horizon day has not happened yet, or the cohort is older than
+<code class="inline">retention_since</code> (<a href="Gamend.Analytics.Catalog.html#overview/0"><code class="inline">Gamend.Analytics.Catalog.overview/0</code></a>). Options:
+<code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
   </section>
 </section>
 <section class="detail" id="dashboard_stats/0">
@@ -688,7 +838,7 @@ empty or the horizon day has not happened yet. Options: <code class="inline">seg
       <h1 class="signature" translate="no">dashboard_stats()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L950" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L981" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -720,7 +870,7 @@ empty or the horizon day has not happened yet. Options: <code class="inline">seg
       <h1 class="signature" translate="no">dau(day \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L785" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L798" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -752,7 +902,7 @@ empty or the horizon day has not happened yet. Options: <code class="inline">seg
       <h1 class="signature" translate="no">economy_flow(days \\ 7, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L643" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L656" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -787,7 +937,7 @@ value of negative deltas). Options: <code class="inline">:currency</code> to fil
       <h1 class="signature" translate="no">economy_totals(days \\ 7, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L678" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L691" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -821,7 +971,7 @@ value of negative deltas). Options: <code class="inline">:currency</code> to fil
       <h1 class="signature" translate="no">families(prefix \\ &quot;*&quot;, days \\ 7, today \\ Date.utc_today())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L412" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L425" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -858,7 +1008,7 @@ first. <code class="inline">prefix</code> as in <a href="#counts/3"><code class=
       <h1 class="signature" translate="no">feature_summary(today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L473" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L486" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -891,7 +1041,7 @@ horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools
       <h1 class="signature" translate="no">flush()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L187" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L200" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -909,6 +1059,42 @@ horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools
 <p>Writes everything <a href="Gamend.Analytics.Buffer.html"><code class="inline">Gamend.Analytics.Buffer</code></a> has gathered, now, in the caller's process.</p>
   </section>
 </section>
+<section class="detail" id="funnel/2">
+
+    <span id="funnel/0"></span>
+
+    <span id="funnel/1"></span>
+
+  <div class="detail-header">
+    <a href="#funnel/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">funnel(days \\ 30, today \\ Date.utc_today())</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L1205" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> funnel(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+
+      </div>
+
+<p>The host's funnel (<code class="inline">Catalog.overview/0</code>) over the <code class="inline">days</code> days ending on
+<code class="inline">today</code>: <code class="inline">[%{label, source, unit, value, of_previous}]</code>, <code class="inline">unit</code> <code class="inline">:events</code>
+for a counter's total (a visitor counts there, each time) and <code class="inline">:people</code>
+otherwise, <code class="inline">of_previous</code> the step's share of the one before: nil first,
+and nil where the unit changes (events and people do not divide).</p>
+  </section>
+</section>
 <section class="detail" id="mau/2">
 
     <span id="mau/0"></span>
@@ -923,7 +1109,7 @@ horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools
       <h1 class="signature" translate="no">mau(day \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L793" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L806" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -941,6 +1127,44 @@ horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools
 <p>Monthly active users: distinct users seen in the 30 days ending on <code class="inline">day</code>.</p>
   </section>
 </section>
+<section class="detail" id="money/2">
+
+    <span id="money/0"></span>
+
+    <span id="money/1"></span>
+
+  <div class="detail-header">
+    <a href="#money/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">money(days \\ 30, today \\ Date.utc_today())</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L1278" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> money(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), <a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()</pre>
+
+      </div>
+
+<p>Money over the <code class="inline">days</code> days ending on <code class="inline">today</code>, for the Overview: checkouts
+opened, purchases fulfilled, checkouts refused or failed and webhook
+deliveries that failed or were refused (<a href="Gamend.Payments.Counters.html"><code class="inline">Gamend.Payments.Counters</code></a>),
+revenue by currency (completed production purchases, minor units),
+payers, and the free trials when the host names their keys
+(<code class="inline">Catalog.overview/0</code>'s <code class="inline">trial_keys</code>): <code class="inline">%{started, running, taken, paid, conversion}</code>, <code class="inline">paid</code> the people with a completed purchase after their
+trial began.</p>
+  </section>
+</section>
 <section class="detail" id="new_users/2">
 
   <div class="detail-header">
@@ -951,7 +1175,7 @@ horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools
       <h1 class="signature" translate="no">new_users(from, to)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L119" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L132" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -981,7 +1205,7 @@ horizon, as <a href="#summary/1"><code class="inline">summary/1</code></a> pools
       <h1 class="signature" translate="no">payers_since(from, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L961" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L992" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1016,7 +1240,7 @@ Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class
       <h1 class="signature" translate="no">people_by_dimension(name, dim, days \\ 30, today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L601" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L614" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1052,7 +1276,7 @@ feature has are the keys of its family's <code class="inline">dims</code> (<a hr
       <h1 class="signature" translate="no">recent_events(limit \\ 50)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L630" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L643" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1082,7 +1306,7 @@ feature has are the keys of its family's <code class="inline">dims</code> (<a hr
       <h1 class="signature" translate="no">record_activity(user_id, now \\ DateTime.utc_now())</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L707" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L720" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1113,7 +1337,7 @@ a missing user (deleted mid-request) is a silent no-op, like the
       <h1 class="signature" translate="no">segment(param)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L763" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L776" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1141,7 +1365,7 @@ a missing user (deleted mid-request) is a silent no-op, like the
       <h1 class="signature" translate="no">segments()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L759" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L772" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1169,7 +1393,7 @@ a missing user (deleted mid-request) is a silent no-op, like the
       <h1 class="signature" translate="no">snapshot()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L92" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L105" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1213,7 +1437,7 @@ drift between two pages.</p>
       <h1 class="signature" translate="no">summary(today \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L916" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L940" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1228,11 +1452,15 @@ drift between two pages.</p>
 
       </div>
 
-<p>Headline numbers as of <code class="inline">today</code>: DAU / WAU / MAU, stickiness (DAU ÷ MAU),
-new users in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort
-of the last 60 days that is old enough to have reached
-the horizon, and payer conversion (distinct users with a completed purchase
-in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
+<p>Headline numbers as of <code class="inline">today</code>: DAU (today so far) / WAU / MAU,
+stickiness (<code class="inline">dau_7d_avg</code>, the average DAU of the 7 full days before today,
+÷ MAU: today's DAU is partial until midnight), new users
+in the last 7 and 30 days, D1 / D7 / D30 pooled over every cohort of the
+last 60 days that is old enough to have reached the
+horizon and not older than <code class="inline">retention_since</code> (<code class="inline">Catalog.overview/0</code>), each
+with its pool's size (<code class="inline">d1_cohort</code>, …), and payer conversion (distinct users
+with a completed purchase in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code>
+(<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
   </section>
 </section>
 <section class="detail" id="track/3">
@@ -1249,7 +1477,7 @@ in the last 30 days ÷ MAU). Options: <code class="inline">segment:</code> (<a h
       <h1 class="signature" translate="no">track(name, dims \\ %{}, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L266" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L279" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1295,7 +1523,7 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
       <h1 class="signature" translate="no">wau(day \\ Date.utc_today(), opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L789" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L802" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -1313,6 +1541,42 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
 <p>Weekly active users: distinct users seen in the 7 days ending on <code class="inline">day</code>.</p>
   </section>
 </section>
+<section class="detail" id="weekly_cohorts/2">
+
+    <span id="weekly_cohorts/0"></span>
+
+    <span id="weekly_cohorts/1"></span>
+
+  <div class="detail-header">
+    <a href="#weekly_cohorts/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">weekly_cohorts(today \\ Date.utc_today(), opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/analytics.ex#L1045" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> weekly_cohorts(<a href="https://elixir.hexdocs.pm/Date.html#t:t/0">Date.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()]</pre>
+
+      </div>
+
+<p>Retention by sign-up week, the last 8 weeks (Monday
+first) from <code class="inline">retention_since</code> on, newest first: <code class="inline">[%{week, from, size, cells}]</code>, each cell <code class="inline">%{week: k, users, rate}</code> the share of the week's
+accounts seen in their own week k after sign-up (days 7k to 7k + 6 after
+their sign-up day). A cell is <code class="inline">rate: nil</code> until every account of the week
+has lived through it. Options: <code class="inline">segment:</code> (<a href="#segments/0"><code class="inline">segments/0</code></a>).</p>
+  </section>
+</section>
 
     </div>
   </section>
@@ -1322,9 +1586,9 @@ name or field is dropped with a warning, the rest is kept.</p><pre><code class="
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1337">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1338">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1337">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1338">Hex Preview</a>
 
             </span>
 
