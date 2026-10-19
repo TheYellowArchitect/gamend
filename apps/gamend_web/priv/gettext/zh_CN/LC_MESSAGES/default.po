@@ -3586,3 +3586,34 @@ msgstr "暂停至"
 #, elixir-autogen, elixir-format
 msgid "You can still change your settings or delete your account."
 msgstr "你仍可以更改设置或删除账户。"
+
+#: lib/gamend_web/live/leaderboards_live.ex:771
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "All time"
+msgstr "总榜"
+
+#: lib/gamend_web/live/leaderboards_live.ex:784
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Daily"
+msgstr "日榜"
+
+#: lib/gamend_web/live/leaderboards_live.ex:785
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Weekly"
+msgstr "周榜"
+
+#: lib/gamend_web/live/leaderboards_live.ex:786
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Monthly"
+msgstr "月榜"
+
+#: lib/gamend_web/live/leaderboards_live.ex:787
+#: lib/gamend_web/live/leaderboards_live.ex:791
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Season"
+msgstr "赛季"

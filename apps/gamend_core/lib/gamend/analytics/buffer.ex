@@ -87,6 +87,26 @@ defmodule Gamend.Analytics.Buffer do
     ArgumentError -> {0, 0}
   end
 
+  @doc """
+  Gives the events still waiting under `from_user_id` to `to_user_id`
+  (`Gamend.Accounts.GuestMerge`: a guest's last seconds before signing in
+  were not written yet when the written rows moved). A row a flush writes
+  meanwhile is left as written. Answers how many moved.
+  """
+  @spec reassign(String.t(), String.t()) :: non_neg_integer()
+  def reassign(from_user_id, to_user_id) do
+    @table
+    |> :ets.select([{{{:event, :"$1"}, :"$2"}, [], [{{:"$1", :"$2"}}]}])
+    |> Enum.count(fn {id, row} ->
+      # `update_element` writes only a row still there: never one a flush
+      # has written and deleted since the select.
+      row.user_id == from_user_id and
+        :ets.update_element(@table, {:event, id}, {2, %{row | user_id: to_user_id}})
+    end)
+  rescue
+    ArgumentError -> 0
+  end
+
   @doc "Drops everything gathered, unwritten. For a test that set a window."
   @spec clear() :: :ok
   def clear do

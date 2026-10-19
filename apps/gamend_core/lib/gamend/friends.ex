@@ -670,8 +670,11 @@ defmodule Gamend.Friends do
         query
 
       user_id ->
-        from f in query,
-          where: f.requester_id == ^user_id or f.target_id == ^user_id
+        # An admin filter typed by hand: an id that is not one matches nothing.
+        case Gamend.UUIDv7.cast_or_nil(user_id) do
+          nil -> from(f in query, where: false)
+          id -> from(f in query, where: f.requester_id == ^id or f.target_id == ^id)
+        end
     end
   end
 
@@ -752,8 +755,11 @@ defmodule Gamend.Friends do
         query
 
       user_id ->
-        from f in query,
-          where: f.requester_id == ^user_id or f.target_id == ^user_id
+        # An admin filter typed by hand: an id that is not one matches nothing.
+        case Gamend.UUIDv7.cast_or_nil(user_id) do
+          nil -> from(f in query, where: false)
+          id -> from(f in query, where: f.requester_id == ^id or f.target_id == ^id)
+        end
     end
   end
 

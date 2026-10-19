@@ -395,28 +395,22 @@ defmodule Gamend.Tournaments do
     |> maybe_join_leader(opts)
   end
 
-  # The leader join is only paid for when a caller needs names or search.
+  # The leader join is only paid for when a caller needs names. A search
+  # finds the leaders first (`Gamend.Query.filter_user_named/3`), so a cup of
+  # a million entries is read by their ids rather than joined whole.
   defp maybe_join_leader(query, opts) do
     pattern = Repo.search_pattern(Keyword.get(opts, :search))
-    preload? = Keyword.get(opts, :preload_leader, false)
 
-    if is_nil(pattern) and not preload? do
-      query
-    else
+    query =
+      if pattern, do: Gamend.Query.filter_user_named(query, :leader_id, pattern), else: query
+
+    if Keyword.get(opts, :preload_leader, false) do
       query
       |> join(:inner, [entry: e], u in assoc(e, :leader), as: :leader)
-      |> then(&if pattern, do: where_leader_name(&1, pattern), else: &1)
-      |> then(&if preload?, do: preload(&1, [leader: u], leader: u), else: &1)
+      |> preload([leader: u], leader: u)
+    else
+      query
     end
-  end
-
-  defp where_leader_name(query, pattern) do
-    where(
-      query,
-      [leader: u],
-      fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.display_name, ^pattern) or
-        fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.username, ^pattern)
-    )
   end
 
   # Entries drawn into brackets sort ahead of any that are not, on both adapters.

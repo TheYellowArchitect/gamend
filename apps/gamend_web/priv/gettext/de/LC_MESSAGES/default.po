@@ -3639,3 +3639,34 @@ msgstr "Gesperrt bis"
 #, elixir-autogen, elixir-format
 msgid "You can still change your settings or delete your account."
 msgstr "Du kannst weiterhin deine Einstellungen ändern oder dein Konto löschen."
+
+#: lib/gamend_web/live/leaderboards_live.ex:771
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "All time"
+msgstr "Gesamt"
+
+#: lib/gamend_web/live/leaderboards_live.ex:784
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Daily"
+msgstr "Täglich"
+
+#: lib/gamend_web/live/leaderboards_live.ex:785
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: lib/gamend_web/live/leaderboards_live.ex:786
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Monthly"
+msgstr "Monatlich"
+
+#: lib/gamend_web/live/leaderboards_live.ex:787
+#: lib/gamend_web/live/leaderboards_live.ex:791
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Season"
+msgstr "Saison"

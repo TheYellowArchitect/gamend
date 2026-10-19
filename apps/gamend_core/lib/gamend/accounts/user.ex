@@ -91,7 +91,9 @@ defmodule Gamend.Accounts.User do
 
   # Every identity column a user can be reached or recovered by. A device id is
   # not one of them: it is a string the client made up, so an account holding
-  # only that is disposable by construction.
+  # only that is disposable by construction. The database repeats this list
+  # in the triggers that keep `leaderboard_records.guest` (migration
+  # `LeaderboardRecordsGuest`): a new identity column needs them made again.
   @identity_fields [
     :email,
     :discord_id,

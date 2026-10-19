@@ -361,6 +361,10 @@ defmodule Gamend.KV do
   and `:key` (substring filter).
   See `t:list_opts/0` for the expected option types.
   Returns a list of `Entry` structs ordered by most recently updated.
+
+  A page past the first reads every row before it, and `:key` matches
+  anywhere in the key, so no index serves it: for a job that walks every
+  row of a key family, use `stream_prefix/2`.
   """
   @spec list_entries() :: [Entry.t()]
   @spec list_entries(list_opts()) :: [Entry.t()]
@@ -618,6 +622,84 @@ defmodule Gamend.KV do
   end
 
   def prune_prefix(_prefix, _days, _opts), do: 0
+
+  @doc """
+  Every entry whose key starts with `prefix`, as a lazy stream in id order:
+  for a job that walks one key family across every player (a migration, an
+  hourly reminder, a boot sweep).
+
+  Each query reads `:batch` rows (default 1,000) after the last id the one
+  before it read, so the walk is one pass over the primary key however big
+  the table is, and rows deleted or rewritten behind it do not shift what
+  is still to come. Ids are UUIDv7, so a row inserted during the walk is
+  newer than any read and comes up at the end. `list_entries/1` is the
+  admin page's search, a substring newest first by page: walking a key
+  family with it reads the whole table once per page.
+
+  The prefix is matched literally and case-sensitively (`%` and `_` in it
+  are not wildcards). Options:
+
+    * `:scope` — `:user` (a user's own rows, no lobby), `:lobby`,
+      `:user_lobby`, `:global`, or `:all` (the default);
+    * `:updated_since` — only rows written at or after this `DateTime`;
+    * `:batch` — rows a query.
+
+  Rows come from the database, never the cache. Each batch is its own
+  query, so run a long walk outside a transaction.
+  """
+  @spec stream_prefix(String.t(), keyword()) :: Enumerable.t()
+  def stream_prefix(prefix, opts \\ []) when is_binary(prefix) and is_list(opts) do
+    batch = Keyword.get(opts, :batch, 1_000)
+
+    # The planner walks the primary key and filters while matches are
+    # dense, and reads a sparse family through the key index (a C
+    # collation) or one sequential scan: never a scan per batch. Not
+    # `key >= prefix`: outside the C collation the order is not by bytes.
+    query =
+      from(e in Entry,
+        where: fragment("? LIKE ? ESCAPE '\\'", e.key, ^(Repo.escape_like(prefix) <> "%")),
+        order_by: e.id,
+        limit: ^batch
+      )
+      |> filter_scope(Keyword.get(opts, :scope, :all))
+      |> filter_updated_since(Keyword.get(opts, :updated_since))
+
+    nil
+    |> Stream.unfold(fn
+      :done ->
+        nil
+
+      after_id ->
+        page = if after_id, do: where(query, [e], e.id > ^after_id), else: query
+
+        case Repo.all(page) do
+          [] -> nil
+          rows when length(rows) < batch -> {rows, :done}
+          rows -> {rows, List.last(rows).id}
+        end
+    end)
+    # SQLite's LIKE ignores ASCII case.
+    |> Stream.flat_map(fn rows -> Enum.filter(rows, &String.starts_with?(&1.key, prefix)) end)
+  end
+
+  defp filter_scope(query, :all), do: query
+
+  defp filter_scope(query, :global),
+    do: where(query, [e], is_nil(e.user_id) and is_nil(e.lobby_id))
+
+  defp filter_scope(query, :user),
+    do: where(query, [e], not is_nil(e.user_id) and is_nil(e.lobby_id))
+
+  defp filter_scope(query, :lobby),
+    do: where(query, [e], is_nil(e.user_id) and not is_nil(e.lobby_id))
+
+  defp filter_scope(query, :user_lobby),
+    do: where(query, [e], not is_nil(e.user_id) and not is_nil(e.lobby_id))
+
+  defp filter_updated_since(query, nil), do: query
+
+  defp filter_updated_since(query, %DateTime{} = since),
+    do: where(query, [e], e.updated_at >= ^DateTime.truncate(since, :second))
 
   defp prune_batches(pattern, cutoff, batch, deleted) do
     rows =

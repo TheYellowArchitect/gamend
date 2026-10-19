@@ -3692,3 +3692,34 @@ msgstr "Pozastaveno do"
 #, elixir-autogen, elixir-format
 msgid "You can still change your settings or delete your account."
 msgstr "Stále můžeš změnit nastavení nebo smazat svůj účet."
+
+#: lib/gamend_web/live/leaderboards_live.ex:771
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "All time"
+msgstr "Za celou dobu"
+
+#: lib/gamend_web/live/leaderboards_live.ex:784
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Daily"
+msgstr "Denní"
+
+#: lib/gamend_web/live/leaderboards_live.ex:785
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Weekly"
+msgstr "Týdenní"
+
+#: lib/gamend_web/live/leaderboards_live.ex:786
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Monthly"
+msgstr "Měsíční"
+
+#: lib/gamend_web/live/leaderboards_live.ex:787
+#: lib/gamend_web/live/leaderboards_live.ex:791
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Season"
+msgstr "Sezóna"

@@ -697,18 +697,12 @@ defmodule GamendWeb.TournamentsLive do
                 class={[e.leader_id == @current_user_id && "bg-primary/10"]}
               >
                 <td>
-                  <div class="flex items-center gap-2">
-                    <.user_avatar user={e.leader} class="w-8 h-8" />
-                    <div class="flex flex-col leading-tight">
-                      <span class={[e.leader_id == @current_user_id && "font-bold"]}>
-                        <.player_name name={leader_name(e.leader)} />
-                      </span>
-                      <.user_title user={e.leader} />
-                    </div>
-                    <span :if={e.leader_id == @current_user_id} class="badge badge-primary badge-sm">
-                      {gettext("You")}
-                    </span>
-                  </div>
+                  <.player_card
+                    user={e.leader}
+                    name={leader_name(e.leader)}
+                    you={e.leader_id == @current_user_id}
+                    class="max-w-[28ch]"
+                  />
                 </td>
                 <td :if={@drawn?}>
                   <%= if e.bracket_index do %>

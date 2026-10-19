@@ -15,7 +15,7 @@ defmodule Gamend.Accounts.Search do
   # Fields the ADMIN search matches. Deliberately wider than search_users/2
   # (username + display_name only): email, device id and provider ids are
   # sensitive and must never be searchable through the public player search.
-  @admin_search_fields ~w(email username display_name device_id google_id apple_id facebook_id github_id steam_id discord_id)a
+  @admin_id_fields ~w(device_id google_id apple_id facebook_id github_id steam_id discord_id)a
 
   @doc """
   Search users by display name (case-insensitive prefix match) or exact numeric id.
@@ -171,21 +171,29 @@ defmodule Gamend.Accounts.Search do
         from u in query, where: u.id == ^id
 
       _ ->
-        like = "%#{Repo.escape_like(term)}%"
-
-        combined =
-          Enum.reduce(@admin_search_fields, nil, fn field, acc ->
-            clause =
-              dynamic(
-                [u],
-                fragment("LOWER(?) LIKE LOWER(?) ESCAPE '\\'", field(u, ^field), ^like)
-              )
-
-            if acc, do: dynamic([u], ^acc or ^clause), else: clause
-          end)
-
-        from u in query, where: ^combined
+        from u in query, where: ^admin_search_match(term)
     end
+  end
+
+  # A name or email holding the term, or an id equal to it. Contains-matching
+  # every id column too read every account per search (1.5 s at a million);
+  # the names and the email are what an admin types part of, and Postgres
+  # finds those through their trigram indexes (`UserNameTrigramIndexes`), the
+  # ids through their unique ones.
+  defp admin_search_match(term) do
+    like = "%" <> Repo.escape_like(String.downcase(term)) <> "%"
+
+    contains =
+      dynamic(
+        [u],
+        fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.username, ^like) or
+          fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.display_name, ^like) or
+          fragment("lower(coalesce(CAST(? AS TEXT), '')) LIKE ? ESCAPE '\\'", u.email, ^like)
+      )
+
+    Enum.reduce(@admin_id_fields, contains, fn field, acc ->
+      dynamic([u], ^acc or field(u, ^field) == ^term)
+    end)
   end
 
   defp filter_users_by_facets(query, facets) do

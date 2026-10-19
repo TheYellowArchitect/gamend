@@ -3632,3 +3632,34 @@ msgstr "Suspendida hasta"
 #, elixir-autogen, elixir-format
 msgid "You can still change your settings or delete your account."
 msgstr "Aún puedes cambiar tu configuración o eliminar tu cuenta."
+
+#: lib/gamend_web/live/leaderboards_live.ex:771
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "All time"
+msgstr "Histórico"
+
+#: lib/gamend_web/live/leaderboards_live.ex:784
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Daily"
+msgstr "Diario"
+
+#: lib/gamend_web/live/leaderboards_live.ex:785
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Weekly"
+msgstr "Semanal"
+
+#: lib/gamend_web/live/leaderboards_live.ex:786
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Monthly"
+msgstr "Mensual"
+
+#: lib/gamend_web/live/leaderboards_live.ex:787
+#: lib/gamend_web/live/leaderboards_live.ex:791
+#, elixir-autogen, elixir-format
+msgctxt "leaderboard"
+msgid "Season"
+msgstr "Temporada"

@@ -18,19 +18,25 @@ defmodule GamendWeb.LeaderboardViews do
       it are picked. Its values are the keys the board holds
       (`Leaderboards.list_keys/2`), so a language nobody has played is not
       offered.
-    * **A filter left on "All"** shows each row's value beside its name,
-      from the record's `metadata[field]` (a run's language on the game's
-      key).
+    * **Each row names its value for every filter** on the line under its
+      name: a picked filter's is the view's, one left on "All" the record's
+      `metadata[field]` (a run's language on the game's key).
 
   Only key filters exist so far; a filter without `"key" => true` is
   ignored. The URL holds the view: `?tab=match&lang=es_es`.
+
+  On a board with an all-time ranking (`Leaderboards.all_time?/1`), the
+  page reads the view all time with `?period=all`: the same keys, every
+  season's (`all_time: true` on `pick/4` and `values/4`).
 
   ## Naming things
 
   Core knows keys and fields, not what they mean. A host names them with a
   module of these callbacks, every one optional, each answering nil to keep
   core's default (the raw key, value or field; no badge). A row's badge
-  marks a row for what it is (`row_badge/2`: a made-up runner, say):
+  marks a row for what it is (`row_badge/2`: a made-up runner, say), first
+  on the line under its name (`GamendWeb.CoreComponents.player_card/1`),
+  before its filters' values:
 
       config :gamend_web, :leaderboard_views, MyHost.LeaderboardViews
 
@@ -50,7 +56,7 @@ defmodule GamendWeb.LeaderboardViews do
   @doc "A filter value's name (`\"Spanish\"` for `es_es`)."
   @callback value_label(Leaderboard.t(), field :: String.t(), value :: String.t()) ::
               String.t() | nil
-  @doc "A badge beside a row's name (`\"Crew ghost\"` for a made-up runner), or nil."
+  @doc "A row's mark, under its name (`\"Crew ghost\"` for a made-up runner), or nil."
   @callback row_badge(Leaderboard.t(), Gamend.Leaderboards.Record.t()) :: String.t() | nil
 
   @optional_callbacks tab_label: 2, tab_icon: 2, filter_label: 2, value_label: 3, row_badge: 2
@@ -80,10 +86,12 @@ defmodule GamendWeb.LeaderboardViews do
   @doc """
   The view a URL asks for, kept to what the board holds: `{tab, picked}`,
   `picked` the key filters' values in order up to the first one left on All
-  (or not offered). An unknown tab is the first tab.
+  (or not offered). An unknown tab is the first tab. `all_time: true` keeps
+  the values any season holds.
   """
-  @spec pick(Leaderboard.t(), t(), map()) :: {String.t(), [{String.t(), String.t()}]}
-  def pick(%Leaderboard{} = board, %{tabs: tabs, filters: filters}, params) do
+  @spec pick(Leaderboard.t(), t(), map(), keyword()) ::
+          {String.t(), [{String.t(), String.t()}]}
+  def pick(%Leaderboard{} = board, %{tabs: tabs, filters: filters}, params, opts \\ []) do
     tab = if params["tab"] in tabs, do: params["tab"], else: hd(tabs)
 
     # Built in reverse, newest first, and turned round at the end.
@@ -92,7 +100,7 @@ defmodule GamendWeb.LeaderboardViews do
       |> Enum.reduce_while([], fn field, reversed ->
         value = params[field]
 
-        if is_binary(value) and value in values(board, tab, Enum.reverse(reversed)),
+        if is_binary(value) and value in values(board, tab, Enum.reverse(reversed), opts),
           do: {:cont, [{field, value} | reversed]},
           else: {:halt, reversed}
       end)
@@ -108,14 +116,15 @@ defmodule GamendWeb.LeaderboardViews do
   @doc """
   The values a filter offers after `picked`: the next part of every key the
   board holds under `tab|picked…|`, in key order (the page sorts them by
-  their names).
+  their names). `all_time: true` reads every season's keys.
   """
-  @spec values(Leaderboard.t(), String.t(), [{String.t(), String.t()}]) :: [String.t()]
-  def values(%Leaderboard{id: id}, tab, picked) do
+  @spec values(Leaderboard.t(), String.t(), [{String.t(), String.t()}], keyword()) ::
+          [String.t()]
+  def values(%Leaderboard{id: id}, tab, picked, opts \\ []) do
     prefix = key(tab, picked) <> "|"
 
     id
-    |> Leaderboards.list_keys(prefix: prefix)
+    |> Leaderboards.list_keys(prefix: prefix, all_time: Keyword.get(opts, :all_time, false))
     |> Enum.map(fn k -> k |> String.replace_prefix(prefix, "") |> String.split("|") |> hd() end)
     |> Enum.uniq()
   end

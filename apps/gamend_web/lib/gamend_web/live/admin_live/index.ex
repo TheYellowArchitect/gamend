@@ -851,64 +851,70 @@ defmodule GamendWeb.AdminLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    # Fire all independent DB queries in parallel for fast mount
-    tasks = %{
-      # Players / lobbies / parties / quests / matchmaking / tournaments come
-      # from the one cached composition every stats surface reads.
-      snapshot: Task.async(fn -> safe_snapshot() end),
-      # Sessions only, as the page the button opens lists: every token context
-      # (reset, confirm, API) made this read higher than that page ever showed.
-      sessions_count:
-        Task.async(fn ->
-          Repo.aggregate(Ecto.Query.where(UserToken, [t], t.context == "session"), :count)
-        end),
-      notifications_count: Task.async(fn -> Notifications.count_all_notifications() end),
-      push_stats: Task.async(fn -> Gamend.Push.token_stats() end),
-      leaderboards_count: Task.async(fn -> Repo.aggregate(Leaderboard, :count) end),
-      matchmaking_stats: Task.async(fn -> Gamend.Matchmaking.stats() end),
-      ready_check_stats: Task.async(fn -> Gamend.ReadyChecks.stats() end),
-      kv_count: Task.async(fn -> KV.count_entries() end),
-      kv_global: Task.async(fn -> KV.count_entries(global_only: true) end),
-      users_google: Task.async(fn -> Accounts.count_users_with_provider(:google_id) end),
-      users_facebook: Task.async(fn -> Accounts.count_users_with_provider(:facebook_id) end),
-      users_github: Task.async(fn -> Accounts.count_users_with_provider(:github_id) end),
-      users_discord: Task.async(fn -> Accounts.count_users_with_provider(:discord_id) end),
-      users_apple: Task.async(fn -> Accounts.count_users_with_provider(:apple_id) end),
-      users_steam: Task.async(fn -> Accounts.count_users_with_provider(:steam_id) end),
-      users_device: Task.async(fn -> Accounts.count_users_with_provider(:device_id) end),
-      users_password: Task.async(fn -> Accounts.count_users_with_password() end),
-      lobbies_hostless: Task.async(fn -> Gamend.Lobbies.count_hostless_lobbies() end),
-      lobbies_hidden: Task.async(fn -> Gamend.Lobbies.count_hidden_lobbies() end),
-      lobbies_locked: Task.async(fn -> Gamend.Lobbies.count_locked_lobbies() end),
-      lobbies_passworded: Task.async(fn -> Gamend.Lobbies.count_passworded_lobbies() end),
-      leaderboard_records: Task.async(fn -> Gamend.Leaderboards.count_all_records() end),
-      groups_count: Task.async(fn -> Groups.count_all_groups() end),
-      groups_public: Task.async(fn -> Groups.count_groups_by_type("public") end),
-      groups_private: Task.async(fn -> Groups.count_groups_by_type("private") end),
-      groups_hidden: Task.async(fn -> Groups.count_groups_by_type("hidden") end),
-      groups_members: Task.async(fn -> Groups.count_all_members() end),
-      parties_count: Task.async(fn -> Parties.count_all_parties() end),
-      blacklist_count: Task.async(fn -> Gamend.Friends.count_all_blocks() end),
-      friends_count: Task.async(fn -> Gamend.Friends.count_all_friendships() end),
-      parties_members: Task.async(fn -> Parties.count_all_party_members() end),
-      chat_count: Task.async(fn -> Gamend.Chat.count_all_messages() end),
-      chat_senders: Task.async(fn -> Gamend.Chat.count_unique_senders() end),
-      chat_by_type: Task.async(fn -> Gamend.Chat.count_messages_by_type() end),
-      open_reports: Task.async(fn -> Reports.count_open_reports() end),
-      report_counts: Task.async(fn -> Gamend.Reports.count_by_status() end),
-      host_cards: Task.async(fn -> GamendWeb.AdminCard.all() end),
-      active_mutes: Task.async(fn -> Gamend.Chat.count_mutes(%{"active" => true}) end),
-      quest_stats: Task.async(fn -> Gamend.Quests.dashboard_stats() end),
-      payments_stats: Task.async(fn -> Payments.admin_stats() end),
-      translation_stats: Task.async(fn -> TranslationStats.all_completeness() end),
-      users_unactivated: Task.async(fn -> Accounts.count_unactivated_users() end),
-      oban_stats: Task.async(fn -> safe_oban_stats() end),
-      economy_stats: Task.async(fn -> safe_economy_stats() end),
-      analytics_stats: Task.async(fn -> safe_analytics_stats() end)
-    }
+    # Fire all independent DB queries in parallel for fast mount. The page
+    # renders twice per view (HTTP, then the socket), and at a million rows
+    # these counts take a second or more, so the two share one run for half a
+    # minute; the live block below refreshes on its own.
+    r =
+      Gamend.Cache.cached({:admin_dashboard_stats}, [ttl: :timer.seconds(30)], fn ->
+        tasks = %{
+          # Players / lobbies / parties / quests / matchmaking / tournaments come
+          # from the one cached composition every stats surface reads.
+          snapshot: Task.async(fn -> safe_snapshot() end),
+          # Sessions only, as the page the button opens lists: every token context
+          # (reset, confirm, API) made this read higher than that page ever showed.
+          sessions_count:
+            Task.async(fn ->
+              Repo.aggregate(Ecto.Query.where(UserToken, [t], t.context == "session"), :count)
+            end),
+          notifications_count: Task.async(fn -> Notifications.count_all_notifications() end),
+          push_stats: Task.async(fn -> Gamend.Push.token_stats() end),
+          leaderboards_count: Task.async(fn -> Repo.aggregate(Leaderboard, :count) end),
+          matchmaking_stats: Task.async(fn -> Gamend.Matchmaking.stats() end),
+          ready_check_stats: Task.async(fn -> Gamend.ReadyChecks.stats() end),
+          kv_count: Task.async(fn -> KV.count_entries() end),
+          kv_global: Task.async(fn -> KV.count_entries(global_only: true) end),
+          users_google: Task.async(fn -> Accounts.count_users_with_provider(:google_id) end),
+          users_facebook: Task.async(fn -> Accounts.count_users_with_provider(:facebook_id) end),
+          users_github: Task.async(fn -> Accounts.count_users_with_provider(:github_id) end),
+          users_discord: Task.async(fn -> Accounts.count_users_with_provider(:discord_id) end),
+          users_apple: Task.async(fn -> Accounts.count_users_with_provider(:apple_id) end),
+          users_steam: Task.async(fn -> Accounts.count_users_with_provider(:steam_id) end),
+          users_device: Task.async(fn -> Accounts.count_users_with_provider(:device_id) end),
+          users_password: Task.async(fn -> Accounts.count_users_with_password() end),
+          lobbies_hostless: Task.async(fn -> Gamend.Lobbies.count_hostless_lobbies() end),
+          lobbies_hidden: Task.async(fn -> Gamend.Lobbies.count_hidden_lobbies() end),
+          lobbies_locked: Task.async(fn -> Gamend.Lobbies.count_locked_lobbies() end),
+          lobbies_passworded: Task.async(fn -> Gamend.Lobbies.count_passworded_lobbies() end),
+          leaderboard_records: Task.async(fn -> Gamend.Leaderboards.count_all_records() end),
+          groups_count: Task.async(fn -> Groups.count_all_groups() end),
+          groups_public: Task.async(fn -> Groups.count_groups_by_type("public") end),
+          groups_private: Task.async(fn -> Groups.count_groups_by_type("private") end),
+          groups_hidden: Task.async(fn -> Groups.count_groups_by_type("hidden") end),
+          groups_members: Task.async(fn -> Groups.count_all_members() end),
+          parties_count: Task.async(fn -> Parties.count_all_parties() end),
+          blacklist_count: Task.async(fn -> Gamend.Friends.count_all_blocks() end),
+          friends_count: Task.async(fn -> Gamend.Friends.count_all_friendships() end),
+          parties_members: Task.async(fn -> Parties.count_all_party_members() end),
+          chat_count: Task.async(fn -> Gamend.Chat.count_all_messages() end),
+          chat_senders: Task.async(fn -> Gamend.Chat.count_unique_senders() end),
+          chat_by_type: Task.async(fn -> Gamend.Chat.count_messages_by_type() end),
+          open_reports: Task.async(fn -> Reports.count_open_reports() end),
+          report_counts: Task.async(fn -> Gamend.Reports.count_by_status() end),
+          host_cards: Task.async(fn -> GamendWeb.AdminCard.all() end),
+          active_mutes: Task.async(fn -> Gamend.Chat.count_mutes(%{"active" => true}) end),
+          quest_stats: Task.async(fn -> Gamend.Quests.dashboard_stats() end),
+          payments_stats: Task.async(fn -> Payments.admin_stats() end),
+          translation_stats: Task.async(fn -> TranslationStats.all_completeness() end),
+          users_unactivated: Task.async(fn -> Accounts.count_unactivated_users() end),
+          oban_stats: Task.async(fn -> safe_oban_stats() end),
+          economy_stats: Task.async(fn -> safe_economy_stats() end),
+          analytics_stats: Task.async(fn -> safe_analytics_stats() end)
+        }
 
-    # Await all tasks (the DB pool handles concurrency)
-    r = Map.new(tasks, fn {key, task} -> {key, Task.await(task, 10_000)} end)
+        # Await all tasks (the DB pool handles concurrency)
+        Map.new(tasks, fn {key, task} -> {key, Task.await(task, 30_000)} end)
+      end)
 
     # In-memory stats (ETS / GenServer — instant, no DB)
     conn_stats = ConnectionTracker.cluster_counts()

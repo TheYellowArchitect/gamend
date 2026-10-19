@@ -137,7 +137,7 @@ defmodule GamendWeb.AdminLive.Leaderboards do
                       <span :if={lb.hidden} class="badge badge-ghost badge-sm">Hidden</span>
                     </td>
                     <td class="text-sm">
-                      {Leaderboards.count_records(lb.id, key: :all, guests: true)}
+                      {Map.get(@record_counts, lb.id, 0)}
                     </td>
                     <td class="text-sm">
                       <.timestamp at={lb.inserted_at} />
@@ -790,6 +790,7 @@ defmodule GamendWeb.AdminLive.Leaderboards do
 
     socket
     |> assign(:leaderboards, leaderboards)
+    |> assign(:record_counts, Leaderboards.count_records_by_board(leaderboard_ids(leaderboards)))
     |> assign(:count, count)
     |> assign(:total_pages, total_pages)
     |> sync_selected_ids(leaderboard_ids(leaderboards))

@@ -241,6 +241,20 @@ defmodule GamendWeb.PresentationPage do
                 text_order_class(@hero),
                 text_align_class(@hero)
               ]}>
+                <%!-- `hero.logo`: the site's mark over the claim, larger
+                      than the navbar's. Decorative: the title names the
+                      site. --%>
+                <img
+                  :if={image_src(@hero["logo"])}
+                  src={image_src(@hero["logo"])}
+                  width="112"
+                  height="112"
+                  alt=""
+                  loading="eager"
+                  fetchpriority="high"
+                  class="size-20 sm:size-24 lg:size-28"
+                  data-hero-logo
+                />
                 <h1 class="text-4xl font-extrabold tracking-normal sm:text-5xl lg:text-6xl">
                   {Map.get(@hero, "title", "")}
                 </h1>

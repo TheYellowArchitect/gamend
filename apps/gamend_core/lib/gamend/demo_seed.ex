@@ -34,6 +34,27 @@ defmodule Gamend.DemoSeed do
       report queue deep enough to page through (every status, some filter-filed,
       some resolved) and mutes in every scope, including expired ones
 
+  The volume sets, one per admin list, sized from N:
+
+    * `kv` — a profile row per player plus N/10 global keys (`/admin/kv`)
+    * `notification` — one per player, and N/10 more for the first player
+      (`/admin/notifications`, `/notifications`)
+    * `analytics` — 2N events over 90 days, a few activity days per player,
+      daily counters for a year (`/admin/analytics/*`)
+    * `economy` — a wallet per player, 2N ledger entries, N/100 of them the
+      first player's (`/admin/economy`)
+    * `payment` — N/10 purchases, each with its entitlement (`/admin/payments`)
+    * `report` — N/10 page reports over 500 pages (`/admin/reports`)
+    * `friend` — a friendship per player, N/100 friends for the first player
+      (`/admin/friends`)
+    * `session` — a session token per player (`/admin/sessions`)
+    * `lobby` — N/10 lobbies (`/admin/lobbies`)
+    * `ban` — N/100 account and IP bans (`/admin/bans`)
+    * `inventory` — two items per player (`/admin/economy`)
+
+  The first player is the heavy one: `mix demo.bench` signs in as them for the
+  player pages, so their lists are the long ones.
+
   The `lobby_snapshot` set goes through the real `capture_lobby/3` path rather
   than inserting rows, so what you see is shaped exactly like production data —
   including content-addressed section dedup. One of its runs reproduces the July
@@ -49,20 +70,32 @@ defmodule Gamend.DemoSeed do
 
   Rows are inserted in bulk rather than through the contexts: this is about
   volume, not about exercising business rules, and 1000 individual writes on
-  SQLite is slow. The cache is flushed afterwards so pages read the new rows.
+  SQLite is slow. Rows are streamed in statements of up to 30,000 parameters,
+  four at a time on Postgres, so a million rows a set fits in memory and takes
+  seconds per set. The cache is flushed afterwards so pages read the new rows,
+  and Postgres re-analyses the tables so the planner sees their new size.
   """
 
   import Ecto.Query
 
   alias Gamend.Accounts.User
+  alias Gamend.Accounts.UserToken
+  alias Gamend.Analytics.ActivityDay
+  alias Gamend.Analytics.DailyCount
+  alias Gamend.Analytics.Event, as: AnalyticsEvent
   alias Gamend.Bans.Ban
   alias Gamend.Chat.FilterWord
   alias Gamend.Chat.Message
   alias Gamend.Chat.Moderation
   alias Gamend.Chat.Moderation.Normalizer
   alias Gamend.Chat.Report
+  alias Gamend.Economy.LedgerEntry
+  alias Gamend.Economy.Wallet
+  alias Gamend.Friends.Friendship
   alias Gamend.Groups.Group
   alias Gamend.Groups.GroupMember
+  alias Gamend.Inventory.Item, as: InventoryItem
+  alias Gamend.KV.Entry, as: KVEntry
   alias Gamend.Leaderboards.Leaderboard
   alias Gamend.Leaderboards.Record
   alias Gamend.Lobbies.Lobby
@@ -70,25 +103,33 @@ defmodule Gamend.DemoSeed do
   alias Gamend.LobbySnapshots.Event, as: SnapshotEvent
   alias Gamend.LobbySnapshots.Snapshot
   alias Gamend.LobbySnapshots.Writer
+  alias Gamend.Notifications.Notification
   alias Gamend.Parties.Party
+  alias Gamend.Payments.Entitlement
+  alias Gamend.Payments.Purchase
   alias Gamend.Push.PushToken
   alias Gamend.Quests.Quest
   alias Gamend.Quests.QuestProgress
   alias Gamend.ReadyChecks.Check, as: ReadyCheck
   alias Gamend.ReadyChecks.Participant, as: ReadyCheckParticipant
   alias Gamend.Repo
+  alias Gamend.Reports.Report, as: PageReport
   alias Gamend.Tournaments.Entry
   alias Gamend.Tournaments.Tournament
   alias Gamend.UUIDv7
 
   @prefix "demo-seed"
   @leaderboard_slug "demo_seed_scores"
+  @season_slug "demo_seed_monthly"
   @group_title "Demo Seed Group"
   @tournament_slug "demo-seed-cup"
   @quest_key_prefix "demo-seed-"
   @default_count 1000
-  @batch 500
-  @all_sets ~w(leaderboard group tournament lobby_snapshot quest push ready_check chat_moderation)
+  # One statement's bind parameters: under SQLite's 32,766 and Postgres's 65,535.
+  @max_params 30_000
+  @all_sets ~w(leaderboard group tournament lobby_snapshot quest push ready_check chat_moderation
+               kv notification analytics economy payment report friend session lobby ban inventory)
+  @year_sec 365 * 86_400
   @lobby_title_prefix "Demo Seed Run"
   @max_runs 12
   @chat_lobby_title "#{@lobby_title_prefix} Chat"
@@ -180,13 +221,132 @@ defmodule Gamend.DemoSeed do
         "push" -> seed_push_tokens(users)
         "ready_check" -> seed_ready_checks(users)
         "chat_moderation" -> seed_chat_moderation(users)
+        "kv" -> seed_kv(users)
+        "notification" -> seed_notifications(users)
+        "analytics" -> seed_analytics(users)
+        "economy" -> seed_economy(users)
+        "payment" -> seed_payments(users)
+        "report" -> seed_reports(users)
+        "friend" -> seed_friends(users)
+        "session" -> seed_sessions(users)
+        "lobby" -> seed_lobbies(users)
+        "ban" -> seed_bans(users)
+        "inventory" -> seed_inventory(users)
       end)
 
+      analyze()
       Gamend.Cache.delete_all()
       info("done — run `demo.seed --clean` to remove it again")
     end
 
     :ok
+  end
+
+  @doc """
+  What `mix demo.bench` signs in with and links to: a session token for an
+  admin (created on first call as `demo-seed-admin`, removed by `--clean`)
+  and one for the heavy player (the first, whose lists are the long ones),
+  plus the ids of the seeded pages. Raises `ArgumentError` before a seed.
+  """
+  @spec bench_context() :: %{admin_token: binary(), player_token: binary(), params: map()}
+  def bench_context do
+    player =
+      Repo.get_by(User, device_id: device_id(1)) ||
+        raise ArgumentError, "no demo players: run `demo.seed` first"
+
+    group_id = Repo.one(from(g in Group, where: g.title == @group_title, select: g.id))
+
+    lobby_id =
+      Repo.one(
+        from(l in Lobby,
+          where: like(l.title, "Demo Seed Lobby %"),
+          order_by: l.title,
+          limit: 1,
+          select: l.id
+        )
+      )
+
+    %{
+      admin_token: session_token(ensure_bench_admin()),
+      player_token: session_token(player),
+      params:
+        %{
+          "player_id" => player.id,
+          "group_id" => group_id,
+          "lobby_id" => lobby_id,
+          "leaderboard" => @leaderboard_slug,
+          "season_board" => @season_slug,
+          "tournament" => @tournament_slug,
+          "search_hit" => username(42),
+          "search_broad" => @prefix,
+          "search_miss" => "zq-no-such-name"
+        }
+        |> Map.merge(host_params(player.id))
+    }
+  end
+
+  # The ids a host's own pages need (`config :gamend_core, :demo_bench_params,
+  # {module, function}`, called with the heavy player's id): its seed made
+  # them, and only it knows where they are.
+  defp host_params(player_id) do
+    case Application.get_env(:gamend_core, :demo_bench_params) do
+      {module, function} -> apply(module, function, [player_id])
+      nil -> %{}
+    end
+  end
+
+  @doc """
+  For a host's own seed (`mix polyglot.demo.seed`): the demo players' ids in
+  order, the heavy one first, `count` of them (every one by default). Empty
+  before `demo.seed` has run.
+  """
+  @spec player_ids(pos_integer() | nil) :: [Ecto.UUID.t()]
+  def player_ids(count \\ nil) do
+    from(u in User,
+      where: like(u.device_id, ^"#{@prefix}-%") and not u.is_admin,
+      order_by: u.device_id,
+      select: u.id
+    )
+    |> then(&if count, do: limit(&1, ^count), else: &1)
+    |> Repo.all(timeout: :infinity)
+  end
+
+  @doc """
+  For a host's own seed: streams `rows` into `schema` the way every set here
+  does (statements under the bind-parameter limit, four at once on
+  Postgres) and answers how many went in. `analyze/0` after a bulk load.
+  """
+  @spec insert_rows(Enumerable.t(), module()) :: non_neg_integer()
+  def insert_rows(rows, schema), do: insert_batches(rows, schema)
+
+  @doc "Re-analyses the tables after a bulk load (Postgres; nothing on SQLite)."
+  @spec analyze_tables() :: :ok
+  def analyze_tables, do: analyze()
+
+  defp ensure_bench_admin do
+    device_id = "#{@prefix}-admin"
+
+    case Repo.get_by(User, device_id: device_id) do
+      nil ->
+        Repo.insert!(%User{
+          device_id: device_id,
+          username: device_id,
+          display_name: "Demo Bench Admin",
+          is_admin: true,
+          is_activated: true
+        })
+
+      admin ->
+        admin
+    end
+  end
+
+  # Inserted here rather than through `Gamend.Accounts`: that also touches the
+  # player's presence, which needs the whole application running.
+  defp session_token(user) do
+    {token, row} = UserToken.build_session_token(user)
+    Repo.insert!(row)
+    token
   end
 
   defp parse_sets(nil), do: @all_sets
@@ -208,45 +368,62 @@ defmodule Gamend.DemoSeed do
 
   defp ensure_users(count) do
     existing =
-      from(u in User, where: like(u.device_id, ^"#{@prefix}-%"), select: {u.device_id, u.id})
+      from(u in User, where: like(u.device_id, ^"#{@prefix}-%"), select: u.device_id)
       |> Repo.all()
-      |> Map.new()
-
-    missing =
-      for i <- 1..count,
-          device_id = device_id(i),
-          not Map.has_key?(existing, device_id),
-          do: {i, device_id}
+      |> MapSet.new()
 
     now = DateTime.utc_now(:second)
 
-    missing
-    |> Enum.map(fn {i, device_id} ->
-      %{
-        id: UUIDv7.generate(),
-        device_id: device_id,
-        username: username(i),
-        display_name: display_name(i),
-        is_admin: false,
-        is_activated: true,
-        metadata: %{},
-        token_version: 0,
-        inserted_at: now,
-        updated_at: now
-      }
-    end)
-    |> insert_batches(User)
+    added =
+      1..count
+      |> Stream.map(&{&1, device_id(&1)})
+      |> Stream.reject(fn {_i, device_id} -> MapSet.member?(existing, device_id) end)
+      |> Stream.map(fn {i, device_id} -> player_row(i, device_id, now) end)
+      |> insert_batches(User)
 
-    info("players: #{count} (#{length(missing)} new)")
+    info("players: #{count} (#{added} new)")
 
+    # `mix demo.bench`'s admin shares the prefix (so --clean takes it) but is
+    # not a player.
     from(u in User,
-      where: like(u.device_id, ^"#{@prefix}-%"),
+      where: like(u.device_id, ^"#{@prefix}-%") and not u.is_admin,
       order_by: u.device_id,
       limit: ^count,
       select: u.id
     )
     |> Repo.all()
   end
+
+  # Every third player registered (a confirmed email), the rest guests; last
+  # seen over the past month and joined up to a year before that, so the
+  # admin lists and the analytics segments have something to sort and split.
+  # Confirmed, or the retention sweep deletes them as unconfirmed sign-ups
+  # while the seed is still writing their rows.
+  defp player_row(i, device_id, now) do
+    last_seen = spread(now, i, 30 * 86_400)
+    joined = spread(last_seen, i * 31, @year_sec)
+    registered? = rem(i, 3) == 0
+
+    %{
+      id: UUIDv7.generate(),
+      device_id: device_id,
+      email: if(registered?, do: "#{device_id}@example.test"),
+      confirmed_at: if(registered?, do: joined),
+      username: username(i),
+      display_name: display_name(i),
+      is_admin: false,
+      is_activated: true,
+      metadata: %{},
+      token_version: 0,
+      last_seen_at: last_seen,
+      inserted_at: joined,
+      updated_at: joined
+    }
+  end
+
+  # A deterministic instant in the `window` seconds before `from`, scattered by
+  # `i` so neighbouring rows do not share a timestamp.
+  defp spread(from, i, window), do: DateTime.add(from, -rem(i * 7_919, window), :second)
 
   defp device_id(i), do: "#{@prefix}-#{pad(i)}"
   defp username(i), do: "#{@prefix}-#{pad(i)}"
@@ -266,11 +443,14 @@ defmodule Gamend.DemoSeed do
         metadata: %{}
       })
 
-    Repo.delete_all(from(r in Record, where: r.leaderboard_id == ^leaderboard.id))
+    Repo.delete_all(from(r in Record, where: r.leaderboard_id == ^leaderboard.id),
+      timeout: :infinity
+    )
+
     now = DateTime.utc_now(:second)
 
     user_ids
-    |> Enum.map(fn user_id ->
+    |> Stream.map(fn user_id ->
       %{
         id: UUIDv7.generate(),
         leaderboard_id: leaderboard.id,
@@ -284,20 +464,80 @@ defmodule Gamend.DemoSeed do
     |> insert_batches(Record)
 
     info("leaderboard: #{length(user_ids)} records -> /leaderboards/#{@leaderboard_slug}")
+    seed_seasons(user_ids)
+  end
+
+  # Twelve monthly seasons under one slug, the last still running: what the
+  # All time tab reads as one ranking. Every player has a row in one season,
+  # every fourth in up to two more.
+  defp seed_seasons(user_ids) do
+    now = DateTime.utc_now(:second)
+    month = %{DateTime.to_date(now) | day: 1}
+
+    boards =
+      for back <- 11..0//-1 do
+        starts = month |> Date.shift(month: -back) |> DateTime.new!(~T[00:00:00])
+        ends = month |> Date.shift(month: 1 - back) |> DateTime.new!(~T[00:00:00])
+
+        upsert(Leaderboard, [slug: @season_slug, starts_at: starts], %{
+          slug: @season_slug,
+          title: "Demo Seed Monthly",
+          description: "Volume demo seasons.",
+          sort_order: :desc,
+          operator: :best,
+          starts_at: starts,
+          ends_at: ends,
+          metadata: %{}
+        })
+      end
+
+    ids = Enum.map(boards, & &1.id)
+    by_season = List.to_tuple(ids)
+    Repo.delete_all(from(r in Record, where: r.leaderboard_id in ^ids), timeout: :infinity)
+
+    rows =
+      user_ids
+      |> Stream.with_index()
+      |> Stream.flat_map(fn {user_id, i} ->
+        seasons =
+          if rem(i, 4) == 0,
+            do: Enum.uniq([rem(i, 12), rem(i * 7 + 3, 12), rem(i * 5 + 1, 12)]),
+            else: [rem(i, 12)]
+
+        for season <- seasons do
+          %{
+            id: UUIDv7.generate(),
+            leaderboard_id: elem(by_season, season),
+            user_id: user_id,
+            score: :rand.uniform(1_000_000),
+            metadata: %{},
+            inserted_at: now,
+            updated_at: now
+          }
+        end
+      end)
+      |> insert_batches(Record)
+
+    # Written around `submit_score/5`, so All time's own board is filled here.
+    {:ok, best} = Gamend.Leaderboards.rebuild_all_time(@season_slug)
+
+    info(
+      "seasons: 12 boards, #{rows} records, #{best} all-time rows -> /leaderboards/#{@season_slug}?period=all"
+    )
   end
 
   defp seed_group(user_ids) do
     [creator | members] = user_ids
     group = demo_group(user_ids)
 
-    Repo.delete_all(from(m in GroupMember, where: m.group_id == ^group.id))
+    Repo.delete_all(from(m in GroupMember, where: m.group_id == ^group.id), timeout: :infinity)
     now = DateTime.utc_now(:second)
 
     rows =
       [%{user_id: creator, role: "admin"}] ++ Enum.map(members, &%{user_id: &1, role: "member"})
 
     rows
-    |> Enum.map(fn row ->
+    |> Stream.map(fn row ->
       %{
         id: UUIDv7.generate(),
         group_id: group.id,
@@ -341,10 +581,12 @@ defmodule Gamend.DemoSeed do
         metadata: %{}
       })
 
-    Repo.delete_all(from(e in Entry, where: e.tournament_id == ^tournament.id))
+    Repo.delete_all(from(e in Entry, where: e.tournament_id == ^tournament.id),
+      timeout: :infinity
+    )
 
     user_ids
-    |> Enum.map(fn user_id ->
+    |> Stream.map(fn user_id ->
       %{
         id: UUIDv7.generate(),
         tournament_id: tournament.id,
@@ -438,12 +680,14 @@ defmodule Gamend.DemoSeed do
     now = DateTime.utc_now(:second)
     today = Gamend.Quests.period_key("daily", now)
 
-    Repo.delete_all(from(p in QuestProgress, where: like(p.quest_key, ^"#{@quest_key_prefix}%")))
+    Repo.delete_all(from(p in QuestProgress, where: like(p.quest_key, ^"#{@quest_key_prefix}%")),
+      timeout: :infinity
+    )
 
     daily_rows =
       user_ids
-      |> Enum.with_index()
-      |> Enum.map(fn {user_id, i} ->
+      |> Stream.with_index()
+      |> Stream.map(fn {user_id, i} ->
         completed? = rem(i, 3) == 0
         claimed? = rem(i, 6) == 0
 
@@ -472,9 +716,9 @@ defmodule Gamend.DemoSeed do
 
     achievement_rows =
       user_ids
-      |> Enum.with_index()
-      |> Enum.filter(fn {_id, i} -> rem(i, 2) == 0 end)
-      |> Enum.map(fn {user_id, _i} ->
+      |> Stream.with_index()
+      |> Stream.filter(fn {_id, i} -> rem(i, 2) == 0 end)
+      |> Stream.map(fn {user_id, _i} ->
         %{
           id: UUIDv7.generate(),
           user_id: user_id,
@@ -493,9 +737,9 @@ defmodule Gamend.DemoSeed do
 
     chain_rows =
       user_ids
-      |> Enum.with_index()
-      |> Enum.filter(fn {_id, i} -> rem(i, 4) == 0 end)
-      |> Enum.map(fn {user_id, i} ->
+      |> Stream.with_index()
+      |> Stream.filter(fn {_id, i} -> rem(i, 4) == 0 end)
+      |> Stream.map(fn {user_id, i} ->
         %{
           id: UUIDv7.generate(),
           user_id: user_id,
@@ -534,11 +778,14 @@ defmodule Gamend.DemoSeed do
         }
       end
 
-    rows = daily_rows ++ achievement_rows ++ chain_rows ++ group_rows
-    insert_batches(rows, QuestProgress)
+    rows =
+      insert_batches(
+        Stream.concat([daily_rows, achievement_rows, chain_rows, group_rows]),
+        QuestProgress
+      )
 
     info(
-      "quests: #{3 + length(group_members)} definitions, #{length(rows)} progress rows -> /admin/quests"
+      "quests: #{3 + length(group_members)} definitions, #{rows} progress rows -> /admin/quests"
     )
   end
 
@@ -555,8 +802,13 @@ defmodule Gamend.DemoSeed do
   end
 
   defp clean_quests do
-    Repo.delete_all(from(p in QuestProgress, where: like(p.quest_key, ^"#{@quest_key_prefix}%")))
-    Repo.delete_all(from(q in Quest, where: like(q.key, ^"#{@quest_key_prefix}%")))
+    Repo.delete_all(from(p in QuestProgress, where: like(p.quest_key, ^"#{@quest_key_prefix}%")),
+      timeout: :infinity
+    )
+
+    Repo.delete_all(from(q in Quest, where: like(q.key, ^"#{@quest_key_prefix}%")),
+      timeout: :infinity
+    )
   end
 
   # One device per player (platform/provider cycling), every tenth disabled so
@@ -564,12 +816,15 @@ defmodule Gamend.DemoSeed do
   # against this data is observable in the server log. Rows cascade-delete
   # with their demo user on clean.
   defp seed_push_tokens(user_ids) do
-    Repo.delete_all(from(t in PushToken, where: like(t.token, ^"#{@prefix}-token-%")))
+    Repo.delete_all(from(t in PushToken, where: like(t.token, ^"#{@prefix}-token-%")),
+      timeout: :infinity
+    )
+
     now = DateTime.utc_now(:second)
 
     user_ids
-    |> Enum.with_index()
-    |> Enum.map(fn {user_id, i} ->
+    |> Stream.with_index()
+    |> Stream.map(fn {user_id, i} ->
       {platform, provider} =
         case rem(i, 3) do
           0 -> {"android", "fcm"}
@@ -716,11 +971,15 @@ defmodule Gamend.DemoSeed do
     room_ids = Map.values(rooms)
     message_ids = from(m in Message, where: m.chat_ref_id in ^room_ids, select: m.id)
 
-    Repo.delete_all(from(r in Report, where: r.message_id in subquery(message_ids)))
-    Repo.delete_all(from(m in Message, where: m.chat_ref_id in ^room_ids))
+    Repo.delete_all(from(r in Report, where: r.message_id in subquery(message_ids)),
+      timeout: :infinity
+    )
+
+    Repo.delete_all(from(m in Message, where: m.chat_ref_id in ^room_ids), timeout: :infinity)
 
     Repo.delete_all(
-      from(b in Ban, where: b.kind == :chat and b.user_id in subquery(demo_user_ids()))
+      from(b in Ban, where: b.kind == :chat and b.user_id in subquery(demo_user_ids())),
+      timeout: :infinity
     )
   end
 
@@ -761,7 +1020,8 @@ defmodule Gamend.DemoSeed do
       |> Enum.map(fn {sender_id, i} ->
         chat_type = Enum.at(@chat_room_types, rem(i, length(@chat_room_types)))
         {content, _reason, flagged?} = chat_line(i)
-        at = DateTime.add(now, -(i * 900 + 60), :second)
+        # Fifteen minutes apart, wrapping within the year.
+        at = DateTime.add(now, -(rem(i * 900, @year_sec) + 60), :second)
 
         %{
           id: UUIDv7.generate(),
@@ -804,33 +1064,30 @@ defmodule Gamend.DemoSeed do
       |> Stream.drop(1)
       |> Enum.take(length(messages))
 
-    rows =
-      messages
-      |> Enum.zip(reporters)
-      |> Enum.with_index()
-      |> Enum.map(fn {{message, reporter_id}, i} ->
-        {status, note} = report_status(i)
-        {_content, reason, flagged?} = chat_line(i)
-        at = DateTime.add(now, -i * 900, :second)
+    messages
+    |> Stream.zip(reporters)
+    |> Stream.with_index()
+    |> Stream.map(fn {{message, reporter_id}, i} ->
+      {status, note} = report_status(i)
+      {_content, reason, flagged?} = chat_line(i)
+      at = DateTime.add(now, -rem(i * 900, @year_sec), :second)
 
-        %{
-          id: UUIDv7.generate(),
-          reporter_id: if(flagged?, do: nil, else: reporter_id),
-          message_id: message.id,
-          reported_user_id: message.sender_id,
-          content_snapshot: message.content,
-          reason: reason,
-          status: status,
-          resolved_by: if(note, do: moderator_id),
-          resolution_note: note,
-          resolved_at: if(note, do: now),
-          inserted_at: at,
-          updated_at: at
-        }
-      end)
-
-    insert_batches(rows, Report)
-    length(rows)
+      %{
+        id: UUIDv7.generate(),
+        reporter_id: if(flagged?, do: nil, else: reporter_id),
+        message_id: message.id,
+        reported_user_id: message.sender_id,
+        content_snapshot: message.content,
+        reason: reason,
+        status: status,
+        resolved_by: if(note, do: moderator_id),
+        resolution_note: note,
+        resolved_at: if(note, do: now),
+        inserted_at: at,
+        updated_at: at
+      }
+    end)
+    |> insert_batches(Report)
   end
 
   defp report_status(i) do
@@ -906,11 +1163,28 @@ defmodule Gamend.DemoSeed do
     group = Repo.get_by(Group, title: @group_title)
     tournament = Repo.get_by(Tournament, slug: @tournament_slug)
 
-    if lb, do: Repo.delete_all(from(r in Record, where: r.leaderboard_id == ^lb.id))
-    if group, do: Repo.delete_all(from(m in GroupMember, where: m.group_id == ^group.id))
-    if tournament, do: Repo.delete_all(from(e in Entry, where: e.tournament_id == ^tournament.id))
+    if lb,
+      do:
+        Repo.delete_all(from(r in Record, where: r.leaderboard_id == ^lb.id), timeout: :infinity)
+
+    if group,
+      do:
+        Repo.delete_all(from(m in GroupMember, where: m.group_id == ^group.id),
+          timeout: :infinity
+        )
+
+    if tournament,
+      do:
+        Repo.delete_all(from(e in Entry, where: e.tournament_id == ^tournament.id),
+          timeout: :infinity
+        )
 
     if lb, do: Repo.delete(lb)
+    # The seasons and All time's own board (`<slug>__all_time`).
+    Repo.delete_all(from(l in Leaderboard, where: like(l.slug, ^"#{@season_slug}%")),
+      timeout: :infinity
+    )
+
     if group, do: Repo.delete(group)
     if tournament, do: Repo.delete(tournament)
 
@@ -921,23 +1195,562 @@ defmodule Gamend.DemoSeed do
     # Reports, mutes and messages cascade with their players; the blocklist has
     # no player to hang off.
     clean_filter_words()
+    clean_volume()
 
-    {users, _} = Repo.delete_all(from(u in User, where: like(u.device_id, ^"#{@prefix}-%")))
+    {users, _} =
+      Repo.delete_all(from(u in User, where: like(u.device_id, ^"#{@prefix}-%")),
+        timeout: :infinity
+      )
 
     Gamend.Cache.delete_all()
     info("removed demo data (#{users} players)")
   end
 
+  # ── Volume sets ───────────────────────────────────────────────────────────
+  #
+  # One per admin list, each sized from N. Rows that cascade with their player
+  # are cleaned by `--clean` deleting the players; the rest carry the prefix
+  # (`clean_volume/0`).
+
+  @event_names ~w(demo.page_view demo.round_finished demo.test_finished demo.hint
+                  demo.checkout demo.signup)
+  @event_langs ~w(es fr de it ro pt ja zh)
+
+  # A profile row per player, plus N/10 global keys for the key search to wade
+  # through.
+  defp seed_kv(user_ids) do
+    Repo.delete_all(from(e in KVEntry, where: like(e.key, ^"#{@prefix}:%")), timeout: :infinity)
+    now = DateTime.utc_now(:second)
+
+    profiles =
+      user_ids
+      |> Stream.with_index(1)
+      |> Stream.map(fn {user_id, i} ->
+        value = %{"level" => rem(i, 50), "title" => display_name(i)}
+        kv_row("#{@prefix}:profile", user_id, value, spread(now, i, @year_sec))
+      end)
+
+    globals =
+      Stream.map(1..max(div(length(user_ids), 10), 1), fn i ->
+        kv_row("#{@prefix}:global:#{pad(i)}", nil, %{"n" => i}, spread(now, i, @year_sec))
+      end)
+
+    rows = insert_batches(Stream.concat(profiles, globals), KVEntry)
+    info("kv: #{rows} entries -> /admin/kv")
+  end
+
+  defp kv_row(key, user_id, value, at) do
+    %{
+      id: UUIDv7.generate(),
+      key: key,
+      user_id: user_id,
+      lobby_id: nil,
+      value: value,
+      metadata: %{},
+      inserted_at: at,
+      updated_at: at
+    }
+  end
+
+  # One per player from the next one along, and N/10 more for the first
+  # player, half of them unread.
+  defp seed_notifications([heavy | _] = user_ids) do
+    Repo.delete_all(from(n in Notification, where: like(n.title, ^"#{@prefix} %")),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+    # The next player along, the last one's being the first.
+    senders = Stream.concat(tl(user_ids), [heavy])
+
+    each =
+      user_ids
+      |> Stream.zip(senders)
+      |> Stream.with_index(1)
+      |> Stream.map(fn {{recipient, sender}, i} ->
+        notification_row(recipient, sender, i, now)
+      end)
+
+    inbox =
+      user_ids
+      |> tl()
+      |> Stream.cycle()
+      |> Stream.take(div(length(user_ids), 10))
+      |> Stream.with_index(1)
+      |> Stream.map(fn {sender, i} -> notification_row(heavy, sender, -i, now) end)
+
+    rows = insert_batches(Stream.concat(each, inbox), Notification)
+    info("notifications: #{rows} -> /admin/notifications, /notifications")
+  end
+
+  defp notification_row(recipient, sender, i, now) do
+    at = spread(now, abs(i), 90 * 86_400)
+
+    %{
+      id: UUIDv7.generate(),
+      sender_id: sender,
+      recipient_id: recipient,
+      title: "#{@prefix} notice #{i}",
+      content: "Volume demo notification.",
+      metadata: %{},
+      read: rem(i, 2) == 0,
+      inserted_at: at,
+      updated_at: at
+    }
+  end
+
+  # 2N events over 90 days, one to five activity days per player in the past
+  # 60, and a year of daily counters for every event name.
+  defp seed_analytics(user_ids) do
+    clean_analytics()
+    now = DateTime.utc_now(:second)
+    today = DateTime.to_date(now)
+    count = length(user_ids)
+
+    events =
+      user_ids
+      |> Stream.cycle()
+      |> Stream.take(count * 2)
+      |> Stream.with_index()
+      |> Stream.map(fn {user_id, i} ->
+        %{
+          id: UUIDv7.generate(),
+          name: Enum.at(@event_names, rem(i, length(@event_names))),
+          dims: %{
+            "lang" => Enum.at(@event_langs, rem(i, length(@event_langs))),
+            "who" => if(rem(i, 3) == 0, do: "account", else: "guest"),
+            "score" => rem(i, 11)
+          },
+          user_id: user_id,
+          inserted_at: spread(now, i, 90 * 86_400)
+        }
+      end)
+
+    days =
+      user_ids
+      |> Stream.with_index()
+      |> Stream.flat_map(fn {user_id, i} ->
+        for k <- 0..rem(i, 5) do
+          day = Date.add(today, -(rem(i, 45) + k * 3))
+          %{id: UUIDv7.generate(), user_id: user_id, day: day, inserted_at: now}
+        end
+      end)
+
+    counters =
+      for name <- @event_names, back <- 0..364 do
+        %{
+          id: UUIDv7.generate(),
+          day: Date.add(today, -back),
+          key: name,
+          count: div(count, 50) + rem(back * 7, 100),
+          inserted_at: now,
+          updated_at: now
+        }
+      end
+
+    events = insert_batches(events, AnalyticsEvent)
+    days = insert_batches(days, ActivityDay)
+    counters = insert_batches(counters, DailyCount)
+
+    info(
+      "analytics: #{events} events, #{days} activity days, #{counters} daily counts -> /admin/analytics"
+    )
+  end
+
+  # Events lose their player on account deletion rather than going with it,
+  # and the counters have none, so both go by name.
+  defp clean_analytics do
+    Repo.delete_all(from(e in AnalyticsEvent, where: like(e.name, "demo.%")), timeout: :infinity)
+    Repo.delete_all(from(c in DailyCount, where: like(c.key, "demo.%")), timeout: :infinity)
+
+    Repo.delete_all(from(d in ActivityDay, where: d.user_id in subquery(demo_user_ids())),
+      timeout: :infinity
+    )
+  end
+
+  # A coin wallet per player, a grant and a spend each, and N/100 entries of
+  # history for the first player.
+  defp seed_economy([heavy | _] = user_ids) do
+    Repo.delete_all(from(w in Wallet, where: w.user_id in subquery(demo_user_ids())),
+      timeout: :infinity
+    )
+
+    Repo.delete_all(from(l in LedgerEntry, where: l.user_id in subquery(demo_user_ids())),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    wallets =
+      user_ids
+      |> Stream.with_index(1)
+      |> Stream.map(fn {user_id, i} ->
+        %{
+          id: UUIDv7.generate(),
+          user_id: user_id,
+          currency: "coins",
+          balance: rem(i * 37, 5_000),
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+
+    entries =
+      user_ids
+      |> Stream.with_index(1)
+      |> Stream.flat_map(fn {user_id, i} ->
+        [
+          ledger_row(user_id, 500, "demo_seed_grant", i, now),
+          ledger_row(user_id, -rem(i, 400), "demo_seed_spend", i + 1, now)
+        ]
+      end)
+
+    history =
+      Stream.map(1..div(length(user_ids), 100)//1, fn i ->
+        ledger_row(heavy, if(rem(i, 2) == 0, do: 10, else: -10), "demo_seed_history", i, now)
+      end)
+
+    wallets = insert_batches(wallets, Wallet)
+    entries = insert_batches(Stream.concat(entries, history), LedgerEntry)
+    info("economy: #{wallets} wallets, #{entries} ledger entries -> /admin/economy")
+  end
+
+  defp ledger_row(user_id, delta, reason, i, now) do
+    %{
+      id: UUIDv7.generate(),
+      user_id: user_id,
+      currency: "coins",
+      delta: delta,
+      balance_after: rem(i * 37, 5_000),
+      reason: reason,
+      metadata: %{},
+      inserted_at: spread(now, i, @year_sec)
+    }
+  end
+
+  # Every tenth player bought something; the completed ones hold an
+  # entitlement from it.
+  defp seed_payments(user_ids) do
+    Repo.delete_all(from(e in Entitlement, where: e.key == "demo_seed_pro"), timeout: :infinity)
+
+    Repo.delete_all(from(p in Purchase, where: like(p.order_id, ^"#{@prefix}-order-%")),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    purchases =
+      user_ids
+      |> Enum.take_every(10)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {user_id, i} ->
+        at = spread(now, i, @year_sec)
+
+        %{
+          id: UUIDv7.generate(),
+          user_id: user_id,
+          provider: "stripe",
+          order_id: "#{@prefix}-order-#{pad(i)}",
+          provider_transaction_id: "#{@prefix}-tx-#{pad(i)}",
+          status: Enum.at(~w(completed completed completed refunded failed), rem(i, 5)),
+          quantity: 1,
+          currency: "eur",
+          amount: if(rem(i, 3) == 0, do: 3_900, else: 499),
+          environment: "production",
+          raw_provider_payload: %{},
+          metadata: %{},
+          purchased_at: at,
+          inserted_at: at,
+          updated_at: at
+        }
+      end)
+
+    entitlements =
+      for %{status: "completed"} = purchase <- purchases do
+        %{
+          id: UUIDv7.generate(),
+          user_id: purchase.user_id,
+          source_purchase_id: purchase.id,
+          key: "demo_seed_pro",
+          status: "active",
+          starts_at: purchase.purchased_at,
+          metadata: %{},
+          inserted_at: purchase.inserted_at,
+          updated_at: purchase.inserted_at
+        }
+      end
+
+    bought = insert_batches(purchases, Purchase)
+    held = insert_batches(entitlements, Entitlement)
+    info("payments: #{bought} purchases, #{held} entitlements -> /admin/payments")
+  end
+
+  # N/10 reports over 500 pages, so the queue groups them; one in four still
+  # open.
+  defp seed_reports(user_ids) do
+    Repo.delete_all(from(r in PageReport, where: like(r.subject_ref, "/demo-seed/%")),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    rows =
+      user_ids
+      |> Stream.take_every(10)
+      |> Stream.with_index(1)
+      |> Stream.map(fn {user_id, i} ->
+        path = "/demo-seed/page-#{rem(i, 500)}"
+        status = Enum.at(PageReport.statuses(), rem(i, 4))
+        at = spread(now, i, 90 * 86_400)
+
+        %{
+          id: UUIDv7.generate(),
+          kind: "page",
+          subject_ref: path,
+          subject: %{"path" => path},
+          data: %{},
+          description: "Demo report #{i}: the page shows the wrong word.",
+          locale: "en",
+          source: "web",
+          client: %{},
+          attachments: %{},
+          status: status,
+          resolved_at: if(status != "open", do: at),
+          user_id: user_id,
+          inserted_at: at,
+          updated_at: at
+        }
+      end)
+      |> insert_batches(PageReport)
+
+    info("reports: #{rows} -> /admin/reports")
+  end
+
+  # Each player and the next are friends (every fifth still pending); the
+  # first player has N/100 more.
+  defp seed_friends([heavy | _] = user_ids) do
+    Repo.delete_all(from(f in Friendship, where: f.requester_id in subquery(demo_user_ids())),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    chain =
+      user_ids
+      |> Stream.zip(tl(user_ids))
+      |> Stream.with_index(1)
+      |> Stream.map(fn {{a, b}, i} ->
+        friendship_row(a, b, if(rem(i, 5) == 0, do: "pending", else: "accepted"), i, now)
+      end)
+
+    circle =
+      user_ids
+      |> Stream.drop(2)
+      |> Stream.take(div(length(user_ids), 100))
+      |> Stream.with_index(1)
+      |> Stream.map(fn {friend, i} -> friendship_row(friend, heavy, "accepted", i, now) end)
+
+    rows = insert_batches(Stream.concat(chain, circle), Friendship)
+    info("friends: #{rows} friendships -> /admin/friends")
+  end
+
+  defp friendship_row(requester, target, status, i, now) do
+    at = spread(now, i, @year_sec)
+
+    %{
+      id: UUIDv7.generate(),
+      requester_id: requester,
+      target_id: target,
+      status: status,
+      inserted_at: at,
+      updated_at: at
+    }
+  end
+
+  # A web session per player, signed in over the past two weeks.
+  defp seed_sessions(user_ids) do
+    Repo.delete_all(
+      from(t in UserToken,
+        where: t.context == "session" and t.user_id in subquery(demo_user_ids())
+      ),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    rows =
+      user_ids
+      |> Stream.with_index(1)
+      |> Stream.map(fn {user_id, i} ->
+        at = spread(now, i, 14 * 86_400)
+
+        %{
+          id: UUIDv7.generate(),
+          token: :crypto.strong_rand_bytes(32),
+          context: "session",
+          user_id: user_id,
+          authenticated_at: at,
+          inserted_at: at
+        }
+      end)
+      |> insert_batches(UserToken)
+
+    info("sessions: #{rows} -> /admin/sessions")
+  end
+
+  # N/10 lobbies, every seventh hidden and every fifth locked.
+  defp seed_lobbies(user_ids) do
+    Repo.delete_all(from(l in Lobby, where: like(l.title, "Demo Seed Lobby %")),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    rows =
+      user_ids
+      |> Stream.take_every(10)
+      |> Stream.with_index(1)
+      |> Stream.map(fn {host_id, i} ->
+        at = spread(now, i, 7 * 86_400)
+
+        %{
+          id: UUIDv7.generate(),
+          title: "Demo Seed Lobby #{pad(i)}",
+          host_id: host_id,
+          max_users: 8,
+          is_hidden: rem(i, 7) == 0,
+          is_locked: rem(i, 5) == 0,
+          metadata: %{},
+          state: "created",
+          state_changed_at: at,
+          inserted_at: at,
+          updated_at: at
+        }
+      end)
+      |> insert_batches(Lobby)
+
+    info("lobbies: #{rows} -> /admin/lobbies")
+  end
+
+  # N/100 bans, half on accounts and half on addresses; some expired, some
+  # lifted, so the list has history.
+  defp seed_bans([admin | players]) do
+    Repo.delete_all(from(b in Ban, where: like(b.reason, ^"#{@prefix}:%")), timeout: :infinity)
+    now = DateTime.utc_now(:second)
+
+    rows =
+      players
+      |> Stream.take_every(100)
+      |> Stream.with_index(1)
+      |> Stream.map(fn {user_id, i} ->
+        {kind, subject, user} =
+          if rem(i, 2) == 0,
+            do: {:account, user_id, user_id},
+            else:
+              {:ip, "10.#{rem(div(i, 65_536), 256)}.#{rem(div(i, 256), 256)}.#{rem(i, 256)}", nil}
+
+        at = spread(now, i, 90 * 86_400)
+
+        %{
+          id: UUIDv7.generate(),
+          kind: kind,
+          subject: subject,
+          user_id: user,
+          expires_at: if(rem(i, 3) == 1, do: DateTime.add(at, 86_400)),
+          lifted_at: if(rem(i, 5) == 0, do: now),
+          lifted_by: if(rem(i, 5) == 0, do: admin),
+          reason: "#{@prefix}: volume demo ban #{i}",
+          source: :admin,
+          banned_by: admin,
+          inserted_at: at,
+          updated_at: at
+        }
+      end)
+      |> insert_batches(Ban)
+
+    info("bans: #{rows} -> /admin/bans")
+  end
+
+  # Two stacks per player.
+  defp seed_inventory(user_ids) do
+    Repo.delete_all(from(i in InventoryItem, where: like(i.item, "demo_seed_%")),
+      timeout: :infinity
+    )
+
+    now = DateTime.utc_now(:second)
+
+    rows =
+      user_ids
+      |> Stream.with_index(1)
+      |> Stream.flat_map(fn {user_id, i} ->
+        for {item, quantity} <- [{"demo_seed_crate", rem(i, 9) + 1}, {"demo_seed_key", rem(i, 3)}] do
+          %{
+            id: UUIDv7.generate(),
+            user_id: user_id,
+            item: item,
+            quantity: quantity,
+            metadata: %{},
+            inserted_at: now,
+            updated_at: now
+          }
+        end
+      end)
+      |> insert_batches(InventoryItem)
+
+    info("inventory: #{rows} items -> /admin/economy")
+  end
+
+  # What does not leave with the players: rows that keep a nil player, and the
+  # ones that never had one.
+  defp clean_volume do
+    clean_analytics()
+
+    Repo.delete_all(from(p in Purchase, where: like(p.order_id, ^"#{@prefix}-order-%")),
+      timeout: :infinity
+    )
+
+    Repo.delete_all(from(r in PageReport, where: like(r.subject_ref, "/demo-seed/%")),
+      timeout: :infinity
+    )
+
+    Repo.delete_all(from(l in Lobby, where: like(l.title, "Demo Seed Lobby %")),
+      timeout: :infinity
+    )
+
+    Repo.delete_all(from(b in Ban, where: like(b.reason, ^"#{@prefix}:%")), timeout: :infinity)
+    Repo.delete_all(from(e in KVEntry, where: like(e.key, ^"#{@prefix}:%")), timeout: :infinity)
+  end
+
   # ── Helpers ───────────────────────────────────────────────────────────────
 
-  # insert_all rejects oversized statements, so rows go in batches.
-  defp insert_batches([], _schema), do: :ok
-
+  # Streams `rows` into `schema` in statements under @max_params bind
+  # parameters, four at once on Postgres (SQLite has one writer). Answers how
+  # many rows went in.
   defp insert_batches(rows, schema) do
+    size = max(div(@max_params, length(schema.__schema__(:fields))), 1)
+    concurrency = if postgres?(), do: 4, else: 1
+
     rows
-    |> Enum.chunk_every(@batch)
-    |> Enum.each(&Repo.insert_all(schema, &1))
+    |> Stream.chunk_every(size)
+    |> Task.async_stream(fn chunk -> elem(Repo.insert_all(schema, chunk), 0) end,
+      max_concurrency: concurrency,
+      ordered: false,
+      timeout: :infinity
+    )
+    |> Enum.reduce(0, fn {:ok, inserted}, total -> total + inserted end)
   end
+
+  # After a bulk load the planner still holds the old row counts until
+  # autovacuum gets round to it, and a plan made for a hundred rows is the wrong
+  # one for a million. SQLite plans without statistics.
+  defp analyze do
+    if postgres?(), do: Repo.query!("ANALYZE", [], timeout: :infinity)
+    :ok
+  end
+
+  # Built at runtime: a literal comparison against the compiled adapter is
+  # folded by the type checker (see `Gamend.Repo`).
+  defp postgres?, do: Repo.__adapter__() == Module.concat([Ecto, Adapters, Postgres])
 
   defp upsert(schema, lookup, attrs) do
     case Repo.get_by(schema, lookup) do
@@ -1148,9 +1961,11 @@ defmodule Gamend.DemoSeed do
       |> Enum.map(& &1.id)
 
     if lobby_ids != [] do
-      Repo.delete_all(from(s in Snapshot, where: s.lobby_id in ^lobby_ids))
+      Repo.delete_all(from(s in Snapshot, where: s.lobby_id in ^lobby_ids), timeout: :infinity)
 
-      Repo.delete_all(from(e in SnapshotEvent, where: e.lobby_id in ^lobby_ids))
+      Repo.delete_all(from(e in SnapshotEvent, where: e.lobby_id in ^lobby_ids),
+        timeout: :infinity
+      )
 
       Enum.each(lobby_ids, fn id ->
         case Repo.get(Lobby, id) do

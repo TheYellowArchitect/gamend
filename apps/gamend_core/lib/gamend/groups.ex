@@ -291,10 +291,18 @@ defmodule Gamend.Groups do
   @spec count_group_members(Ecto.UUID.t()) :: non_neg_integer()
   @spec count_group_members(Ecto.UUID.t(), keyword()) :: non_neg_integer()
   def count_group_members(group_id, opts \\ []) when is_binary(group_id) do
-    group_id
-    |> members_query(opts)
-    |> exclude(:preload)
-    |> Repo.aggregate(:count, :id)
+    case Repo.search_pattern(Keyword.get(opts, :search)) do
+      # The roster alone, on its index: the listing's join to the members'
+      # accounts made every count read every member's account.
+      nil ->
+        Repo.aggregate(from(m in GroupMember, where: m.group_id == ^group_id), :count, :id)
+
+      _pattern ->
+        group_id
+        |> members_query(opts)
+        |> exclude(:preload)
+        |> Repo.aggregate(:count, :id)
+    end
   end
 
   defp members_query(group_id, opts) do
@@ -307,16 +315,8 @@ defmodule Gamend.Groups do
       )
 
     case Repo.search_pattern(Keyword.get(opts, :search)) do
-      nil ->
-        query
-
-      pattern ->
-        where(
-          query,
-          [user: u],
-          fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.display_name, ^pattern) or
-            fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.username, ^pattern)
-        )
+      nil -> query
+      pattern -> Gamend.Query.filter_user_named(query, :user_id, pattern)
     end
   end
 

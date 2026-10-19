@@ -152,7 +152,9 @@ defmodule Gamend.Analytics.Explore do
     |> group_by(selected_as(:dim_value))
     |> select([e], %{
       value: selected_as(fragment("? ->> CAST(? AS TEXT)", e.dims, ^dim), :dim_value),
-      sum: sum(type(fragment("? ->> CAST(? AS TEXT)", e.dims, ^field), :float)),
+      # In parentheses: Postgres reads `->> CAST(key AS TEXT)::float` as a cast of
+      # the key, not of the value, and has no `jsonb ->> float`.
+      sum: sum(type(fragment("(? ->> CAST(? AS TEXT))", e.dims, ^field), :float)),
       n: count(fragment("? ->> CAST(? AS TEXT)", e.dims, ^field))
     })
     |> Repo.all()
@@ -175,7 +177,7 @@ defmodule Gamend.Analytics.Explore do
           filter
           |> base()
           |> select([e], {
-            sum(type(fragment("? ->> CAST(? AS TEXT)", e.dims, ^field), :float)),
+            sum(type(fragment("(? ->> CAST(? AS TEXT))", e.dims, ^field), :float)),
             count(fragment("? ->> CAST(? AS TEXT)", e.dims, ^field))
           })
           |> Repo.one()

@@ -123,6 +123,35 @@ a friends query on join and memoises the result on the socket's heap for its
 lifetime, so friend count changes both connect cost and per-socket memory.
 
 
+## Pages at volume
+
+A different question: does every page still work, and how fast, when the
+tables hold a million rows? `pages/bench.mjs` loads each page, joins its
+LiveView socket the way a browser does, and fires the events it finds that
+only read: next page and the furthest jump, each sort, each search box (a
+term matching everyone, one name, nothing) and the page-size select. Each
+step is timed (median of the runs) and checked; a crash, a 5xx or a step
+that times out fails the run. `pages/core_pages.mjs` is core's page list; a
+host adds its own with `--spec`.
+
+```bash
+# its own database, and its own build: the adapter is compile-time
+export GAMEND_DB_URL=ecto://$USER@localhost/gamend_scale GAMEND_DEV_BENCH=1 MIX_BUILD_PATH=_build/scale
+mix ecto.create && mix ecto.migrate
+mix demo.seed --count 1000000          # ~10 GB at a million; --count 100000 is ~1 GB
+PORT=4221 GAMEND_RATELIMIT_ENABLED=false GAMEND_RETENTION_ABANDONED_LOBBY_MINUTES=0 mix phx.server &
+mix demo.bench --base-url http://localhost:4221 --label 1m
+node stress/pages/bench.mjs --compare stress/results/pages/100k.json stress/results/pages/1m.json
+```
+
+`mix demo.bench` signs in as an admin it makes and as the heavy demo player
+(their lists are the long ones) and hands the cookies to the client. The
+server needs no rate limit, and lobby retention off, or the sweep reaps the
+seeded lobbies mid-run. For the queries behind a slow step, set
+`ALTER DATABASE gamend_scale SET log_min_duration_statement = 100` and
+`log_parameter_max_length = 0` (a seed's inserts carry thousands of
+parameters) and read the Postgres log.
+
 ## On Fly
 
 `fly/matrix.sh --setup` prints the one-time commands (they create billable

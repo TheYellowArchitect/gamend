@@ -33,17 +33,27 @@ defmodule GamendWeb.AdminLive.Analytics do
   end
 
   @impl true
-  def handle_event("refresh", _params, socket), do: {:noreply, load(socket)}
+  def handle_event("refresh", _params, socket), do: {:noreply, load(socket, true)}
 
-  defp load(socket) do
-    # Gathered for up to a flush window; a reader wants now.
-    _ = Analytics.flush()
+  # A view renders twice (the HTTP page, then the socket), and at a million
+  # players one computation takes seconds, so the two share it for half a
+  # minute. Refresh computes again.
+  defp load(socket, fresh? \\ false) do
+    %{segment: segment, days: days} = socket.assigns
     today = Date.utc_today()
-    opts = [segment: socket.assigns.segment]
-    series = Analytics.daily_series(socket.assigns.days, today, opts)
+    key = {:admin_analytics, segment, days, today}
+    if fresh?, do: Gamend.Cache.delete(key)
+
+    {summary, series} =
+      Gamend.Cache.cached(key, [ttl: :timer.seconds(30)], fn ->
+        # Gathered for up to a flush window; a reader wants now.
+        _ = Analytics.flush()
+        opts = [segment: segment]
+        {Analytics.summary(today, opts), Analytics.daily_series(days, today, opts)}
+      end)
 
     socket
-    |> assign(:summary, Analytics.summary(today, opts))
+    |> assign(:summary, summary)
     |> assign(:series, series)
   end
 

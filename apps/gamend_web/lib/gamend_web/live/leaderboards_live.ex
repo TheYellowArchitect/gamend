@@ -14,6 +14,11 @@ defmodule GamendWeb.LeaderboardsLive do
   per key and filters that add a part to it (`GamendWeb.LeaderboardViews`),
   held in the URL (`?tab=match&lang=es_es`). Every read on the page (the
   rows, their count, the reader's own rank) is the view's one key.
+
+  A board with an all-time ranking (`Leaderboards.all_time?/1`: a `:best`
+  board with seasons) has two tabs above its season, the season's length
+  ("Monthly") and All time (`?period=all`), which reads every season as
+  one ranking, the view's tab and filters kept.
   """
   use GamendWeb, :live_view
 
@@ -47,6 +52,8 @@ defmodule GamendWeb.LeaderboardsLive do
       |> assign(:board_action, nil)
       |> assign(:view, nil)
       |> assign(:record_key, "")
+      |> assign(:all_time, false)
+      |> assign(:period_tabs, nil)
       |> reload_groups()
 
     {:ok, socket}
@@ -166,6 +173,8 @@ defmodule GamendWeb.LeaderboardsLive do
             current_user_id={@current_scope && Scope.user(@current_scope) && @current_scope.user_id}
             locale={@locale}
             view={@view}
+            all_time={@all_time}
+            period_tabs={@period_tabs}
           />
         <% else %>
           <.render_group_list
@@ -232,16 +241,31 @@ defmodule GamendWeb.LeaderboardsLive do
   defp render_leaderboard_detail(assigns) do
     ~H"""
     <%!-- The title row (Back, icon, name, the board's button) is the
-          page's. Under it: the season (Older and Newer around its number,
-          its dates beside it), then what the board counts with its state on
-          the right. --%>
+          page's. Under it: the period (the season or all time), the season
+          (Older and Newer around its number, its dates beside it), then
+          what the board counts with its state on the right. All time has
+          no season, dates or state. --%>
     <div class="mb-6 space-y-4">
       <div
-        :if={(length(@slug_leaderboards) > 1 or @leaderboard.starts_at) || @leaderboard.ends_at}
+        :if={
+          @period_tabs || length(@slug_leaderboards) > 1 || @leaderboard.starts_at ||
+            @leaderboard.ends_at
+        }
         class="flex flex-wrap items-center gap-x-4 gap-y-2"
       >
+        <div :if={@period_tabs} role="tablist" class="tabs tabs-box w-fit">
+          <.link
+            :for={tab <- @period_tabs}
+            role="tab"
+            patch={tab.path}
+            aria-selected={to_string(tab.active)}
+            class={["tab", tab.active && "tab-active"]}
+          >
+            {tab.label}
+          </.link>
+        </div>
         <div
-          :if={length(@slug_leaderboards) > 1}
+          :if={!@all_time and length(@slug_leaderboards) > 1}
           class="flex items-center gap-1 rounded-lg bg-base-200 px-1 py-1"
         >
           <button
@@ -271,7 +295,10 @@ defmodule GamendWeb.LeaderboardsLive do
             <.icon name="hero-chevron-right" class="size-4 rtl:-scale-x-100" />
           </button>
         </div>
-        <span :if={@leaderboard.starts_at || @leaderboard.ends_at} class="text-sm text-muted">
+        <span
+          :if={!@all_time and (@leaderboard.starts_at || @leaderboard.ends_at)}
+          class="text-sm text-muted"
+        >
           <%= cond do %>
             <% @leaderboard.starts_at && @leaderboard.ends_at -> %>
               <.timestamp at={@leaderboard.starts_at} format="date" /> —
@@ -287,10 +314,12 @@ defmodule GamendWeb.LeaderboardsLive do
 
       <div class="flex items-start justify-between gap-3">
         <p class="text-muted">{@leaderboard.description}</p>
-        <%= if Leaderboard.active?(@leaderboard) do %>
-          <span class="badge badge-success shrink-0">{gettext("Active")}</span>
-        <% else %>
-          <span class="badge badge-neutral shrink-0">{gettext("Ended")}</span>
+        <%= cond do %>
+          <% @all_time -> %>
+          <% Leaderboard.active?(@leaderboard) -> %>
+            <span class="badge badge-success shrink-0">{gettext("Active")}</span>
+          <% true -> %>
+            <span class="badge badge-neutral shrink-0">{gettext("Ended")}</span>
         <% end %>
       </div>
     </div>
@@ -376,50 +405,17 @@ defmodule GamendWeb.LeaderboardsLive do
                   record.user_id != nil && record.user_id == @current_user_id && "bg-primary/10"
                 ]}
               >
-                <td class="font-mono">
-                  <span class={[
-                    "inline-flex items-center justify-center w-8 h-8 rounded-full",
-                    record.rank == 1 && "bg-yellow-500/20 text-yellow-600",
-                    record.rank == 2 && "bg-gray-400/20 text-gray-600",
-                    record.rank == 3 && "bg-orange-500/20 text-orange-600"
-                  ]}>
-                    {record.rank}
-                  </span>
-                </td>
+                <td><.leaderboard_rank rank={record.rank} /></td>
                 <td>
-                  <div class="flex items-center gap-2">
-                    <%!-- A label-only record (an external scoreboard entry) has
-                          no user behind it, so it gets no avatar. --%>
-                    <.user_avatar :if={record.user} user={record.user} class="w-8 h-8" />
-                    <div class="flex flex-col leading-tight">
-                      <span class={[
-                        record.user_id != nil && record.user_id == @current_user_id && "font-bold"
-                      ]}>
-                        <.player_name name={
-                          record.label || LiveHelpers.public_user_name(record.user || record.user_id)
-                        } />
-                      </span>
-                      <.user_title user={record.user} />
-                      <span
-                        :for={label <- row_values(@view, @leaderboard, record)}
-                        class="text-xs text-muted"
-                      >
-                        {label}
-                      </span>
-                      <span
-                        :for={
-                          badge <-
-                            List.wrap(@view && LeaderboardViews.row_badge(@leaderboard, record))
-                        }
-                        class="badge badge-ghost badge-sm w-fit"
-                      >
-                        {badge}
-                      </span>
-                    </div>
-                    <%= if record.user_id != nil and record.user_id == @current_user_id do %>
-                      <span class="badge badge-primary badge-sm">{gettext("You")}</span>
-                    <% end %>
-                  </div>
+                  <%!-- A label-only record (an external scoreboard entry) has
+                        no user behind it: the card draws the person icon. --%>
+                  <.player_card
+                    user={record.user}
+                    name={record.label || LiveHelpers.public_user_name(record.user || record.user_id)}
+                    subtitle={row_subtitle(@view, @leaderboard, record)}
+                    you={record.user_id != nil and record.user_id == @current_user_id}
+                    class="max-w-[28ch]"
+                  />
                 </td>
                 <td class="text-end font-mono">
                   {format_score(record.score, @leaderboard)}
@@ -497,7 +493,11 @@ defmodule GamendWeb.LeaderboardsLive do
 
     {:noreply,
      push_patch(socket,
-       to: leaderboard_path(socket.assigns.selected_leaderboard, query(tab, picked))
+       to:
+         leaderboard_path(
+           socket.assigns.selected_leaderboard,
+           query(tab, picked, socket.assigns.all_time)
+         )
      )}
   end
 
@@ -542,11 +542,18 @@ defmodule GamendWeb.LeaderboardsLive do
     search = socket.assigns[:records_search] || ""
 
     key = socket.assigns[:record_key] || ""
+    all_time = socket.assigns[:all_time] == true
 
     records =
-      Leaderboards.list_records(lb.id, key: key, page: page, page_size: page_size, search: search)
+      Leaderboards.list_records(lb.id,
+        key: key,
+        page: page,
+        page_size: page_size,
+        search: search,
+        all_time: all_time
+      )
 
-    count = Leaderboards.count_records(lb.id, key: key, search: search)
+    count = Leaderboards.count_records(lb.id, key: key, search: search, all_time: all_time)
     total_pages = max(1, LiveHelpers.total_pages(count, page_size))
 
     socket
@@ -576,10 +583,13 @@ defmodule GamendWeb.LeaderboardsLive do
   defp register_href(locale),
     do: GamendWeb.HostLayouts.localized_href(~p"/users/register", locale)
 
-  defp get_user_record(socket, leaderboard_id, key) do
+  defp get_user_record(socket, leaderboard_id, key, all_time) do
     case socket.assigns[:current_scope] do
       %{user_id: user_id} when is_binary(user_id) ->
-        case Leaderboards.get_user_record(leaderboard_id, user_id, key: key) do
+        case Leaderboards.get_user_record(leaderboard_id, user_id,
+               key: key,
+               all_time: all_time
+             ) do
           {:ok, record} -> record
           _ -> nil
         end
@@ -593,8 +603,10 @@ defmodule GamendWeb.LeaderboardsLive do
     # Load all leaderboards with same slug for season navigation
     slug_leaderboards = Leaderboards.list_leaderboards_by_slug(leaderboard.slug)
     current_index = Enum.find_index(slug_leaderboards, &(&1.id == leaderboard.id)) || 0
-    {view, tab, picked, key} = view_for(leaderboard, params)
-    user_record = get_user_record(socket, leaderboard.id, key)
+    all_time = params["period"] == "all" and Leaderboards.all_time?(leaderboard)
+    {view, tab, picked, key} = view_for(leaderboard, params, all_time)
+    user_record = get_user_record(socket, leaderboard.id, key, all_time)
+    period_tabs = period_tabs(leaderboard, slug_leaderboards, tab, picked, all_time)
     leaderboard = ContentText.translate(leaderboard)
 
     {:noreply,
@@ -608,6 +620,8 @@ defmodule GamendWeb.LeaderboardsLive do
      |> assign(:tab, tab)
      |> assign(:picked, picked)
      |> assign(:record_key, key)
+     |> assign(:all_time, all_time)
+     |> assign(:period_tabs, period_tabs)
      |> assign(
        :board_action,
        Leaderboards.host_action(
@@ -643,20 +657,22 @@ defmodule GamendWeb.LeaderboardsLive do
 
   # A board's view from the URL: its declared views, the tab, the picked key
   # filters and the key they read. A board with one ranking reads `""`.
-  defp view_for(leaderboard, params) do
+  defp view_for(leaderboard, params, all_time) do
     case LeaderboardViews.of(leaderboard) do
       nil ->
         {nil, nil, [], ""}
 
       views ->
-        {tab, picked} = LeaderboardViews.pick(leaderboard, views, params)
-        {view(leaderboard, views, tab, picked), tab, picked, LeaderboardViews.key(tab, picked)}
+        {tab, picked} = LeaderboardViews.pick(leaderboard, views, params, all_time: all_time)
+
+        {view(leaderboard, views, tab, picked, all_time), tab, picked,
+         LeaderboardViews.key(tab, picked)}
     end
   end
 
   # What the controls draw: the tabs, and each key filter with its values
   # (sorted by name) while the filters before it are picked.
-  defp view(leaderboard, views, tab, picked) do
+  defp view(leaderboard, views, tab, picked, all_time) do
     tabs =
       for key <- views.tabs do
         %{
@@ -664,7 +680,7 @@ defmodule GamendWeb.LeaderboardsLive do
           label: LeaderboardViews.tab_label(leaderboard, key),
           icon: LeaderboardViews.tab_icon(leaderboard, key),
           active: key == tab,
-          path: leaderboard_path(leaderboard, query(key, []))
+          path: leaderboard_path(leaderboard, query(key, [], all_time))
         }
       end
 
@@ -677,7 +693,7 @@ defmodule GamendWeb.LeaderboardsLive do
 
         options =
           leaderboard
-          |> LeaderboardViews.values(tab, before)
+          |> LeaderboardViews.values(tab, before, all_time: all_time)
           |> Enum.map(&{LeaderboardViews.value_label(leaderboard, field, &1), &1})
           |> Enum.sort_by(&String.downcase(elem(&1, 0)))
 
@@ -693,15 +709,53 @@ defmodule GamendWeb.LeaderboardsLive do
     %{views: views, tabs: tabs, filters: filters, picked: picked}
   end
 
-  # The URL's query for a view: the tab, then the picked filters in order.
-  defp query(tab, picked), do: [{"tab", tab} | picked]
+  # The URL's query for a view: the tab, then the picked filters in order,
+  # then the period when it is all time. A board without views has no tab.
+  defp query(tab, picked, all_time) do
+    period = if all_time, do: [{"period", "all"}], else: []
+    if tab, do: [{"tab", tab} | picked] ++ period, else: period
+  end
 
   defp view_params(socket) do
     case socket.assigns do
-      %{view: %{}, tab: tab, picked: picked} -> query(tab, picked)
-      _ -> []
+      %{view: %{}, tab: tab, picked: picked} -> query(tab, picked, socket.assigns.all_time)
+      _ -> query(nil, [], socket.assigns.all_time)
     end
   end
+
+  # The two periods of a board with an all-time ranking, each leading to the
+  # newest season (all time reads every season from it): the season's
+  # length, and All time. nil for any other board.
+  defp period_tabs(leaderboard, [newest | _], tab, picked, all_time) do
+    if Leaderboards.all_time?(leaderboard) do
+      [
+        %{
+          label: period_label(leaderboard),
+          active: not all_time,
+          path: leaderboard_path(newest, query(tab, picked, false))
+        },
+        %{
+          label: pgettext("leaderboard", "All time"),
+          active: all_time,
+          path: leaderboard_path(newest, query(tab, picked, true))
+        }
+      ]
+    end
+  end
+
+  defp period_tabs(_leaderboard, [], _tab, _picked, _all_time), do: nil
+
+  # A season's name by its length.
+  defp period_label(%Leaderboard{starts_at: %DateTime{} = from, ends_at: %DateTime{} = to}) do
+    case DateTime.diff(to, from, :day) do
+      1 -> pgettext("leaderboard", "Daily")
+      7 -> pgettext("leaderboard", "Weekly")
+      days when days in 28..31 -> pgettext("leaderboard", "Monthly")
+      _ -> pgettext("leaderboard", "Season")
+    end
+  end
+
+  defp period_label(_leaderboard), do: pgettext("leaderboard", "Season")
 
   defp view_query(params) when is_list(params), do: URI.encode_query(params)
 
@@ -716,14 +770,29 @@ defmodule GamendWeb.LeaderboardsLive do
     |> URI.encode_query()
   end
 
-  # A row's values for the filters left on All: its record's metadata, named.
-  defp row_values(%{views: views, picked: picked}, leaderboard, record) do
-    picked_fields = Enum.map(picked, &elem(&1, 0))
+  # The line under a row's name (`player_card/1`): the row's badge and its
+  # value for every filter, `·`-joined ("Crew ghost · Spanish"); a picked
+  # filter's value is the view's, since a filtered key's records need not
+  # carry it. A board with no views, or a row with none of these, shows the
+  # player's title (`user_title_text/1`).
+  defp row_subtitle(view, leaderboard, record) do
+    badge = view && LeaderboardViews.row_badge(leaderboard, record)
 
+    case List.wrap(badge) ++ row_values(view, leaderboard, record) do
+      [] -> :title
+      parts -> Enum.join(parts, " · ")
+    end
+  end
+
+  # A row's value for each filter: the picked one's, else its record's
+  # metadata (a filter left on All), named.
+  defp row_values(%{views: views, picked: picked}, leaderboard, record) do
     views.filters
-    |> Enum.reject(&(&1 in picked_fields))
     |> Enum.flat_map(fn field ->
-      case record.metadata do
+      case List.keyfind(picked, field, 0) || record.metadata do
+        {^field, value} ->
+          [LeaderboardViews.value_label(leaderboard, field, value)]
+
         %{^field => value} when is_binary(value) and value != "" ->
           [LeaderboardViews.value_label(leaderboard, field, value)]
 

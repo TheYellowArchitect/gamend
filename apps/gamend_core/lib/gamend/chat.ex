@@ -1013,7 +1013,7 @@ defmodule Gamend.Chat do
       case Map.get(filters, :sender_id) || Map.get(filters, "sender_id") do
         nil -> query
         "" -> query
-        v -> where(query, [m], m.sender_id == ^to_string(v))
+        v -> where_id(query, :sender_id, v)
       end
 
     query =
@@ -1027,7 +1027,7 @@ defmodule Gamend.Chat do
       case Map.get(filters, :chat_ref_id) || Map.get(filters, "chat_ref_id") do
         nil -> query
         "" -> query
-        v -> where(query, [m], m.chat_ref_id == ^to_string(v))
+        v -> where_id(query, :chat_ref_id, v)
       end
 
     query =
@@ -1044,6 +1044,14 @@ defmodule Gamend.Chat do
       end
 
     query
+  end
+
+  # An admin filter typed by hand: an id that is not one matches nothing.
+  defp where_id(query, field, value) do
+    case Gamend.UUIDv7.cast_or_nil(to_string(value)) do
+      nil -> where(query, [_], false)
+      id -> where(query, [m], field(m, ^field) == ^id)
+    end
   end
 
   defp admin_sort(query, "inserted_at_asc"), do: order_by(query, [m], asc: m.inserted_at)

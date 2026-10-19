@@ -165,6 +165,12 @@ defmodule Gamend.Retention do
   # and `prune_all/0` still work.
   @impl true
   def init(_opts) do
+    # The last sweep's report, readable while the next one runs: a sweep with
+    # a backlog holds this process for minutes, and a call for the report
+    # waited out its timeout (the admin page took 5 s to open).
+    :ets.new(__MODULE__, [:named_table, :protected, read_concurrency: true])
+    :ets.insert(__MODULE__, {:status, @never_run})
+
     if Keyword.get(Application.get_env(:gamend_core, __MODULE__, []), :enabled, true) do
       Process.send_after(self(), :prune, @initial_delay_ms)
       schedule_live()
@@ -183,9 +189,10 @@ defmodule Gamend.Retention do
           results: %{atom() => non_neg_integer()}
         }
   def status do
-    GenServer.call(__MODULE__, :status)
-  catch
-    :exit, _reason -> @never_run
+    case :ets.whereis(__MODULE__) do
+      :undefined -> @never_run
+      _table -> :ets.lookup_element(__MODULE__, :status, 2, @never_run)
+    end
   end
 
   @doc """
@@ -197,8 +204,6 @@ defmodule Gamend.Retention do
   def run_now, do: GenServer.call(__MODULE__, :prune, @run_now_timeout_ms)
 
   @impl true
-  def handle_call(:status, _from, state), do: {:reply, state, state}
-
   def handle_call(:prune, _from, _state) do
     state = sweep()
     {:reply, state.results, state}
@@ -241,11 +246,14 @@ defmodule Gamend.Retention do
     started = System.monotonic_time(:millisecond)
     results = prune_all()
 
-    %{
+    state = %{
       last_run_at: DateTime.utc_now(:second),
       duration_ms: System.monotonic_time(:millisecond) - started,
       results: results
     }
+
+    :ets.insert(__MODULE__, {:status, state})
+    state
   end
 
   @doc """

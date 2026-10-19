@@ -30,6 +30,14 @@ defmodule Gamend.Leaderboards.Record do
     field :score, :integer, default: 0
     field :metadata, :map, default: %{}
 
+    # Whether the player is a guest (`User.anonymous?/1`). The database keeps
+    # it, never a changeset: set from the user when the row is inserted, and
+    # moved when the user gains or loses their last identity (the triggers of
+    # migration `LeaderboardRecordsGuest`). A struct built here holds `false`
+    # until it is read back. Public boards read it to list registered
+    # players only (`Gamend.AccountRequired`).
+    field :guest, :boolean, default: false
+
     # Virtual field for rank (computed in queries)
     field :rank, :integer, virtual: true
 

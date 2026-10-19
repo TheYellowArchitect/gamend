@@ -27,7 +27,7 @@ defmodule Gamend.Query do
   growing table.
   """
 
-  import Ecto.Query, only: [limit: 2, offset: 2, where: 3, join: 5]
+  import Ecto.Query, only: [dynamic: 2, from: 2, limit: 2, offset: 2, where: 2, where: 3, join: 5]
 
   alias Gamend.Accounts.User
   alias Gamend.Limits
@@ -80,16 +80,67 @@ defmodule Gamend.Query do
         where(query, [q], q.user_id == ^uuid)
 
       :error ->
-        pattern = "%" <> Repo.escape_like(String.downcase(value)) <> "%"
-
-        query
-        |> join(:inner, [q], u in User, on: u.id == q.user_id)
-        |> where(
-          [q, u],
-          fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.username, ^pattern) or
-            fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.display_name, ^pattern)
-        )
+        case Repo.search_pattern(value) do
+          nil -> query
+          pattern -> filter_user_named(query, :user_id, pattern)
+        end
     end
+  end
+
+  @named_probe 500
+
+  @doc """
+  The users whose username or display name holds `pattern` (a
+  `Repo.search_pattern/1`): `{:few, ids}` when at most #{@named_probe} do,
+  `:many` past that.
+
+  Every player search across a big table goes through it: when a term names
+  few players, the table is read by their ids, through its index; when it
+  names many, the caller reads the table in its own order, joined to the
+  names, and stops at a page. Joining every row to the names first read a
+  whole leaderboard or member list per search, 0.5 s at 100,000 rows. On
+  Postgres the names are found through their trigram indexes
+  (`UserNameTrigramIndexes`).
+  """
+  @spec users_named(String.t()) :: {:few, [Ecto.UUID.t()]} | :many
+  def users_named(pattern) when is_binary(pattern) do
+    ids =
+      from(u in User, as: :named_user, select: u.id, limit: ^(@named_probe + 1))
+      |> where(^name_match(pattern))
+      |> Repo.all()
+
+    if length(ids) > @named_probe, do: :many, else: {:few, ids}
+  end
+
+  @doc """
+  Narrows `query` to the rows whose `field` holds a player named by
+  `pattern` (`users_named/1`): by their ids when few, else joined to the
+  names as `:named_user`.
+  """
+  @spec filter_user_named(Ecto.Queryable.t(), atom(), String.t()) :: Ecto.Query.t()
+  def filter_user_named(query, field, pattern) when is_atom(field) and is_binary(pattern) do
+    case users_named(pattern) do
+      {:few, ids} ->
+        where(query, [q], field(q, ^field) in ^ids)
+
+      :many ->
+        query
+        |> join(:inner, [q], u in User, as: :named_user, on: u.id == field(q, ^field))
+        |> where(^name_match(pattern))
+    end
+  end
+
+  @doc """
+  The condition a player search reads, on a user bound as `binding`
+  (`:named_user`): the expressions the trigram indexes cover.
+  """
+  @spec name_match(String.t(), atom()) :: Ecto.Query.dynamic_expr()
+  def name_match(pattern, binding \\ :named_user) when is_binary(pattern) do
+    dynamic(
+      [{^binding, u}],
+      fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.username, ^pattern) or
+        fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.display_name, ^pattern)
+    )
   end
 
   @doc """

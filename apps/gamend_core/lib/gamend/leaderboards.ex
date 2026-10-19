@@ -34,6 +34,23 @@ defmodule Gamend.Leaderboards do
   ahead of a score on one key. A board can show its keys as tabs and
   filters on `/leaderboards` (`GamendWeb.LeaderboardViews`).
 
+  ## All time
+
+  A `:best` board with seasons (`all_time?/1`: a start or an end date) has
+  an all-time ranking too: every season of its slug read as one, each
+  player's (or label's) best row of them, ranked. `all_time: true` on
+  `list_records/2`, `count_records/2`, `get_user_record/3` and
+  `list_keys/2` reads it, per key, from any season of the slug.
+
+  Those rows are kept on a hidden board of their own, `<slug>__all_time`:
+  a submit to a season raises it the way a `:best` submit does, an edited
+  or deleted season row reads its owner's best again, and a deleted season
+  refills it. So All time reads like any board, indexed and cached, however
+  many seasons and players there are. Computing it from the seasons on
+  every read took a second a page at 100,000 rows. The board is made and
+  filled the first time it is asked for; `rebuild_all_time/1` refills it
+  for rows written around `submit_score/5`.
+
   ## Hidden boards
 
   `hidden: true` keeps a board out of `list_leaderboards/1`,
@@ -48,6 +65,12 @@ defmodule Gamend.Leaderboards do
   own `get_user_record/3` still answers, ranked where it would stand, with
   `hidden: true`. A hidden board keeps its guests (it is no one's public
   board), and `guests: true` reads them anyway (the admin's view).
+
+  Whether a record is a guest's is stored on it (`Record`'s `guest`), kept
+  by the database: set from the user on insert, moved when the user
+  registers (or loses their last identity). A listed read filters the
+  record alone, on its own rank index (`NOT guest`); joining every record to
+  its user took a second a rank at a million rows.
 
       # Get user's record (use leaderboard id)
       {:ok, record} = Leaderboards.get_user_record(leaderboard.id, user_id)
@@ -64,6 +87,9 @@ defmodule Gamend.Leaderboards do
   alias Gamend.Leaderboards.Leaderboard
   alias Gamend.Leaderboards.Record
   alias Gamend.Repo.AdvisoryLock
+  alias Gamend.UUIDv7
+
+  require Logger
 
   @records_cache_ttl_ms 10_000
 
@@ -200,6 +226,7 @@ defmodule Gamend.Leaderboards do
       {:ok, lb} = ok ->
         _ = invalidate_leaderboards_cache()
         _ = invalidate_records_cache(lb.id)
+        if all_time?(lb), do: rebuild_all_time(lb.slug)
         ok
 
       other ->
@@ -761,6 +788,7 @@ defmodule Gamend.Leaderboards do
 
         if record do
           _ = invalidate_record_cache(record.id)
+          keep_all_time(leaderboard, record)
           {:ok, record}
         else
           {:error, :insert_failed}
@@ -826,6 +854,7 @@ defmodule Gamend.Leaderboards do
 
         if record do
           _ = invalidate_record_cache(record.id)
+          keep_all_time(leaderboard, record)
           {:ok, record}
         else
           {:error, :insert_failed}
@@ -934,6 +963,7 @@ defmodule Gamend.Leaderboards do
       {:ok, updated} = ok ->
         _ = invalidate_records_cache(updated.leaderboard_id)
         _ = invalidate_record_cache(updated.id)
+        refresh_all_time_of(updated)
         ok
 
       other ->
@@ -988,37 +1018,37 @@ defmodule Gamend.Leaderboards do
   @doc """
   Gets a user's record with their rank (within its key: `key:`, default `""`).
   Returns `{:ok, record_with_rank}` or `{:error, :not_found}`.
+
+  `all_time: true` answers their best row of every season, ranked all time
+  (*All time* above).
   """
   @spec get_user_record(Ecto.UUID.t(), Ecto.UUID.t()) ::
           {:ok, Record.t()} | {:error, :not_found}
   @spec get_user_record(Ecto.UUID.t(), Ecto.UUID.t(), keyword()) ::
           {:ok, Record.t()} | {:error, :not_found}
   def get_user_record(leaderboard_id, user_id, opts \\ []) when is_binary(leaderboard_id) do
-    get_user_record_cached(leaderboard_id, user_id, key_opt(opts))
+    case read_board(leaderboard_id, opts) do
+      nil -> {:error, :not_found}
+      leaderboard -> get_user_record_cached(leaderboard, user_id, key_opt(opts))
+    end
   end
 
   @decorate cacheable(
               key:
-                {:leaderboards, :user_record, records_cache_version(leaderboard_id),
-                 leaderboard_id, user_id, key},
+                {:leaderboards, :user_record, records_cache_version(leaderboard.id),
+                 leaderboard.id, user_id, key},
               match: &cache_ok/1,
               opts: [ttl: @records_cache_ttl_ms]
             )
-  defp get_user_record_cached(leaderboard_id, user_id, key)
-       when is_binary(leaderboard_id) and is_binary(user_id) do
-    case get_leaderboard(leaderboard_id) do
+  defp get_user_record_cached(%Leaderboard{} = leaderboard, user_id, key)
+       when is_binary(user_id) do
+    case get_record(leaderboard.id, user_id, key) do
       nil ->
         {:error, :not_found}
 
-      leaderboard ->
-        case get_record(leaderboard.id, user_id, key) do
-          nil ->
-            {:error, :not_found}
-
-          record ->
-            rank = calculate_rank(leaderboard, record.score, record.inserted_at, key)
-            {:ok, %{record | rank: rank, hidden: unlisted?(leaderboard, record)}}
-        end
+      record ->
+        rank = calculate_rank(leaderboard, record.score, record.inserted_at, key)
+        {:ok, %{record | rank: rank, hidden: unlisted?(leaderboard, record)}}
     end
   end
 
@@ -1026,56 +1056,310 @@ defmodule Gamend.Leaderboards do
          %Leaderboard{id: leaderboard_id, sort_order: sort_order} = leaderboard,
          score,
          at,
-         key
+         key,
+         opts \\ []
        ) do
-    ahead =
-      case sort_order do
-        :desc -> dynamic([r], r.score > ^score or (r.score == ^score and r.inserted_at < ^at))
-        :asc -> dynamic([r], r.score < ^score or (r.score == ^score and r.inserted_at < ^at))
-      end
-
     from(r in Record,
       where: r.leaderboard_id == ^leaderboard_id and r.key == ^key,
-      where: ^ahead,
+      where: ^ahead(sort_order, score, at),
       select: count(r.id)
     )
-    |> listed(leaderboard, [])
+    |> listed(leaderboard, opts)
     |> Repo.one()
     |> Kernel.+(1)
   end
 
+  # The rows sorting ahead of `score` set at `at`: a better score, or the
+  # same one set earlier, as `record_order/1` sorts them.
+  defp ahead(:desc, score, at),
+    do: dynamic([r], r.score > ^score or (r.score == ^score and r.inserted_at < ^at))
+
+  defp ahead(:asc, score, at),
+    do: dynamic([r], r.score < ^score or (r.score == ^score and r.inserted_at < ^at))
+
+  # The rows sorting behind it: a worse score, or the same one set later.
+  defp behind(:desc, score, at),
+    do: dynamic([r], r.score < ^score or (r.score == ^score and r.inserted_at > ^at))
+
+  defp behind(:asc, score, at),
+    do: dynamic([r], r.score > ^score or (r.score == ^score and r.inserted_at > ^at))
+
+  # ---------------------------------------------------------------------------
+  # All time
+  # ---------------------------------------------------------------------------
+
+  @all_time_suffix "__all_time"
+
+  @doc """
+  Whether a board has an all-time ranking: a `:best` board with seasons (a
+  start or an end date). *All time* above.
+  """
+  @spec all_time?(Leaderboard.t()) :: boolean()
+  def all_time?(%Leaderboard{operator: :best, starts_at: starts_at, ends_at: ends_at}),
+    do: not is_nil(starts_at) or not is_nil(ends_at)
+
+  def all_time?(_leaderboard), do: false
+
+  @doc """
+  Fills the all-time board of `slug`'s seasons again from them (*All time*
+  above). Reads make and fill it on their own the first time; this is for
+  rows written around `submit_score/5`, such as a bulk import or
+  `mix demo.seed`. Answers how many rows it holds, or `:error` when no board
+  under `slug` has an all-time ranking.
+  """
+  @spec rebuild_all_time(String.t()) :: {:ok, non_neg_integer()} | :error
+  def rebuild_all_time(slug) when is_binary(slug) do
+    case newest_season(slug) do
+      nil ->
+        # The last season went: so does what was read from them.
+        with %Leaderboard{} = board <- get_all_time_board(slug) do
+          {:ok, _} = Repo.delete(board)
+          _ = invalidate_leaderboards_cache()
+        end
+
+        :error
+
+      season ->
+        case with_all_time_lock(slug, fn -> fill_all_time(season) end) do
+          {:ok, {%Leaderboard{}, rows}} -> {:ok, rows}
+          _failed -> :error
+        end
+    end
+  end
+
+  defp newest_season(slug) do
+    from(lb in Leaderboard,
+      where: lb.slug == ^slug and lb.operator == :best,
+      where: not is_nil(lb.starts_at) or not is_nil(lb.ends_at),
+      order_by: [desc: lb.inserted_at],
+      limit: 1
+    )
+    |> Repo.one()
+  end
+
+  # The board a read reads: the board itself, or with `all_time: true` its
+  # seasons' all-time board, listed by the board's own rules (a public
+  # board keeps its guests off All time too).
+  defp read_board(leaderboard_id, opts) do
+    case get_leaderboard(leaderboard_id) do
+      %Leaderboard{} = leaderboard ->
+        if Keyword.get(opts, :all_time) == true and all_time?(leaderboard),
+          do: all_time_view(leaderboard),
+          else: leaderboard
+
+      nil ->
+        nil
+    end
+  end
+
+  defp all_time_view(%Leaderboard{} = season) do
+    case all_time_board(season) do
+      %Leaderboard{id: id} -> %{season | id: id}
+      nil -> season
+    end
+  end
+
+  # The hidden board holding each player's (and label's) best row of every
+  # season under `season`'s slug, per key. Made and filled from the seasons
+  # the first time it is asked for, under a lock so two first readers make
+  # one; nil (logged) when it cannot be made, and the season reads alone.
+  defp all_time_board(%Leaderboard{slug: slug} = season) do
+    with nil <- get_all_time_board(slug) do
+      case with_all_time_lock(slug, fn ->
+             find_all_time_board(slug) || elem(fill_all_time(season), 0)
+           end) do
+        {:ok, %Leaderboard{} = board} ->
+          board
+
+        failed ->
+          Logger.warning("no all-time board for #{slug}: #{inspect(failed)}")
+          nil
+      end
+    end
+  end
+
+  # One builder per slug, across nodes (an advisory lock; SQLite's single
+  # writer on one node), in a transaction with no time limit: a fill reads
+  # every season's rows and `Repo.stream/2` needs the transaction.
+  defp with_all_time_lock(slug, fun) do
+    Repo.transaction(
+      fn ->
+        AdvisoryLock.lock("leaderboard_all_time", slug)
+        fun.()
+      end,
+      timeout: :infinity
+    )
+  end
+
+  @decorate cacheable(
+              key: {:leaderboards, :all_time_board, leaderboards_cache_version(), slug},
+              match: &(&1 != nil)
+            )
+  defp get_all_time_board(slug), do: find_all_time_board(slug)
+
+  # By its slug, and only when it says whose it is: a board someone named
+  # `x__all_time` by hand is not this one.
+  defp find_all_time_board(slug) do
+    from(lb in Leaderboard, where: lb.slug == ^(slug <> @all_time_suffix), limit: 1)
+    |> Repo.one()
+    |> case do
+      %Leaderboard{metadata: %{"all_time_of" => ^slug}} = board -> board
+      _other -> nil
+    end
+  end
+
+  # Makes the all-time board when there is none, then fills it from scratch:
+  # each owner's best row of every season per key, at the time they first
+  # appeared (a `:best` board keeps a row's first insert time when it rises).
+  # Runs inside `with_all_time_lock/2`.
+  defp fill_all_time(%Leaderboard{slug: slug, sort_order: sort_order} = season) do
+    board =
+      find_all_time_board(slug) ||
+        %Leaderboard{}
+        |> Leaderboard.changeset(%{
+          slug: slug <> @all_time_suffix,
+          title: season.title,
+          description: season.description,
+          sort_order: sort_order,
+          operator: :best,
+          hidden: true,
+          metadata: %{"all_time_of" => slug}
+        })
+        |> Repo.insert!()
+
+    _ = invalidate_leaderboards_cache()
+    now = DateTime.utc_now(:second)
+    Repo.delete_all(from(r in Record, where: r.leaderboard_id == ^board.id), timeout: :infinity)
+
+    best =
+      from(r in in_seasons(season, :all),
+        select: %{
+          id: r.id,
+          n: over(row_number(), :best),
+          first_at: over(min(r.inserted_at), :owner)
+        },
+        windows: [
+          owner: [partition_by: [r.key, r.user_id, r.label]],
+          best: [partition_by: [r.key, r.user_id, r.label], order_by: ^record_order(sort_order)]
+        ]
+      )
+
+    rows =
+      from(r in Record,
+        join: b in subquery(best),
+        on: b.id == r.id and b.n == 1,
+        select: %{
+          user_id: r.user_id,
+          label: r.label,
+          key: r.key,
+          score: r.score,
+          metadata: r.metadata,
+          inserted_at: b.first_at
+        }
+      )
+      |> Repo.stream(max_rows: 2_000, timeout: :infinity)
+      |> Stream.map(
+        &Map.merge(&1, %{id: UUIDv7.generate(), leaderboard_id: board.id, updated_at: now})
+      )
+      |> Stream.chunk_every(2_000)
+      |> Enum.reduce(0, fn chunk, total ->
+        {inserted, _} = Repo.insert_all(Record, chunk, timeout: :infinity)
+        total + inserted
+      end)
+
+    _ = invalidate_records_cache(board.id)
+    {board, rows}
+  end
+
+  # Every season's rows of one key (or all): each board under the slug. The
+  # all-time board's own slug carries the suffix, so it is never one of them.
+  defp in_seasons(%Leaderboard{slug: slug}, key) do
+    seasons = from(lb in Leaderboard, where: lb.slug == ^slug, select: lb.id)
+    query = from(r in Record, where: r.leaderboard_id in subquery(seasons))
+
+    if key == :all, do: query, else: from(r in query, where: r.key == ^key)
+  end
+
+  # A season row rose: the all-time row rises with it, by the same `:best`
+  # upsert (the all-time board has no seasons, so it keeps nothing further).
+  defp keep_all_time(%Leaderboard{} = season, %Record{} = record) do
+    with true <- all_time?(season),
+         %Leaderboard{} = board <- all_time_board(season) do
+      result =
+        if is_binary(record.user_id),
+          do: do_submit_score(board, record.user_id, record.score, record.metadata, record.key),
+          else:
+            do_submit_label_score(board, record.label, record.score, record.metadata, record.key)
+
+      with {:error, reason} <- result do
+        Logger.warning("all-time row for #{season.slug} not kept: #{inspect(reason)}")
+      end
+    end
+
+    :ok
+  end
+
+  # A season row was edited or deleted: its owner's all-time row is read
+  # again from what the seasons hold now, or goes when they hold nothing.
+  defp refresh_all_time(%Leaderboard{} = season, %Record{} = record) do
+    with true <- all_time?(season),
+         %Leaderboard{id: board_id} <- all_time_board(season) do
+      owner =
+        if is_binary(record.user_id),
+          do: dynamic([r], r.user_id == ^record.user_id),
+          else: dynamic([r], r.label == ^record.label)
+
+      rows = from(r in in_seasons(season, record.key), where: ^owner)
+      best = from(r in rows, order_by: ^record_order(season.sort_order), limit: 1) |> Repo.one()
+      Repo.delete_all(from(r in in_key(board_id, record.key), where: ^owner))
+
+      if best do
+        first_at = Repo.one(from(r in rows, select: min(r.inserted_at)))
+
+        %Record{}
+        |> Ecto.Changeset.change(
+          leaderboard_id: board_id,
+          user_id: best.user_id,
+          label: best.label,
+          key: best.key,
+          score: best.score,
+          metadata: best.metadata,
+          inserted_at: first_at
+        )
+        |> Repo.insert!()
+      end
+
+      _ = invalidate_records_cache(board_id)
+    end
+
+    :ok
+  end
+
+  defp refresh_all_time_of(%Record{leaderboard_id: leaderboard_id} = record) do
+    case get_leaderboard(leaderboard_id) do
+      %Leaderboard{} = season -> refresh_all_time(season, record)
+      nil -> :ok
+    end
+  end
+
   # A guest's record on a public board, while the host lists registered
   # players only (`Gamend.AccountRequired`): kept, never shown to others.
-  defp unlisted?(%Leaderboard{hidden: false}, %Record{user: %User{} = user}),
-    do: not AccountRequired.allowed?(user, :leaderboards)
+  defp unlisted?(%Leaderboard{hidden: false}, %Record{guest: true}),
+    do: AccountRequired.required?(:leaderboards)
 
   defp unlisted?(_leaderboard, _record), do: false
 
   # The records others see: a public board without its guests' when the host
-  # requires an account to be listed. `guests: true` keeps them.
+  # requires an account to be listed. `guests: true` keeps them. The flag is
+  # the record's own (*Guests* above), so this is a filter on the rank index
+  # `leaderboard_records_listed_rank_index`, never a join.
   defp listed(query, %Leaderboard{hidden: false}, opts) do
     if AccountRequired.required?(:leaderboards) and Keyword.get(opts, :guests) != true,
-      do: without_guests(query),
+      do: where(query, [r], r.guest == false),
       else: query
   end
 
   defp listed(query, _leaderboard, _opts), do: query
-
-  # A label's record has no user and is always listed; a user's when they
-  # have any identity (`User.anonymous?/1`, as SQL).
-  defp without_guests(query) do
-    listed =
-      Enum.reduce(User.identity_fields(), dynamic([r], is_nil(r.user_id)), fn field, acc ->
-        dynamic([listed_user: u], ^acc or not is_nil(field(u, ^field)))
-      end)
-
-    from(r in query,
-      left_join: u in User,
-      as: :listed_user,
-      on: u.id == r.user_id,
-      where: ^listed
-    )
-  end
 
   @doc """
   Lists records for a leaderboard, ordered by rank.
@@ -1096,11 +1380,14 @@ defmodule Gamend.Leaderboards do
       row only: one board read across keys, a player once.
     * `:guests` — `true` lists guests' records on a public board too, when
       the host keeps them off it (`Gamend.AccountRequired`): the admin's view.
+    * `:all_time` — `true` reads every season of the board's slug as one
+      ranking (*All time* above), with `:key` and `:search` only. A board
+      without seasons reads as itself.
   """
   @spec list_records(String.t()) :: [Record.t()]
   @spec list_records(String.t(), keyword()) :: [Record.t()]
   def list_records(leaderboard_id, opts \\ []) when is_binary(leaderboard_id) do
-    case get_leaderboard(leaderboard_id) do
+    case read_board(leaderboard_id, opts) do
       nil ->
         []
 
@@ -1196,9 +1483,12 @@ defmodule Gamend.Leaderboards do
   end
 
   # Searches are unbounded strings, so they bypass the cache rather than filling
-  # it with one entry per term anyone ever typed.
+  # it with one entry per term anyone ever typed. A found row shows its real
+  # rank: the rows ahead of it, counted on the rank index, as
+  # `get_user_record/3` ranks one. Ranking the whole board to find a page of
+  # names read every row of it per search.
   defp search_records(
-         %Leaderboard{id: id, sort_order: sort_order} = leaderboard,
+         %Leaderboard{sort_order: sort_order} = leaderboard,
          key,
          pattern,
          page,
@@ -1207,37 +1497,42 @@ defmodule Gamend.Leaderboards do
        ) do
     offset = max((page - 1) * page_size, 0)
 
-    ranked =
-      from(r in listed(in_key(id, key), leaderboard, opts),
-        select: %{id: r.id, rank: over(row_number(), :ranking)},
-        windows: [ranking: [order_by: ^record_order(sort_order)]]
-      )
-
-    from(r in Record,
-      as: :record,
-      join: ranked in subquery(ranked),
-      on: ranked.id == r.id,
-      left_join: u in assoc(r, :user),
-      as: :user,
-      where: ^name_match(pattern),
-      order_by: [asc: ranked.rank],
+    from(r in matching_records(leaderboard, key, pattern, opts),
+      order_by: ^record_order(sort_order),
       offset: ^offset,
       limit: ^page_size,
-      select: {r, ranked.rank}
+      preload: [:user]
     )
     |> Repo.all()
-    |> Enum.map(fn {record, rank} -> %{record | rank: rank} end)
-    |> Repo.preload(:user)
+    |> Enum.map(fn record ->
+      %{record | rank: calculate_rank(leaderboard, record.score, record.inserted_at, key, opts)}
+    end)
   end
 
-  # Matches the label a record shows publicly: its own label, or the user behind it.
-  defp name_match(pattern) do
-    dynamic(
-      [record: r, user: u],
-      fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", r.label, ^pattern) or
-        fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.display_name, ^pattern) or
-        fragment("lower(coalesce(?, '')) LIKE ? ESCAPE '\\'", u.username, ^pattern)
-    )
+  # The listed rows a search names: a label holding the term, or a player
+  # found by name (`Gamend.Query.users_named/1`) — by their ids when few, in
+  # the board's order joined to the names when many.
+  defp matching_records(%Leaderboard{id: id} = leaderboard, key, pattern, opts) do
+    rows = listed(in_key(id, key), leaderboard, opts)
+
+    label =
+      dynamic(
+        [r],
+        not is_nil(r.label) and fragment("lower(?) LIKE ? ESCAPE '\\'", r.label, ^pattern)
+      )
+
+    case Gamend.Query.users_named(pattern) do
+      {:few, ids} ->
+        from(r in rows, where: ^dynamic([r], r.user_id in ^ids or ^label))
+
+      :many ->
+        from(r in rows,
+          left_join: u in User,
+          as: :named_user,
+          on: u.id == r.user_id,
+          where: ^dynamic([r], ^label or ^Gamend.Query.name_match(pattern))
+        )
+    end
   end
 
   defp search_pattern(opts), do: Repo.search_pattern(Keyword.get(opts, :search))
@@ -1261,45 +1556,60 @@ defmodule Gamend.Leaderboards do
 
   @doc """
   Counts records for a leaderboard: the same `:key`, `:meta`,
-  `:best_per_user` and `:search` as `list_records/2`.
+  `:best_per_user`, `:search` and `:all_time` as `list_records/2`.
   """
   @spec count_records(Ecto.UUID.t()) :: non_neg_integer()
   @spec count_records(Ecto.UUID.t(), keyword()) :: non_neg_integer()
   def count_records(leaderboard_id, opts \\ []) when is_binary(leaderboard_id) do
     key = Keyword.get(opts, :key, "")
 
-    cond do
-      pattern = search_pattern(opts) ->
-        from(r in listed(in_key(leaderboard_id, key), get_leaderboard(leaderboard_id), opts),
-          as: :record,
-          left_join: u in assoc(r, :user),
-          as: :user,
-          where: ^name_match(pattern)
-        )
-        |> Repo.aggregate(:count, :id)
+    case read_board(leaderboard_id, opts) do
+      nil ->
+        0
 
-      is_binary(key) and meta_filter(opts) == [] and not Keyword.has_key?(opts, :guests) ->
-        count_records_cached(leaderboard_id, key)
+      leaderboard ->
+        cond do
+          pattern = search_pattern(opts) ->
+            leaderboard |> matching_records(key, pattern, opts) |> Repo.aggregate(:count, :id)
 
-      true ->
-        case get_leaderboard(leaderboard_id) do
-          nil -> 0
-          leaderboard -> leaderboard |> scoped_records(opts) |> Repo.aggregate(:count, :id)
+          is_binary(key) and meta_filter(opts) == [] and not Keyword.has_key?(opts, :guests) ->
+            count_records_cached(leaderboard, key)
+
+          true ->
+            leaderboard |> scoped_records(opts) |> Repo.aggregate(:count, :id)
         end
     end
   end
 
   @decorate cacheable(
               key:
-                {:leaderboards, :count_records, records_cache_version(leaderboard_id),
-                 leaderboard_id, key},
+                {:leaderboards, :count_records, records_cache_version(leaderboard.id),
+                 leaderboard.id, key},
               opts: [ttl: @records_cache_ttl_ms]
             )
-  defp count_records_cached(leaderboard_id, key) when is_binary(leaderboard_id) do
-    leaderboard_id
+  defp count_records_cached(%Leaderboard{} = leaderboard, key) do
+    leaderboard.id
     |> in_key(key)
-    |> listed(get_leaderboard(leaderboard_id), [])
+    |> listed(leaderboard, [])
     |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  How many records each of `leaderboard_ids` holds, every key and every
+  player (the admin's view), in one grouped query: `%{id => count}`, a board
+  without records absent.
+  """
+  @spec count_records_by_board([Ecto.UUID.t()]) :: %{Ecto.UUID.t() => non_neg_integer()}
+  def count_records_by_board([]), do: %{}
+
+  def count_records_by_board(leaderboard_ids) when is_list(leaderboard_ids) do
+    from(r in Record,
+      where: r.leaderboard_id in ^leaderboard_ids,
+      group_by: r.leaderboard_id,
+      select: {r.leaderboard_id, count(r.id)}
+    )
+    |> Repo.all()
+    |> Map.new()
   end
 
   @doc """
@@ -1445,9 +1755,10 @@ defmodule Gamend.Leaderboards do
     end
   end
 
-  # Ranked over the whole key in one statement, as `list_records_around_user/3`
-  # is, so the ranks agree with every other read; then the rows ahead of the
-  # score, the nearest (the highest rank number) first.
+  # The rows just ahead of the score in the board's order reversed, read off
+  # the rank index; then one count gives the nearest its rank, and the rest
+  # are the ranks before it (consecutive rows of the ranking). Ranking the
+  # whole key to find three rows took a second and more at a million.
   @decorate cacheable(
               key:
                 {:leaderboards, :above, records_cache_version(leaderboard.id), leaderboard.id,
@@ -1461,61 +1772,202 @@ defmodule Gamend.Leaderboards do
          limit
        )
        when is_integer(limit) do
-    ahead =
+    {ahead, nearest_first} =
       case sort_order do
-        :desc -> dynamic([r], r.score > ^score)
-        :asc -> dynamic([r], r.score < ^score)
+        :desc -> {dynamic([r], r.score > ^score), [asc: :score, desc: :inserted_at]}
+        :asc -> {dynamic([r], r.score < ^score), [desc: :score, desc: :inserted_at]}
       end
 
-    from(r in Record,
-      join: k in @rank_cte,
-      on: k.id == r.id,
+    from(r in listed(in_key(leaderboard.id, key), leaderboard, []),
       where: ^ahead,
-      order_by: [desc: k.rank],
+      order_by: ^nearest_first,
       limit: ^limit,
-      select: {r, k.rank},
       preload: [:user]
     )
-    |> with_cte(@rank_cte, as: ^ranked_records(leaderboard, key))
     |> Repo.all()
-    |> Enum.map(fn {record, rank} -> %{record | rank: rank} end)
+    |> case do
+      [] ->
+        []
+
+      [nearest | _] = rows ->
+        rank = calculate_rank(leaderboard, nearest.score, nearest.inserted_at, key)
+        rows |> Enum.with_index() |> Enum.map(fn {record, i} -> %{record | rank: rank - i} end)
+    end
   end
+
+  @doc """
+  The listed records either side of `record` on its key: `{above, below}`,
+  each nearest first, each carrying its rank. Above is sorting ahead of it
+  the way ranks count (a better score, or the same one set earlier), below
+  sorting behind it, so the ranks run on from the record's own: `rank - 1`,
+  `rank - 2`… above, `rank + 1`… below. `record` must carry its rank
+  (`get_user_record/3`'s).
+
+  A record kept off the board (a guest's, `Gamend.AccountRequired`) reads
+  the same: its rank is where it would stand, and the rows behind it are
+  numbered as if it stood there. Read off the rank index, as
+  `list_records_above/3` is: the key is never ranked whole.
+
+  ## Options
+
+    * `:above`, `:below` — how many on each side (default 1)
+  """
+  @spec list_records_beside(String.t(), Record.t(), keyword()) :: {[Record.t()], [Record.t()]}
+  def list_records_beside(leaderboard_id, %Record{rank: rank} = record, opts \\ [])
+      when is_binary(leaderboard_id) and is_integer(rank) do
+    case get_leaderboard(leaderboard_id) do
+      nil ->
+        {[], []}
+
+      leaderboard ->
+        list_records_beside_cached(
+          leaderboard,
+          record,
+          max(Keyword.get(opts, :above, 1), 0),
+          max(Keyword.get(opts, :below, 1), 0)
+        )
+    end
+  end
+
+  @decorate cacheable(
+              key:
+                {:leaderboards, :beside, records_cache_version(leaderboard.id), leaderboard.id,
+                 leaderboard.sort_order, record.key, record.id, record.score, record.inserted_at,
+                 record.rank, above, below},
+              opts: [ttl: @records_cache_ttl_ms]
+            )
+  defp list_records_beside_cached(
+         %Leaderboard{sort_order: sort} = leaderboard,
+         record,
+         above,
+         below
+       )
+       when is_integer(above) and is_integer(below) do
+    %Record{key: key, score: score, inserted_at: at, rank: rank} = record
+    rows = from(r in listed(in_key(leaderboard.id, key), leaderboard, []), preload: [:user])
+
+    ahead_rows =
+      if above > 0,
+        do:
+          Repo.all(
+            from(r in rows,
+              where: ^ahead(sort, score, at),
+              order_by: ^last_first(sort),
+              limit: ^above
+            )
+          ),
+        else: []
+
+    behind_rows =
+      if below > 0,
+        do:
+          Repo.all(
+            from(r in rows,
+              where: ^behind(sort, score, at),
+              order_by: ^record_order(sort),
+              limit: ^below
+            )
+          ),
+        else: []
+
+    {ahead_rows |> Enum.with_index(1) |> Enum.map(fn {r, i} -> %{r | rank: rank - i} end),
+     behind_rows |> Enum.with_index(1) |> Enum.map(fn {r, i} -> %{r | rank: rank + i} end)}
+  end
+
+  @doc """
+  The last records listed on a key, in rank order, each carrying its rank:
+  the bottom of the board, where a player with no score yet comes in.
+
+  ## Options
+
+    * `:key` — the ranking (default `""`)
+    * `:limit` — how many (default 3)
+  """
+  @spec list_records_last(String.t(), keyword()) :: [Record.t()]
+  def list_records_last(leaderboard_id, opts \\ []) when is_binary(leaderboard_id) do
+    case get_leaderboard(leaderboard_id) do
+      nil ->
+        []
+
+      leaderboard ->
+        key = key_opt(opts)
+        count = count_records(leaderboard.id, key: key)
+        list_records_last_cached(leaderboard, key, count, max(Keyword.get(opts, :limit, 3), 1))
+    end
+  end
+
+  @decorate cacheable(
+              key:
+                {:leaderboards, :last, records_cache_version(leaderboard.id), leaderboard.id,
+                 leaderboard.sort_order, key, count, limit},
+              opts: [ttl: @records_cache_ttl_ms]
+            )
+  defp list_records_last_cached(%Leaderboard{sort_order: sort} = leaderboard, key, count, limit)
+       when is_integer(limit) do
+    from(r in listed(in_key(leaderboard.id, key), leaderboard, []),
+      order_by: ^last_first(sort),
+      limit: ^limit,
+      preload: [:user]
+    )
+    |> Repo.all()
+    |> Enum.with_index()
+    |> Enum.map(fn {record, i} -> %{record | rank: count - i} end)
+    |> Enum.reverse()
+  end
+
+  # The board's order turned round: the last row first.
+  defp last_first(:desc), do: [asc: :score, desc: :inserted_at]
+  defp last_first(:asc), do: [desc: :score, desc: :inserted_at]
 
   @doc """
   The keys a board holds, sorted, from its listed records; with `prefix:`
   only the keys starting with it (`"match|"`: every language Word match has
-  runs in). A key only guests have played is not offered.
+  runs in). A key only guests have played is not offered. `all_time: true`
+  names the keys of every season of the slug (*All time* above).
   """
   @spec list_keys(String.t()) :: [String.t()]
   @spec list_keys(String.t(), keyword()) :: [String.t()]
   def list_keys(leaderboard_id, opts \\ []) when is_binary(leaderboard_id) do
     case get_leaderboard(leaderboard_id) do
-      nil -> []
-      leaderboard -> list_keys_cached(leaderboard, Keyword.get(opts, :prefix, ""))
+      nil ->
+        []
+
+      leaderboard ->
+        leaderboard =
+          if Keyword.get(opts, :all_time) == true and all_time?(leaderboard),
+            do: all_time_view(leaderboard),
+            else: leaderboard
+
+        list_keys_cached(leaderboard, Keyword.get(opts, :prefix, ""))
     end
   end
 
-  # `substr` reads the same in Postgres and SQLite and needs no LIKE escaping.
-  @decorate cacheable(
-              key:
-                {:leaderboards, :keys, records_cache_version(leaderboard.id), leaderboard.id,
-                 prefix},
-              opts: [ttl: @records_cache_ttl_ms]
-            )
+  # One index seek per key (a loose scan of the rank index), not every
+  # record read for its key: 2 s at a million rows. A public board that lists
+  # registered players only keeps the keys one of them (or a label) holds,
+  # each found on its first listed row. The prefix is checked here, not as a
+  # range: a collation that skips punctuation does not keep `match|…` together.
   defp list_keys_cached(%Leaderboard{id: id} = leaderboard, prefix) when is_binary(prefix) do
-    query = listed(in_key(id, :all), leaderboard, [])
+    next = fn after_key ->
+      from(r in Record, where: r.leaderboard_id == ^id, select: min(r.key))
+      |> then(&if after_key, do: where(&1, [r], r.key > ^after_key), else: &1)
+      |> Repo.one()
+    end
 
-    query =
-      if prefix == "",
-        do: query,
-        else:
-          from(r in query,
-            where: fragment("substr(?, 1, ?)", r.key, ^String.length(prefix)) == ^prefix
-          )
-
-    from(r in query, distinct: true, select: r.key, order_by: r.key)
-    |> Repo.all()
+    next.(nil)
+    |> Stream.unfold(fn
+      nil -> nil
+      key -> {key, next.(key)}
+    end)
+    |> Enum.filter(&(String.starts_with?(&1, prefix) and listed_key?(leaderboard, &1)))
   end
+
+  defp listed_key?(%Leaderboard{hidden: false} = leaderboard, key) do
+    not AccountRequired.required?(:leaderboards) or
+      Repo.exists?(listed(in_key(leaderboard.id, key), leaderboard, []))
+  end
+
+  defp listed_key?(_leaderboard, _key), do: true
 
   @doc """
   Deletes a record.
@@ -1527,6 +1979,7 @@ defmodule Gamend.Leaderboards do
       {:ok, rec} = ok ->
         _ = invalidate_records_cache(rec.leaderboard_id)
         _ = invalidate_record_cache(rec.id)
+        refresh_all_time_of(rec)
         ok
 
       other ->

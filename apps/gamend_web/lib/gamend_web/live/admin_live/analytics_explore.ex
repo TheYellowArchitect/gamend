@@ -113,7 +113,13 @@ defmodule GamendWeb.AdminLive.AnalyticsExplore do
     p = socket.assigns.params
     today = Date.utc_today()
 
-    seen = Explore.names(90, today)
+    # The names of 90 days barely move between two views, and reading them
+    # groups every event of those days.
+    seen =
+      Gamend.Cache.cached({:analytics_explore_names, today}, [ttl: :timer.minutes(5)], fn ->
+        Explore.names(90, today)
+      end)
+
     seen_names = Enum.map(seen, &elem(&1, 0))
     groups = Catalog.grouped(seen_names, kind: :event)
 
@@ -134,6 +140,22 @@ defmodule GamendWeb.AdminLive.AnalyticsExplore do
         user_id: p.user
       )
 
+    # Each of these reads the filter's events on its own: side by side, the
+    # page waits for the slowest rather than the sum (1.5 s at a million
+    # players, one after another).
+    read =
+      [
+        values: fn -> values(filter, dims) end,
+        series: fn -> Explore.series(filter) end,
+        counter: fn -> Explore.counter_series(filter) end,
+        totals: fn -> Explore.totals(filter) end,
+        averages: fn -> Explore.measures(filter, measure_opts) end,
+        breakdown: fn -> if(by, do: Explore.breakdown(filter, by, measure_opts), else: []) end,
+        rows: fn -> Explore.rows(filter, page: p.page, page_size: @page_size) end
+      ]
+      |> Enum.map(fn {key, fun} -> {key, Task.async(fun)} end)
+      |> Map.new(fn {key, task} -> {key, Task.await(task, 30_000)} end)
+
     socket
     |> assign(:groups, groups)
     |> assign(:title, title)
@@ -143,13 +165,7 @@ defmodule GamendWeb.AdminLive.AnalyticsExplore do
     |> assign(:by, by)
     |> assign(:measures, measures)
     |> assign(:rates, rates)
-    |> assign(:values, values(filter, dims))
-    |> assign(:series, Explore.series(filter))
-    |> assign(:counter, Explore.counter_series(filter))
-    |> assign(:totals, Explore.totals(filter))
-    |> assign(:averages, Explore.measures(filter, measure_opts))
-    |> assign(:breakdown, if(by, do: Explore.breakdown(filter, by, measure_opts), else: []))
-    |> assign(:rows, Explore.rows(filter, page: p.page, page_size: @page_size))
+    |> assign(read)
     |> assign(:user, p.user && Gamend.Accounts.get_user(p.user))
     |> assign(:labels, Map.new(Catalog.events(), &{&1.name, &1.label}))
   end

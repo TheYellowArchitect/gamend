@@ -125,27 +125,28 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :account_links, :list, default: []
 
   def user_menu(assigns) do
+    path = assigns.current_path
+
     assigns =
       assign(assigns,
-        custom_link_active?: any_entry_active?(assigns.account_links, assigns.current_path),
+        active?:
+          any_entry_active?(assigns.account_links, path) or here?(path, "/users/settings") or
+            here?(path, "/notifications") or here?(path, "/chat"),
         anonymous?: Scope.anonymous?(assigns.current_scope)
       )
 
     ~H"""
     <details class="dropdown dropdown-end" data-navbar-dropdown>
-      <summary class={[
-        "btn gap-1 list-none",
-        if(
-          @custom_link_active? or
-            here?(@current_path, "/users/settings") or
-            here?(@current_path, "/notifications") or
-            here?(@current_path, "/chat"),
-          do: "btn-primary",
-          else: "btn-surface"
-        )
-      ]}>
-        <.user_avatar user={Scope.user(@current_scope)} class="w-6 h-6" />
-        <.player_name name={display_name(Scope.user(@current_scope))} class="max-w-[8rem]" />
+      <summary class={["btn gap-1 list-none", if(@active?, do: "btn-primary", else: "btn-surface")]}>
+        <%!-- The player card (`player_card/1`), as every list draws the
+              player: on a filled button its line takes the button's colour. --%>
+        <.player_card
+          user={Scope.user(@current_scope)}
+          name={display_name(Scope.user(@current_scope))}
+          size="sm"
+          subtitle_class={if(@active?, do: nil, else: "text-muted")}
+          class="max-w-[10rem]"
+        />
         <.count_pill count={@notif_unread_count} />
         <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
       </summary>
@@ -684,9 +685,13 @@ defmodule GamendWeb.HostLayoutNavigation do
           "btn w-full justify-start pe-10 relative cursor-pointer list-none summary-no-marker",
           if(@active?, do: "btn-primary", else: "btn-ghost")
         ]}>
-          <span class="flex items-center gap-2">
-            <.user_avatar user={Scope.user(@current_scope)} class="w-5 h-5" />
-            <.player_name name={display_name(Scope.user(@current_scope))} class="max-w-full" />
+          <span class="flex min-w-0 items-center gap-2">
+            <.player_card
+              user={Scope.user(@current_scope)}
+              name={display_name(Scope.user(@current_scope))}
+              size="sm"
+              subtitle_class={if(@active?, do: nil, else: "text-muted")}
+            />
             <.count_pill count={@notif_unread_count} class="ms-0.5" />
           </span>
           <.icon
@@ -1297,21 +1302,30 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp best_href(entries, current_path) do
     entries
     |> Enum.reject(&dropdown_entry?/1)
-    |> Enum.filter(&link_active?(&1, current_path))
-    |> Enum.max_by(&String.length(&1["href"]), fn -> nil end)
+    |> Enum.map(&{&1, match_length(&1, current_path)})
+    |> Enum.reject(fn {_entry, length} -> is_nil(length) end)
+    |> Enum.max_by(fn {_entry, length} -> length end, fn -> nil end)
     |> case do
       nil -> nil
-      entry -> entry["href"]
+      {entry, _length} -> entry["href"]
     end
   end
 
   defp dropdown_entry?(%{"items" => items}) when is_list(items), do: true
   defp dropdown_entry?(_entry), do: false
 
-  defp link_active?(%{"href" => href} = link, current_path)
+  defp link_active?(link, current_path), do: match_length(link, current_path) != nil
+
+  # How much of the page's path the link claims: the longest of its href and
+  # its `"active"` prefixes that the path starts with, or nil. `"active"` is
+  # a list of clean paths a section owns besides its href (`["/vocabulary",
+  # "/flashcards"]`): a link whose href names one page of the section
+  # (`/vocabulary/spanish`) is still lit on the hub and the section's other
+  # pages. `"match": "exact"` applies to the href alone.
+  defp match_length(%{"href" => href} = link, current_path)
        when is_binary(href) and is_binary(current_path) do
     if external_href?(href) do
-      false
+      nil
     else
       # Both sides get stripped: the href now carries the reader's locale
       # prefix, while `current_path` may be the clean path the PageMeta plug
@@ -1320,14 +1334,24 @@ defmodule GamendWeb.HostLayoutNavigation do
       href = GamendWeb.HostLayouts.strip_locale_prefix(href, known)
       current_path = GamendWeb.HostLayouts.strip_locale_prefix(current_path, known)
 
-      case Map.get(link, "match", "prefix") do
-        "exact" -> current_path == href
-        _ -> path_prefix?(current_path, href)
-      end
+      href_match? =
+        case Map.get(link, "match", "prefix") do
+          "exact" -> current_path == href
+          _ -> path_prefix?(current_path, href)
+        end
+
+      owned =
+        link["active"]
+        |> List.wrap()
+        |> Enum.filter(&(is_binary(&1) and path_prefix?(current_path, &1)))
+
+      if(href_match?, do: [href | owned], else: owned)
+      |> Enum.map(&String.length/1)
+      |> Enum.max(fn -> nil end)
     end
   end
 
-  defp link_active?(_link, _current_path), do: false
+  defp match_length(_link, _current_path), do: nil
 
   # Keeps the reader's locale prefix on the hand-written account links, the
   # same way `localize_hrefs/2` does for every configured nav entry.

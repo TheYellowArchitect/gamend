@@ -71,6 +71,19 @@ Gamend.Leaderboards.list_records(board.id,
 Make the key the finest grain a reader may want: a coarser view is a `meta:`
 filter over keys, a finer one cannot be made after the fact.
 
+Around one player, read off the rank index (the key is never ranked whole):
+
+```elixir
+{:ok, me} = Gamend.Leaderboards.get_user_record(board.id, user_id, key: key)
+# The rows just ahead and just behind, nearest first, ranked from mine.
+{above, below} = Gamend.Leaderboards.list_records_beside(board.id, me, above: 1, below: 1)
+# The bottom of the board, in rank order: where a first score comes in.
+Gamend.Leaderboards.list_records_last(board.id, key: key, limit: 3)
+```
+
+A guest's record (kept off a public board) reads the same: its rank is
+where it would stand, and the rows behind it are numbered as if it did.
+
 A game client reads the same rankings over the API: `key` on
 `GET /api/v1/leaderboards/{id}/records`, `/records/around/{user_id}` and
 `/records/me` picks one (left out, `""`). Two more reads go with it:
@@ -83,12 +96,52 @@ A game client reads the same rankings over the API: `key` on
 A board's `metadata.views` (tabs and filters, see `GamendWeb.LeaderboardViews`)
 names which keys it holds. A guest is in no list, as on the website.
 
+## All time
+
+A `:best` board with seasons (a start or an end date, `all_time?/1`) also
+has an all-time ranking: every board under its slug read as one, each
+player's (or label's) best row of them, ranked per key. `all_time: true` on
+`list_records/2`, `count_records/2`, `get_user_record/3` and `list_keys/2`
+reads it, from any season's id.
+
+Those rows live on a hidden board of their own, `<slug>__all_time`: a submit
+to a season raises it as a `:best` submit does, an edited or deleted season
+row reads its owner's best again, a deleted season refills it. So All time
+reads like one board, indexed and cached. (Read from the seasons on every
+request, it took a second a page at 100,000 rows.) It is made and filled the
+first time it is asked for; `rebuild_all_time/1` refills it after rows were
+written around `submit_score/5` (a bulk import, `mix demo.seed`). On
+`/leaderboards/<slug>`
+the board shows two tabs above its season, its length ("Monthly",
+"Weekly", "Daily", else "Season") and All time (`?period=all`), the view's
+tab and filters kept.
+
 ## Hidden boards
 
 `hidden: true` keeps a board out of the public listings (`/leaderboards`, the
 API index, `list_leaderboards/1` and `list_leaderboard_groups/1` unless
 `include_hidden: true`). It is still a board: scores submit and rank, and it
 reads by id or slug. For a board a host shows on its own pages.
+
+## Guests
+
+A host can list registered players only:
+`config :gamend_core, Gamend.AccountRequired, [:leaderboards]`. A guest (no
+email, no provider, `User.anonymous?/1`) keeps their records on a public
+board, but no list, count, rank or key of it includes them; their own
+`get_user_record/3` answers with `hidden: true`. A hidden board keeps its
+guests, and `guests: true` lists them (the admin's view).
+
+Each record says whether its player is a guest (`leaderboard_records.guest`),
+and the database keeps it: a trigger sets it from the user on every insert
+(a submit, a merge, the All time fill, a bulk seed), and another moves every
+record of a user who gains their first identity or loses their last. So a
+guest who registers is listed at once (after the 10 s record cache), and a
+listed read filters the record alone, on its own partial rank index
+(`NOT guest`). Joining every record to its user instead took 0.6 to 1.5 s
+for a rank, a search or a count at a million records. A new identity column
+on `users` needs those triggers made again (migration
+`LeaderboardRecordsGuest`).
 
 ## Icons
 

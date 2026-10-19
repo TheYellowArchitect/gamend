@@ -230,14 +230,22 @@ defmodule Gamend.Chat.Reports do
              Map.get(filters, :reported_user_id) || Map.get(filters, "reported_user_id")
            ) do
         nil -> query
-        value -> where(query, [r], r.reported_user_id == ^to_string(value))
+        value -> where_id(query, :reported_user_id, value)
       end
 
     case Gamend.Parse.blank_to_nil(
            Map.get(filters, :reporter_id) || Map.get(filters, "reporter_id")
          ) do
       nil -> query
-      value -> where(query, [r], r.reporter_id == ^to_string(value))
+      value -> where_id(query, :reporter_id, value)
+    end
+  end
+
+  # An admin filter typed by hand: an id that is not one matches nothing.
+  defp where_id(query, field, value) do
+    case Gamend.UUIDv7.cast_or_nil(to_string(value)) do
+      nil -> where(query, [_], false)
+      id -> where(query, [r], field(r, ^field) == ^id)
     end
   end
 

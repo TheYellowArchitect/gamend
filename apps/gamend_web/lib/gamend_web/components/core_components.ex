@@ -1500,19 +1500,25 @@ defmodule GamendWeb.CoreComponents do
   def user_display(_), do: "-"
 
   @doc """
-  The game's own line under a player's name — a rank, a title, a guild — read
-  from a metadata path the host configures:
+  The game's own line under a player's name — a rank, a title, a guild, the
+  language they study. The host names it one of two ways: a function that
+  answers it from the user (`{module, function}`, called with the `%User{}`,
+  the metadata map or `nil` given, answering a string or nil), or a metadata
+  path:
 
+      config :gamend_web, :user_title, {MyHost.Players, :title}
       config :gamend_web, :user_title_meta_path, ["player", "rank"]
 
-  Core knows nothing about what a rank IS; it only knows where the host keeps
-  it. Renders nothing when the path is unset, the user has no metadata, or the
-  value is blank, so a fresh account shows a bare name rather than an empty
-  badge. Takes a `%User{}`, a metadata map, or `nil`.
+  The function wins when both are set. Core knows nothing about what a title
+  IS; it only knows where the host keeps it. Renders nothing when neither is
+  set, the user has no metadata, or the value is blank, so a fresh account
+  shows a bare name rather than an empty badge. Takes a `%User{}`, a metadata
+  map, or `nil`.
 
   One component so every place that names a player — leaderboards, tournament
   rosters, party lists, profile cards — says the same thing about them, and a
   host that changes where the title lives changes one config key.
+  `player_card/1` draws it under the name.
   """
   attr :user, :any, required: true
   attr :class, :string, default: "text-xs text-muted"
@@ -1527,6 +1533,19 @@ defmodule GamendWeb.CoreComponents do
 
   @doc "The title text `user_title/1` renders, or nil. Exposed for plain-text callers."
   def user_title_text(user) do
+    case Application.get_env(:gamend_web, :user_title) do
+      {module, fun} when is_atom(module) and is_atom(fun) ->
+        case apply(module, fun, [user]) do
+          title when is_binary(title) and title != "" -> title
+          _ -> nil
+        end
+
+      _ ->
+        meta_path_title(user)
+    end
+  end
+
+  defp meta_path_title(user) do
     with [_ | _] = path <- Application.get_env(:gamend_web, :user_title_meta_path),
          %{} = metadata <- user_metadata(user),
          value when is_binary(value) and value != "" <- get_in(metadata, path) do
@@ -1582,6 +1601,94 @@ defmodule GamendWeb.CoreComponents do
     />
     <.icon :if={@avatar_url} name="hero-user-circle-solid" class={"hidden " <> @class} />
     <.icon :if={!@avatar_url} name="hero-user-circle-solid" class={@class} />
+    """
+  end
+
+  attr :name, :string, required: true, doc: "the name shown, cut where it does not fit"
+
+  attr :user, :any,
+    default: nil,
+    doc:
+      "the `%User{}` behind it (its avatar, its title), or nil: a row with no account (a label)"
+
+  attr :subtitle, :any,
+    default: :title,
+    doc: "the line under the name: `:title` (default) is `user_title_text/1`, nil or \"\" none"
+
+  attr :subtitle_class, :any,
+    default: "text-muted",
+    doc:
+      "the line's tone: `text-muted`, or nil to take the surrounding colour (on a filled button)"
+
+  attr :you, :boolean,
+    default: false,
+    doc: "the reader's own: the name bold, a You badge after it"
+
+  attr :size, :string, default: "md", values: ~w(sm md), doc: "the avatar: `sm` 1.5rem, `md` 2rem"
+  attr :class, :any, default: nil, doc: "layout only (a width cap, `flex-1`)"
+  attr :rest, :global
+
+  slot :inner_block, doc: "after the card's text: a tag of the caller's"
+
+  @doc """
+  A player as every list and header draws one: the avatar (the person icon
+  for a row with no account behind it, so every row's name starts in the
+  same place), the name on one line, cut with an ellipsis where it does not
+  fit and whole on hover (`player_name/1`), and one line under it, the
+  host's title for the user (`user_title_text/1`) unless the caller names
+  the line itself (a run's language, a made-up runner's mark). The reader's
+  own card is bold and says You.
+
+  One component for leaderboards, rosters, the account menu and a host's
+  own lists, so a player looks the same wherever they are named.
+  """
+  def player_card(assigns) do
+    assigns =
+      assign(assigns,
+        line: card_line(assigns.subtitle, assigns.user),
+        avatar_class: if(assigns.size == "sm", do: "size-6 shrink-0", else: "size-8 shrink-0")
+      )
+
+    ~H"""
+    <div class={["flex min-w-0 items-center gap-2", @class]} {@rest}>
+      <.user_avatar user={@user} class={@avatar_class} />
+      <span class="flex min-w-0 flex-col text-start leading-tight">
+        <.player_name name={@name} class={["max-w-full", @you && "font-bold"]} />
+        <span
+          :if={@line}
+          class={["truncate text-xs font-normal", @subtitle_class]}
+          title={@line}
+        >
+          {@line}
+        </span>
+      </span>
+      <span :if={@you} class="badge badge-primary badge-sm shrink-0">{gettext("You")}</span>
+      {render_slot(@inner_block)}
+    </div>
+    """
+  end
+
+  defp card_line(:title, user), do: user_title_text(user)
+  defp card_line(line, _user) when is_binary(line) and line != "", do: line
+  defp card_line(_line, _user), do: nil
+
+  attr :rank, :any, required: true, doc: "the rank, or nil for a row with none (a dash)"
+
+  @doc """
+  A rank on a leaderboard row: its number in a circle, gold, silver and
+  bronze for the first three. Every ranked list draws it, core's
+  leaderboards and a host's own.
+  """
+  def leaderboard_rank(assigns) do
+    ~H"""
+    <span class={[
+      "inline-flex size-8 shrink-0 items-center justify-center rounded-full font-mono",
+      @rank == 1 && "bg-yellow-500/20 text-yellow-600",
+      @rank == 2 && "bg-gray-400/20 text-gray-600",
+      @rank == 3 && "bg-orange-500/20 text-orange-600"
+    ]}>
+      {@rank || "–"}
+    </span>
     """
   end
 end

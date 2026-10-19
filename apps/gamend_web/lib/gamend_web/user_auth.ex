@@ -29,6 +29,23 @@ defmodule GamendWeb.UserAuth do
   @anonymous_session_max_age 300
 
   @doc """
+  The remember-me cookie that signs `token` in, as `{name, value}`: what a
+  browser holds after "Keep me signed in". `mix demo.bench` hands it to its
+  page client, which has no other way to sign in.
+  """
+  @spec remember_me_cookie(binary()) :: {String.t(), String.t()}
+  def remember_me_cookie(token) when is_binary(token) do
+    secret = Application.fetch_env!(:gamend_web, GamendWeb.Endpoint)[:secret_key_base]
+
+    conn =
+      put_resp_cookie(%Plug.Conn{secret_key_base: secret}, @remember_me_cookie, token,
+        sign: true
+      )
+
+    {@remember_me_cookie, conn.resp_cookies[@remember_me_cookie].value}
+  end
+
+  @doc """
   Logs the user in.
 
   Redirects to the session's `:user_return_to` path

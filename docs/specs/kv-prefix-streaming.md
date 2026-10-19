@@ -1,5 +1,17 @@
 # KV prefix queries and streaming
 
+**Status (2026-10-19):** one piece landed, under another name.
+`KV.stream_prefix/2` (beside `prune_prefix/3`) walks one key family across
+every player: `scope:` `:user` / `:global` / `:lobby` / `:user_lobby` /
+`:all`, `updated_since:`, `batch:`. It pages by `id`, not by `key`: outside
+the C collation a left-anchored `LIKE` uses no plain btree and `ORDER BY key`
+sorts by the collation, while the primary key carries a one-pass walk with
+the prefix as a filter and needs no new index. Polyglot's hourly streak
+reminder went from about 17 hours a run to a minute at a million players.
+Still open: the per-user (`user_id:`) reads, `list_by_prefix/2`,
+`count_by_prefix/2`, `delete_by_prefix/2`, the pattern-ops index and the
+admin `*` search.
+
 Goal: make "all of this user's entries under `word_stats:`" a single indexed,
 cursor-paged query instead of a substring `LIKE` behind offset pagination that
 a plugin has to loop over by hand.

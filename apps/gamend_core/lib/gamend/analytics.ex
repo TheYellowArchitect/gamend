@@ -52,6 +52,7 @@ defmodule Gamend.Analytics do
   alias Gamend.Economy.LedgerEntry
   alias Gamend.Payments.Purchase
   alias Gamend.Repo
+  alias Gamend.Repo.AdvisoryLock
 
   @stats_cache_ttl_ms :timer.minutes(5)
   @snapshot_cache_ttl_ms :timer.minutes(1)
@@ -363,8 +364,40 @@ defmodule Gamend.Analytics do
     :ok
   rescue
     error ->
-      Logger.warning("analytics: #{length(rows)} events not written: #{Exception.message(error)}")
-      :error
+      # A row naming an account deleted since it was tracked (a guest merged
+      # into the account it signed in to, an account deleted) fails the
+      # whole batch on the foreign key, and a refused batch stays buffered,
+      # so every later event queued behind it. Such a row is kept with no
+      # person, as `on_delete: :nilify_all` does to rows already written.
+      case gone_users(rows) do
+        [] ->
+          Logger.warning(
+            "analytics: #{length(rows)} events not written: #{Exception.message(error)}"
+          )
+
+          :error
+
+        gone ->
+          Logger.info("analytics: events of #{length(gone)} deleted accounts kept without them")
+
+          rows
+          |> Enum.map(fn row -> if row.user_id in gone, do: %{row | user_id: nil}, else: row end)
+          |> write_events()
+      end
+  end
+
+  # The batch's user ids with no account left. None when the lookup fails
+  # too (the database is down): the batch then waits for the next flush.
+  defp gone_users(rows) do
+    ids = rows |> Enum.map(& &1.user_id) |> Enum.reject(&is_nil/1) |> Enum.uniq()
+
+    if ids == [] do
+      []
+    else
+      ids -- Repo.all(from(u in User, where: u.id in ^ids, select: u.id))
+    end
+  rescue
+    _ -> []
   end
 
   @doc """
@@ -440,19 +473,7 @@ defmodule Gamend.Analytics do
   def feature_summary(today \\ Date.utc_today(), opts \\ []) do
     segment = Keyword.get(opts, :segment, :all)
     first = Date.add(today, -(@feature_window_days - 1))
-    start = start_of_day(first)
     stop = start_of_day(Date.add(today, 1))
-
-    presence =
-      from(e in Event,
-        where: not is_nil(e.user_id) and e.inserted_at >= ^start and e.inserted_at < ^stop,
-        group_by: [e.name, fragment("date(?)", e.inserted_at), e.user_id],
-        select: {e.name, fragment("date(?)", e.inserted_at), e.user_id}
-      )
-      |> in_segment(segment)
-      |> Repo.all()
-      |> Enum.group_by(&elem(&1, 0), fn {_name, day, user} -> {to_date(day), user} end)
-
     week_start = start_of_day(Date.add(today, -6))
 
     events_7d =
@@ -465,71 +486,104 @@ defmodule Gamend.Analytics do
       |> Repo.all()
       |> Map.new()
 
-    names =
-      presence |> Map.keys() |> MapSet.new() |> MapSet.union(MapSet.new(Map.keys(events_7d)))
+    people = feature_people(first, today, segment)
 
-    names
+    events_7d
+    |> Map.keys()
+    |> MapSet.new()
+    |> MapSet.union(MapSet.new(Map.keys(people)))
     |> Enum.map(fn name ->
-      feature_row(name, Map.get(presence, name, []), Map.get(events_7d, name, 0), today)
+      feature_row(name, Map.get(people, name), Map.get(events_7d, name, 0))
     end)
     |> Enum.sort_by(&{-&1.mau, -&1.events_7d, &1.name})
   end
 
-  # `seen` is `[{day, user_id}]`, one per user per day.
-  defp feature_row(name, seen, events_7d, today) do
-    week = Date.add(today, -6)
-    month = Date.add(today, -29)
+  # Per event name, counted by the database: each person's first and last
+  # day with it in the window, so active / new are counts over people, and
+  # whether they were seen again on their first day + 1 / 7 / 30. Reading
+  # every (name, day, person) into the app instead took 14 s at a million
+  # players.
+  defp feature_people(first, today, segment) do
+    presence =
+      from(e in Event,
+        where: not is_nil(e.user_id),
+        where: e.inserted_at >= ^start_of_day(first),
+        where: e.inserted_at < ^start_of_day(Date.add(today, 1)),
+        distinct: true,
+        select: %{
+          name: selected_as(e.name, :name),
+          user_id: selected_as(e.user_id, :user_id),
+          day: selected_as(fragment("date(?)", e.inserted_at), :day)
+        }
+      )
+      |> in_segment(segment)
 
-    users_since = fn since ->
-      seen
-      |> Enum.filter(fn {day, _} -> Date.compare(day, since) != :lt end)
-      |> Enum.map(&elem(&1, 1))
-      |> Enum.uniq()
-      |> length()
+    {presence_sql, params} = Repo.to_sql(:all, presence)
+
+    since = fn column, day ->
+      "SUM(CASE WHEN #{column} >= #{date_literal(day)} THEN 1 ELSE 0 END)"
     end
 
-    dau = users_since.(today)
-    mau = users_since.(month)
-
-    firsts =
-      seen
-      |> Enum.group_by(&elem(&1, 1), &elem(&1, 0))
-      |> Map.new(fn {user, days} -> {user, Enum.min_by(days, &Date.to_erl/1)} end)
-
-    present = MapSet.new(seen)
-
-    retained = fn n ->
-      {kept, total} =
-        Enum.reduce(firsts, {0, 0}, fn {user, day}, {kept, total} ->
-          horizon = Date.add(day, n)
-
-          cond do
-            Date.compare(horizon, today) == :gt -> {kept, total}
-            MapSet.member?(present, {horizon, user}) -> {kept + 1, total + 1}
-            true -> {kept, total + 1}
-          end
-        end)
-
-      ratio(kept, total)
+    reached = fn n ->
+      "SUM(CASE WHEN first <= #{date_literal(Date.add(today, -n))} THEN 1 ELSE 0 END)"
     end
 
-    new_since = fn since ->
-      Enum.count(firsts, fn {_user, day} -> Date.compare(day, since) != :lt end)
-    end
+    back = fn n -> "MAX(CASE WHEN day = #{plus_days("first", n)} THEN 1 ELSE 0 END)" end
 
-    %{
-      name: name,
-      dau: dau,
-      wau: users_since.(week),
-      mau: mau,
-      stickiness: ratio(dau, mau),
-      events_7d: events_7d,
-      new_7d: new_since.(week),
-      new_30d: new_since.(month),
-      d1: retained.(1),
-      d7: retained.(7),
-      d30: retained.(30)
-    }
+    # One row per (name, person, day), each beside the person's first day
+    # with the name; then one per (name, person); then one per name.
+    sql = """
+    WITH p AS (#{presence_sql}),
+    w AS (SELECT name, user_id, day, MIN(day) OVER (PARTITION BY name, user_id) AS first FROM p),
+    f AS (
+      SELECT name, user_id, MIN(first) AS first, MAX(day) AS last,
+        #{back.(1)} AS k1, #{back.(7)} AS k7, #{back.(30)} AS k30
+      FROM w GROUP BY name, user_id
+    )
+    SELECT name,
+      #{since.("last", today)}, #{since.("last", Date.add(today, -6))},
+      #{since.("last", Date.add(today, -29))},
+      #{since.("first", Date.add(today, -6))}, #{since.("first", Date.add(today, -29))},
+      #{reached.(1)}, SUM(k1), #{reached.(7)}, SUM(k7), #{reached.(30)}, SUM(k30)
+    FROM f
+    GROUP BY name
+    """
+
+    Repo.query!(sql, params, timeout: :infinity).rows
+    |> Map.new(fn [name | counts] ->
+      [dau, wau, mau, new_7d, new_30d, d1n, d1k, d7n, d7k, d30n, d30k] =
+        Enum.map(counts, &to_int/1)
+
+      {name,
+       %{
+         dau: dau,
+         wau: wau,
+         mau: mau,
+         new_7d: new_7d,
+         new_30d: new_30d,
+         d1: ratio(d1k, d1n),
+         d7: ratio(d7k, d7n),
+         d30: ratio(d30k, d30n)
+       }}
+    end)
+  end
+
+  # Dates the code made, never input, so they are written into the SQL.
+  defp date_literal(%Date{} = day) do
+    if postgres?(), do: "DATE '#{Date.to_iso8601(day)}'", else: "'#{Date.to_iso8601(day)}'"
+  end
+
+  defp plus_days(column, n) do
+    if postgres?(), do: "(#{column} + #{n})", else: "date(#{column}, '+#{n} days')"
+  end
+
+  @no_people %{dau: 0, wau: 0, mau: 0, new_7d: 0, new_30d: 0, d1: nil, d7: nil, d30: nil}
+
+  defp feature_row(name, people, events_7d) do
+    people = people || @no_people
+
+    people
+    |> Map.merge(%{name: name, events_7d: events_7d, stickiness: ratio(people.dau, people.mau)})
   end
 
   @doc """
@@ -776,54 +830,80 @@ defmodule Gamend.Analytics do
     end
   end
 
-  # `%{day => %{active, wau, mau}}` for every day in `first..today`: each
-  # user's days seen, spread over the 7 and 30 days they count in. One read
-  # of the days that can count (30 before `first` on), so a 90-day table is
-  # one query, not 180.
+  # `%{day => %{active, wau, mau}}` for every day in `first..today`, from the
+  # days that can count (30 before `first` on), counted by the database in
+  # one pass. Each user's days in order: a day newly covers the window days
+  # its previous day did not, from that day's window end (or its own day) to
+  # its own window end 7 or 30 days on. So a day's WAU is the window starts
+  # up to it less the days seen up to 7 days before it (each ends there),
+  # and likewise MAU at 30. The rows come back grouped by (day, week start,
+  # month start), a few thousand at most. Reading every (user, day) row into
+  # the app instead took over 15 s, and gigabytes, at a million players.
   defp rolling_active(first, today, segment) do
     from_day = Date.add(first, -29)
-    first_n = Date.to_gregorian_days(first)
-    last_n = Date.to_gregorian_days(today)
 
     seen =
       from(a in ActivityDay,
         where: a.day >= ^from_day and a.day <= ^today,
-        select: {a.user_id, a.day}
+        select: %{user_id: selected_as(a.user_id, :user_id), day: selected_as(a.day, :day)}
       )
       |> in_segment(segment)
-      |> Repo.all()
-      |> Enum.group_by(&elem(&1, 0), &(&1 |> elem(1) |> to_date() |> Date.to_gregorian_days()))
 
-    empty = Map.new(first_n..last_n, &{&1, {0, 0, 0}})
+    {seen_sql, params} = Repo.to_sql(:all, seen)
+    later = if postgres?(), do: "GREATEST", else: "MAX"
 
-    seen
-    |> Enum.reduce(empty, fn {_user, days}, acc -> add_user_days(acc, days, first_n, last_n) end)
-    |> Map.new(fn {n, {d, w, m}} ->
-      {Date.from_gregorian_days(n), %{active: d, wau: w, mau: m}}
-    end)
-  end
+    sql = """
+    WITH seen AS (#{seen_sql})
+    SELECT n, #{later}(n, COALESCE(prev + 7, n)) AS ws, #{later}(n, COALESCE(prev + 30, n)) AS ms,
+      COUNT(*)
+    FROM (
+      SELECT n, LAG(n) OVER (PARTITION BY user_id ORDER BY n) AS prev
+      FROM (SELECT user_id, #{epoch_day("day")} AS n FROM seen) numbered
+    ) days
+    GROUP BY n, ws, ms
+    """
 
-  # One user's days seen, added to every `{active, wau, mau}` they count in.
-  defp add_user_days(acc, days, first_n, last_n) do
-    week = covered(days, 7, first_n, last_n)
-    month = covered(days, 30, first_n, last_n)
-    seen = MapSet.new(days)
+    {seen_on, week_starts, month_starts} =
+      Repo.query!(sql, params, timeout: :infinity).rows
+      |> Enum.reduce({%{}, %{}, %{}}, fn [day_n, ws, ms, count], {d, w, m} ->
+        count = to_int(count)
 
-    Enum.reduce(month, acc, fn n, acc ->
-      Map.update!(acc, n, fn {d, w, m} ->
-        {d + one_if(MapSet.member?(seen, n)), w + one_if(MapSet.member?(week, n)), m + 1}
+        {Map.update(d, to_int(day_n), count, &(&1 + count)),
+         Map.update(w, to_int(ws), count, &(&1 + count)),
+         Map.update(m, to_int(ms), count, &(&1 + count))}
       end)
-    end)
+
+    first_n = epoch_n(first)
+
+    {_week, _month, by_day} =
+      Enum.reduce(epoch_n(from_day)..epoch_n(today), {0, 0, %{}}, fn n, {w, m, acc} ->
+        w = w + Map.get(week_starts, n, 0) - Map.get(seen_on, n - 7, 0)
+        m = m + Map.get(month_starts, n, 0) - Map.get(seen_on, n - 30, 0)
+
+        acc =
+          if n >= first_n,
+            do: Map.put(acc, from_epoch_n(n), %{active: Map.get(seen_on, n, 0), wau: w, mau: m}),
+            else: acc
+
+        {w, m, acc}
+      end)
+
+    by_day
   end
 
-  defp one_if(true), do: 1
-  defp one_if(false), do: 0
+  # A day as days since 1970-01-01, in SQL and back.
+  @epoch_days 719_528
 
-  # The days in `first_n..last_n` a user seen on `days` counts in, for a
-  # window of `width` days ending on each.
-  defp covered(days, width, first_n, last_n) do
-    for d <- days, n <- max(d, first_n)..min(d + width - 1, last_n)//1, into: MapSet.new(), do: n
+  defp epoch_day(column) do
+    if postgres?(),
+      do: "(#{column} - DATE '1970-01-01')",
+      else: "CAST(julianday(#{column}) - 2440587.5 AS INTEGER)"
   end
+
+  defp epoch_n(%Date{} = day), do: Date.to_gregorian_days(day) - @epoch_days
+  defp from_epoch_n(n), do: Date.from_gregorian_days(n + @epoch_days)
+
+  defp postgres?, do: AdvisoryLock.postgres?()
 
   @doc """
   Headline numbers as of `today`: DAU / WAU / MAU, stickiness (DAU ÷ MAU),

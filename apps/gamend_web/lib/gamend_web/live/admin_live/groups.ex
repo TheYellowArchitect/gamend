@@ -18,6 +18,10 @@ defmodule GamendWeb.AdminLive.Groups do
       |> assign(:selected_group, nil)
       |> assign(:form, nil)
       |> assign(:members, [])
+      |> assign(:members_page, 1)
+      |> assign(:members_page_size, 50)
+      |> assign(:members_count, 0)
+      |> assign(:members_total_pages, 0)
       |> assign(:selected_ids, MapSet.new())
       |> reload_groups()
 
@@ -296,7 +300,7 @@ defmodule GamendWeb.AdminLive.Groups do
       <div class="modal modal-open">
         <div class="modal-box max-w-2xl">
           <h3 class="font-bold text-lg">
-            Members of "{@selected_group.title}" ({length(@members)})
+            Members of "{@selected_group.title}" ({@members_count})
           </h3>
 
           <div class="overflow-x-auto mt-4">
@@ -363,6 +367,17 @@ defmodule GamendWeb.AdminLive.Groups do
               </tbody>
             </table>
           </div>
+
+          <.pagination
+            class="mt-4"
+            page={@members_page}
+            total_pages={@members_total_pages}
+            total_count={@members_count}
+            page_size={@members_page_size}
+            on_prev="members_prev"
+            on_next="members_next"
+            on_page_size="members_page_size"
+          />
 
           <div class="modal-action">
             <button type="button" phx-click="close_members" class="btn">Close</button>
@@ -530,9 +545,27 @@ defmodule GamendWeb.AdminLive.Groups do
       {:noreply,
        socket
        |> assign(:selected_group, group)
-       |> assign(:members, Groups.get_group_members(group.id))
+       |> assign(:members_page, 1)
+       |> load_members()
        |> assign(:form, nil)}
     end)
+  end
+
+  def handle_event("members_prev", _, socket),
+    do: {:noreply, socket |> LiveHelpers.prev_page(:members_page) |> load_members()}
+
+  def handle_event("members_next", _, socket),
+    do: {:noreply, socket |> LiveHelpers.next_page(:members_page) |> load_members()}
+
+  def handle_event("members_page_size", %{"size" => size}, socket) do
+    socket =
+      LiveHelpers.put_page_size(socket, size,
+        min: 25,
+        size_key: :members_page_size,
+        page_key: :members_page
+      )
+
+    {:noreply, load_members(socket)}
   end
 
   @impl true
@@ -612,6 +645,19 @@ defmodule GamendWeb.AdminLive.Groups do
   # ---------------------------------------------------------------------------
   # Private
   # ---------------------------------------------------------------------------
+
+  # One page of the open group's members: a group can hold every player, and
+  # the modal used to load them all with their accounts.
+  defp load_members(%{assigns: %{selected_group: %{id: group_id}}} = socket) do
+    %{members_page: page, members_page_size: page_size} = socket.assigns
+    count = Groups.count_group_members(group_id)
+
+    assign(socket,
+      members: Groups.get_group_members_paginated(group_id, page: page, page_size: page_size),
+      members_count: count,
+      members_total_pages: LiveHelpers.total_pages(count, page_size)
+    )
+  end
 
   defp reload_groups(socket) do
     page = socket.assigns[:groups_page] || 1
@@ -708,7 +754,7 @@ defmodule GamendWeb.AdminLive.Groups do
             {:ok, _} ->
               {:noreply,
                socket
-               |> assign(:members, Groups.get_group_members(group.id))
+               |> load_members()
                |> put_flash(:info, success)}
 
             {:error, reason} ->

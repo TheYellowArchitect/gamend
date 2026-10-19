@@ -44,6 +44,7 @@ defmodule Gamend.Accounts.GuestMerge do
 
   alias Gamend.Accounts
   alias Gamend.Accounts.User
+  alias Gamend.Analytics.Buffer
   alias Gamend.Lock.Local
   alias Gamend.Repo
 
@@ -139,8 +140,16 @@ defmodule Gamend.Accounts.GuestMerge do
         from(d in Gamend.Analytics.ActivityDay, where: d.user_id == ^guest_id, select: d.day)
       )
 
+    # `insert_all` runs no schema autogeneration: a `Gamend.UUIDv7` key is
+    # not an `:id`/`:binary_id` one, so the id is ours to give (Postgres
+    # refuses a null one; SQLite took it).
     now = DateTime.utc_now(:second)
-    rows = Enum.map(days, &%{user_id: user_id, day: &1, inserted_at: now})
+
+    rows =
+      Enum.map(
+        days,
+        &%{id: Gamend.UUIDv7.generate(), user_id: user_id, day: &1, inserted_at: now}
+      )
 
     rows
     |> Enum.chunk_every(500)
@@ -150,6 +159,8 @@ defmodule Gamend.Accounts.GuestMerge do
         conflict_target: [:user_id, :day]
       )
     )
+
+    _ = Buffer.reassign(guest_id, user_id)
 
     Repo.update_all(from(e in Gamend.Analytics.Event, where: e.user_id == ^guest_id),
       set: [user_id: user_id]

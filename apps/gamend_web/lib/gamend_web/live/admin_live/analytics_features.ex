@@ -26,11 +26,22 @@ defmodule GamendWeb.AdminLive.AnalyticsFeatures do
   end
 
   @impl true
-  def handle_event("refresh", _params, socket), do: {:noreply, load(socket)}
+  def handle_event("refresh", _params, socket), do: {:noreply, load(socket, true)}
 
-  defp load(socket) do
-    _ = Analytics.flush()
-    summary = Analytics.feature_summary(Date.utc_today(), segment: socket.assigns.segment)
+  # Shared by the HTTP render and the socket's for half a minute, as the
+  # overview's (`GamendWeb.AdminLive.Analytics`); Refresh computes again.
+  defp load(socket, fresh? \\ false) do
+    segment = socket.assigns.segment
+    today = Date.utc_today()
+    key = {:admin_analytics_features, segment, today}
+    if fresh?, do: Gamend.Cache.delete(key)
+
+    summary =
+      Gamend.Cache.cached(key, [ttl: :timer.seconds(30)], fn ->
+        _ = Analytics.flush()
+        Analytics.feature_summary(today, segment: segment)
+      end)
+
     by_name = Map.new(summary, &{&1.name, &1})
 
     groups =

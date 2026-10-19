@@ -71,6 +71,15 @@ defmodule GamendWeb.LogFilters do
   there is no longer a connection to name. Scanners that connect and instantly
   reset produce a steady trickle of these.
 
+  An HTTP/2 stream answering after its connection is gone exits in
+  `GenServer.call/3` to the connection process (`noproc`): the peer closed the
+  connection while the response was on its way. The exit escapes the plug, so
+  Phoenix's error page is tried on the same dead connection and Bandit logs the
+  second exit. Only a call carrying Bandit's own stream messages
+  (`{:send_data, …}`, `:peer_data`, `:sock_data`, `:ssl_data` with the stream
+  id) is dropped; a `noproc` from any other `GenServer.call/3` is a real fault
+  and still logged.
+
   Bandit's "Connection that looks like TLS received on a clear channel" is a
   client speaking TLS to port 80. This app serves 80 only to redirect and to
   answer ACME challenges, so that is the client's mistake, not a fault here.
@@ -155,8 +164,8 @@ defmodule GamendWeb.LogFilters do
   defp peer_fault?(event, extra) do
     reason = reason(event)
 
-    benign_tls_alert?(reason) or dead_socket?(reason) or clear_channel_warning?(event) or
-      host_filters_drop?(event, extra)
+    benign_tls_alert?(reason) or dead_socket?(reason) or dead_connection?(reason) or
+      clear_channel_warning?(event) or host_filters_drop?(event, extra)
   end
 
   @doc """
@@ -195,6 +204,18 @@ defmodule GamendWeb.LogFilters do
   defp dead_socket?(%Bandit.TransportError{error: error}), do: error in @dead_socket_errors
   defp dead_socket?({:shutdown, inner}), do: dead_socket?(inner)
   defp dead_socket?(_reason), do: false
+
+  # `Bandit.HTTP2.Stream` talks to its connection process with
+  # `GenServer.call(connection_pid, {message, stream_id}, :infinity)`; that
+  # process gone means the peer closed the connection.
+  defp dead_connection?({{_exit, {GenServer, :call, [_pid, {message, stream_id}, _]}}, stack})
+       when is_integer(stream_id) and is_list(stack),
+       do: stream_message?(message)
+
+  defp dead_connection?(_reason), do: false
+
+  defp stream_message?({:send_data, _headers, _data, _end_stream}), do: true
+  defp stream_message?(message), do: message in [:peer_data, :sock_data, :ssl_data]
 
   # A plain `Logger.warning/2` from Bandit, not a crash report — matched on its
   # message because that is all the event carries.

@@ -338,8 +338,7 @@ defmodule GamendWeb.GroupsLive do
     total_pages =
       LiveHelpers.total_pages(total_count, socket.assigns.page_size)
 
-    # Build a map of member counts per group
-    member_counts = Enum.into(groups, %{}, fn g -> {g.id, Groups.count_group_members(g.id)} end)
+    member_counts = Groups.batch_member_counts(Enum.map(groups, & &1.id))
 
     assign(socket,
       groups: groups,
@@ -366,11 +365,16 @@ defmodule GamendWeb.GroupsLive do
 
         # The stat card reports the real roster size; the table and its pager
         # report whatever the search matched.
-        matched = Groups.count_group_members(group.id, search: search)
+        total = Groups.count_group_members(group.id)
+
+        matched =
+          if Gamend.Repo.search_pattern(search),
+            do: Groups.count_group_members(group.id, search: search),
+            else: total
 
         assign(socket,
           selected_members: members,
-          members_total: Groups.count_group_members(group.id),
+          members_total: total,
           members_matched: matched,
           members_total_pages: LiveHelpers.total_pages(matched, @page_size)
         )
