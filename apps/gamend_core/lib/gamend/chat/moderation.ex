@@ -357,7 +357,7 @@ defmodule Gamend.Chat.Moderation do
   can extend or shorten one without unmuting first.
   """
   @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-          {:ok, Ban.t()} | {:error, term()}
+          {:ok, Ban.t()} | {:error, Ecto.Changeset.t()}
   def mute_user(user_id, scope, scope_ref_id, attrs \\ %{}) do
     attrs = normalize_attrs(attrs)
 

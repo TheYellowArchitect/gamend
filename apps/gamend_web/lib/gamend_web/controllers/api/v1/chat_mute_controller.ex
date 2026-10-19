@@ -308,9 +308,6 @@ defmodule GamendWeb.Api.V1.ChatMuteController do
 
           {:error, %Ecto.Changeset{} = changeset} ->
             unprocessable(conn, changeset)
-
-          {:error, reason} ->
-            reply_error(conn, :unprocessable_entity, reason)
         end
     end
   end

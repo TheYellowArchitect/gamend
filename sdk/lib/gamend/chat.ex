@@ -488,7 +488,7 @@ defmodule Gamend.Chat do
     
   """
   @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-          {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
+          {:ok, Gamend.Bans.Ban.t()} | {:error, Ecto.Changeset.t()}
   def mute_user(_user_id, _scope, _scope_ref_id, _attrs \\ %{}) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->

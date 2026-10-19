@@ -16,6 +16,7 @@
 - [changed] **Layout and speed**: three page widths, breadcrumbs, a navbar that fits a phone, cached per-user reads and links that reuse the open connection. **Hosts:** declare `text-muted` and `--container-narrow` in your stylesheet.
 - [changed] **Translations say "you" informally**, and the English is American.
 - [changed] **Version 1.1**: releases are `1.1.<commit count>`, from the `VERSION` file.
+- [changed] **Nebulex 3.1**, the cache: no false miss when two reads promote one entry, and no `delete_all` that empties a table. **Hosts:** `mix deps.update nebulex nebulex_local nebulex_distributed nebulex_redis_adapter`.
 - [added] **Smaller additions**: crawler statistics, FAQ sections on presentation pages, rate-limit-exempt IPs, KV pruning by prefix, slow query logging and `Accounts.update_user_metadata/2`.
 - [removed] **IndexNow.** **Hosts:** drop `GAMEND_INDEX_NOW_*` and any `urls/1` from your sitemap source.
 - [fixed] **Sign-in and connections**: Steam sign-in works again, an unconfirmed account gets its confirmation email instead of a login link, and TLS 1.2 clients (Stripe's sandbox webhooks) connect again.
