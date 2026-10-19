@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1335">
+    <meta name="project" content="gamend_core v1.1.1336">
 
 
-    <title>Gamend.KV — gamend_core v1.1.1335</title>
+    <title>Gamend.KV — gamend_core v1.1.1336</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-2FE24F26.js"></script>
+    <script defer src="dist/sidebar_items-F240CFC9.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1335
+          v1.1.1336
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />KV</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1335)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1336)</small>
 
     </h1>
 
@@ -313,6 +313,18 @@ which nothing else ever trims. Hand it to the retention sweep with
       </div>
 
         <div class="summary-synopsis"><p>Store <code class="inline">value</code> with optional <code class="inline">metadata</code> at <code class="inline">key</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stream_prefix/2" data-no-tooltip="" translate="no">stream_prefix(prefix, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Every entry whose key starts with <code class="inline">prefix</code>, as a lazy stream in id order:
+for a job that walks one key family across every player (a migration, an
+hourly reminder, a boot sweep).</p></div>
 
     </div>
 
@@ -539,7 +551,7 @@ Returns <code class="inline">{:ok, entry}</code>, <code class="inline">{:error, 
       <h1 class="signature" translate="no">count_entries(opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L418" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L422" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -567,7 +579,7 @@ Returns <code class="inline">{:ok, entry}</code>, <code class="inline">{:error, 
       <h1 class="signature" translate="no">create_entry(attrs)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L465" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L469" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -628,7 +640,7 @@ Returns <code class="inline">{:ok, entry}</code> or <code class="inline">{:error
       <h1 class="signature" translate="no">delete_entry(id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L584" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L588" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -748,7 +760,7 @@ Returns <code class="inline">{:ok, %{value: map(), metadata: map()}}</code> when
       <h1 class="signature" translate="no">get_entry(id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L455" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L459" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -779,7 +791,7 @@ Returns the <code class="inline">Entry</code> struct or <code class="inline">nil
       <h1 class="signature" translate="no">list_entries(opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L367" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L371" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -797,7 +809,9 @@ Returns the <code class="inline">Entry</code> struct or <code class="inline">nil
 <p>List key/value entries with optional pagination and filtering.</p><p>Supported options: <code class="inline">:page</code>, <code class="inline">:page_size</code>, <code class="inline">:user_id</code>, <code class="inline">:lobby_id</code>, <code class="inline">:global_only</code>,
 and <code class="inline">:key</code> (substring filter).
 See <a href="#t:list_opts/0"><code class="inline">list_opts/0</code></a> for the expected option types.
-Returns a list of <code class="inline">Entry</code> structs ordered by most recently updated.</p>
+Returns a list of <code class="inline">Entry</code> structs ordered by most recently updated.</p><p>A page past the first reads every row before it, and <code class="inline">:key</code> matches
+anywhere in the key, so no index serves it: for a job that walks every
+row of a key family, use <a href="#stream_prefix/2"><code class="inline">stream_prefix/2</code></a>.</p>
   </section>
 </section>
 <section class="detail" id="prune_prefix/3">
@@ -812,7 +826,7 @@ Returns a list of <code class="inline">Entry</code> structs ordered by most rece
       <h1 class="signature" translate="no">prune_prefix(prefix, days, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L611" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L615" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -898,6 +912,47 @@ the entry.
 Returns <code class="inline">{:ok, entry}</code> on success or <code class="inline">{:error, changeset}</code> on validation failure.</p>
   </section>
 </section>
+<section class="detail" id="stream_prefix/2">
+
+    <span id="stream_prefix/1"></span>
+
+  <div class="detail-header">
+    <a href="#stream_prefix/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stream_prefix(prefix, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L651" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> stream_prefix(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: <a href="https://elixir.hexdocs.pm/Enumerable.html#t:t/0">Enumerable.t</a>()</pre>
+
+      </div>
+
+<p>Every entry whose key starts with <code class="inline">prefix</code>, as a lazy stream in id order:
+for a job that walks one key family across every player (a migration, an
+hourly reminder, a boot sweep).</p><p>Each query reads <code class="inline">:batch</code> rows (default 1,000) after the last id the one
+before it read, so the walk is one pass over the primary key however big
+the table is, and rows deleted or rewritten behind it do not shift what
+is still to come. Ids are UUIDv7, so a row inserted during the walk is
+newer than any read and comes up at the end. <a href="#list_entries/1"><code class="inline">list_entries/1</code></a> is the
+admin page's search, a substring newest first by page: walking a key
+family with it reads the whole table once per page.</p><p>The prefix is matched literally and case-sensitively (<code class="inline">%</code> and <code class="inline">_</code> in it
+are not wildcards). Options:</p><ul><li><code class="inline">:scope</code> — <code class="inline">:user</code> (a user's own rows, no lobby), <code class="inline">:lobby</code>,
+<code class="inline">:user_lobby</code>, <code class="inline">:global</code>, or <code class="inline">:all</code> (the default);</li><li><code class="inline">:updated_since</code> — only rows written at or after this <a href="https://elixir.hexdocs.pm/DateTime.html"><code class="inline">DateTime</code></a>;</li><li><code class="inline">:batch</code> — rows a query.</li></ul><p>Rows come from the database, never the cache. Each batch is its own
+query, so run a long walk outside a transaction.</p>
+  </section>
+</section>
 <section class="detail" id="subscribe/2">
 
     <span id="subscribe/1"></span>
@@ -968,7 +1023,7 @@ Returns <code class="inline">{:ok, entry}</code> on success or <code class="inli
       <h1 class="signature" translate="no">update_entry(id, attrs)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L526" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/kv.ex#L530" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -999,9 +1054,9 @@ Returns <code class="inline">{:ok, entry}</code>, <code class="inline">{:error, 
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1335">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1336">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1335">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1336">Hex Preview</a>
 
             </span>
 

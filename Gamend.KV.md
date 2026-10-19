@@ -182,6 +182,10 @@ and `:key` (substring filter).
 See `t:list_opts/0` for the expected option types.
 Returns a list of `Entry` structs ordered by most recently updated.
 
+A page past the first reads every row before it, and `:key` matches
+anywhere in the key, so no index serves it: for a job that walks every
+row of a key family, use `stream_prefix/2`.
+
 # `prune_prefix`
 
 ```elixir
@@ -217,6 +221,35 @@ Store `value` with optional `metadata` at `key`.
 When using the 4-arity, supported options include `user_id: id` or `lobby_id: id` to scope
 the entry.
 Returns `{:ok, entry}` on success or `{:error, changeset}` on validation failure.
+
+# `stream_prefix`
+
+```elixir
+@spec stream_prefix(String.t(), keyword()) :: Enumerable.t()
+```
+
+Every entry whose key starts with `prefix`, as a lazy stream in id order:
+for a job that walks one key family across every player (a migration, an
+hourly reminder, a boot sweep).
+
+Each query reads `:batch` rows (default 1,000) after the last id the one
+before it read, so the walk is one pass over the primary key however big
+the table is, and rows deleted or rewritten behind it do not shift what
+is still to come. Ids are UUIDv7, so a row inserted during the walk is
+newer than any read and comes up at the end. `list_entries/1` is the
+admin page's search, a substring newest first by page: walking a key
+family with it reads the whole table once per page.
+
+The prefix is matched literally and case-sensitively (`%` and `_` in it
+are not wildcards). Options:
+
+  * `:scope` — `:user` (a user's own rows, no lobby), `:lobby`,
+    `:user_lobby`, `:global`, or `:all` (the default);
+  * `:updated_since` — only rows written at or after this `DateTime`;
+  * `:batch` — rows a query.
+
+Rows come from the database, never the cache. Each batch is its own
+query, so run a long walk outside a transaction.
 
 # `subscribe`
 

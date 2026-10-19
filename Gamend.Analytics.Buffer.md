@@ -91,6 +91,17 @@ Milliseconds between flushes; 0 means callers write through.
 
 The cap on events waiting to be written.
 
+# `reassign`
+
+```elixir
+@spec reassign(String.t(), String.t()) :: non_neg_integer()
+```
+
+Gives the events still waiting under `from_user_id` to `to_user_id`
+(`Gamend.Accounts.GuestMerge`: a guest's last seconds before signing in
+were not written yet when the written rows moved). A row a flush writes
+meanwhile is left as written. Answers how many moved.
+
 # `start_link`
 
 ---

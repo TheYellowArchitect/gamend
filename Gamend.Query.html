@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1335">
+    <meta name="project" content="gamend_core v1.1.1336">
 
 
-    <title>Gamend.Query — gamend_core v1.1.1335</title>
+    <title>Gamend.Query — gamend_core v1.1.1336</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-2FE24F26.js"></script>
+    <script defer src="dist/sidebar_items-F240CFC9.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1335
+          v1.1.1336
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Query</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1335)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1336)</small>
 
     </h1>
 
@@ -168,12 +168,35 @@ can filter a list without knowing the raw id.</p></div>
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#filter_user_named/3" data-no-tooltip="" translate="no">filter_user_named(query, field, pattern)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Narrows <code class="inline">query</code> to the rows whose <code class="inline">field</code> holds a player named by
+<code class="inline">pattern</code> (<a href="#users_named/1"><code class="inline">users_named/1</code></a>): by their ids when few, else joined to the
+names as <code class="inline">:named_user</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#maybe_page/2" data-no-tooltip="" translate="no">maybe_page(query, opts)</a>
 
       </div>
 
         <div class="summary-synopsis"><p>Applies the window when <code class="inline">:page</code> is given, and otherwise caps the read at
 <a href="#unpaginated_limit/0"><code class="inline">unpaginated_limit/0</code></a>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#name_match/2" data-no-tooltip="" translate="no">name_match(pattern, binding \\ :named_user)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The condition a player search reads, on a user bound as <code class="inline">binding</code>
+(<code class="inline">:named_user</code>): the expressions the trigram indexes cover.</p></div>
 
     </div>
 
@@ -194,6 +217,18 @@ can filter a list without knowing the raw id.</p></div>
       </div>
 
         <div class="summary-synopsis"><p>The ceiling applied to a read that requested no page.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#users_named/1" data-no-tooltip="" translate="no">users_named(pattern)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The users whose username or display name holds <code class="inline">pattern</code> (a
+<code class="inline">Repo.search_pattern/1</code>): <code class="inline">{:few, ids}</code> when at most 500 do,
+<code class="inline">:many</code> past that.</p></div>
 
     </div>
 
@@ -221,7 +256,7 @@ can filter a list without knowing the raw id.</p></div>
       <h1 class="signature" translate="no">filter_id(query, field, value)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/query.ex#L108" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/query.ex#L159" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -275,6 +310,36 @@ can filter a list without knowing the raw id.</p><p><code class="inline">nil</co
 identical private copy of this.</p>
   </section>
 </section>
+<section class="detail" id="filter_user_named/3">
+
+  <div class="detail-header">
+    <a href="#filter_user_named/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">filter_user_named(query, field, pattern)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/query.ex#L121" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> filter_user_named(<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Queryable.html#t:t/0">Ecto.Queryable.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">atom</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Query.html#t:t/0">Ecto.Query.t</a>()</pre>
+
+      </div>
+
+<p>Narrows <code class="inline">query</code> to the rows whose <code class="inline">field</code> holds a player named by
+<code class="inline">pattern</code> (<a href="#users_named/1"><code class="inline">users_named/1</code></a>): by their ids when few, else joined to the
+names as <code class="inline">:named_user</code>.</p>
+  </section>
+</section>
 <section class="detail" id="maybe_page/2">
 
   <div class="detail-header">
@@ -302,6 +367,37 @@ identical private copy of this.</p>
 
 <p>Applies the window when <code class="inline">:page</code> is given, and otherwise caps the read at
 <a href="#unpaginated_limit/0"><code class="inline">unpaginated_limit/0</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="name_match/2">
+
+    <span id="name_match/1"></span>
+
+  <div class="detail-header">
+    <a href="#name_match/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">name_match(pattern, binding \\ :named_user)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/query.ex#L138" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> name_match(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">atom</a>()) :: <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Query.html#t:dynamic_expr/0">Ecto.Query.dynamic_expr</a>()</pre>
+
+      </div>
+
+<p>The condition a player search reads, on a user bound as <code class="inline">binding</code>
+(<code class="inline">:named_user</code>): the expressions the trigram indexes cover.</p>
   </section>
 </section>
 <section class="detail" id="page/2">
@@ -360,6 +456,42 @@ identical private copy of this.</p>
 <p>The ceiling applied to a read that requested no page.</p>
   </section>
 </section>
+<section class="detail" id="users_named/1">
+
+  <div class="detail-header">
+    <a href="#users_named/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">users_named(pattern)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/query.ex#L106" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> users_named(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: {:few, [<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>()]} | :many</pre>
+
+      </div>
+
+<p>The users whose username or display name holds <code class="inline">pattern</code> (a
+<code class="inline">Repo.search_pattern/1</code>): <code class="inline">{:few, ids}</code> when at most 500 do,
+<code class="inline">:many</code> past that.</p><p>Every player search across a big table goes through it: when a term names
+few players, the table is read by their ids, through its index; when it
+names many, the caller reads the table in its own order, joined to the
+names, and stops at a page. Joining every row to the names first read a
+whole leaderboard or member list per search, 0.5 s at 100,000 rows. On
+Postgres the names are found through their trigram indexes
+(<code class="inline">UserNameTrigramIndexes</code>).</p>
+  </section>
+</section>
 
     </div>
   </section>
@@ -369,9 +501,9 @@ identical private copy of this.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1335">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1336">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1335">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1336">Hex Preview</a>
 
             </span>
 

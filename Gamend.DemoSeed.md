@@ -35,6 +35,27 @@ same arguments:
     report queue deep enough to page through (every status, some filter-filed,
     some resolved) and mutes in every scope, including expired ones
 
+The volume sets, one per admin list, sized from N:
+
+  * `kv` — a profile row per player plus N/10 global keys (`/admin/kv`)
+  * `notification` — one per player, and N/10 more for the first player
+    (`/admin/notifications`, `/notifications`)
+  * `analytics` — 2N events over 90 days, a few activity days per player,
+    daily counters for a year (`/admin/analytics/*`)
+  * `economy` — a wallet per player, 2N ledger entries, N/100 of them the
+    first player's (`/admin/economy`)
+  * `payment` — N/10 purchases, each with its entitlement (`/admin/payments`)
+  * `report` — N/10 page reports over 500 pages (`/admin/reports`)
+  * `friend` — a friendship per player, N/100 friends for the first player
+    (`/admin/friends`)
+  * `session` — a session token per player (`/admin/sessions`)
+  * `lobby` — N/10 lobbies (`/admin/lobbies`)
+  * `ban` — N/100 account and IP bans (`/admin/bans`)
+  * `inventory` — two items per player (`/admin/economy`)
+
+The first player is the heavy one: `mix demo.bench` signs in as them for the
+player pages, so their lists are the long ones.
+
 The `lobby_snapshot` set goes through the real `capture_lobby/3` path rather
 than inserting rows, so what you see is shaped exactly like production data —
 including content-addressed section dedup. One of its runs reproduces the July
@@ -50,7 +71,53 @@ appear across them (as they would in a real deployment).
 
 Rows are inserted in bulk rather than through the contexts: this is about
 volume, not about exercising business rules, and 1000 individual writes on
-SQLite is slow. The cache is flushed afterwards so pages read the new rows.
+SQLite is slow. Rows are streamed in statements of up to 30,000 parameters,
+four at a time on Postgres, so a million rows a set fits in memory and takes
+seconds per set. The cache is flushed afterwards so pages read the new rows,
+and Postgres re-analyses the tables so the planner sees their new size.
+
+# `analyze_tables`
+
+```elixir
+@spec analyze_tables() :: :ok
+```
+
+Re-analyses the tables after a bulk load (Postgres; nothing on SQLite).
+
+# `bench_context`
+
+```elixir
+@spec bench_context() :: %{
+  admin_token: binary(),
+  player_token: binary(),
+  params: map()
+}
+```
+
+What `mix demo.bench` signs in with and links to: a session token for an
+admin (created on first call as `demo-seed-admin`, removed by `--clean`)
+and one for the heavy player (the first, whose lists are the long ones),
+plus the ids of the seeded pages. Raises `ArgumentError` before a seed.
+
+# `insert_rows`
+
+```elixir
+@spec insert_rows(Enumerable.t(), module()) :: non_neg_integer()
+```
+
+For a host's own seed: streams `rows` into `schema` the way every set here
+does (statements under the bind-parameter limit, four at once on
+Postgres) and answers how many went in. `analyze/0` after a bulk load.
+
+# `player_ids`
+
+```elixir
+@spec player_ids(pos_integer() | nil) :: [Ecto.UUID.t()]
+```
+
+For a host's own seed (`mix polyglot.demo.seed`): the demo players' ids in
+order, the heavy one first, `count` of them (every one by default). Empty
+before `demo.seed` has run.
 
 # `run`
 

@@ -35,6 +35,23 @@ names the keys a board holds, and `list_records_above/3` the records just
 ahead of a score on one key. A board can show its keys as tabs and
 filters on `/leaderboards` (`GamendWeb.LeaderboardViews`).
 
+## All time
+
+A `:best` board with seasons (`all_time?/1`: a start or an end date) has
+an all-time ranking too: every season of its slug read as one, each
+player's (or label's) best row of them, ranked. `all_time: true` on
+`list_records/2`, `count_records/2`, `get_user_record/3` and
+`list_keys/2` reads it, per key, from any season of the slug.
+
+Those rows are kept on a hidden board of their own, `<slug>__all_time`:
+a submit to a season raises it the way a `:best` submit does, an edited
+or deleted season row reads its owner's best again, and a deleted season
+refills it. So All time reads like any board, indexed and cached, however
+many seasons and players there are. Computing it from the seasons on
+every read took a second a page at 100,000 rows. The board is made and
+filled the first time it is asked for; `rebuild_all_time/1` refills it
+for rows written around `submit_score/5`.
+
 ## Hidden boards
 
 `hidden: true` keeps a board out of `list_leaderboards/1`,
@@ -50,8 +67,23 @@ own `get_user_record/3` still answers, ranked where it would stand, with
 `hidden: true`. A hidden board keeps its guests (it is no one's public
 board), and `guests: true` reads them anyway (the admin's view).
 
+Whether a record is a guest's is stored on it (`Record`'s `guest`), kept
+by the database: set from the user on insert, moved when the user
+registers (or loses their last identity). A listed read filters the
+record alone, on its own rank index (`NOT guest`); joining every record to
+its user took a second a rank at a million rows.
+
     # Get user's record (use leaderboard id)
     {:ok, record} = Leaderboards.get_user_record(leaderboard.id, user_id)
+
+# `all_time?`
+
+```elixir
+@spec all_time?(Gamend.Leaderboards.Leaderboard.t()) :: boolean()
+```
+
+Whether a board has an all-time ranking: a `:best` board with seasons (a
+start or an end date). *All time* above.
 
 # `change_leaderboard`
 
@@ -103,7 +135,19 @@ Accepts the same filter options as `list_leaderboards/1`.
 ```
 
 Counts records for a leaderboard: the same `:key`, `:meta`,
-`:best_per_user` and `:search` as `list_records/2`.
+`:best_per_user`, `:search` and `:all_time` as `list_records/2`.
+
+# `count_records_by_board`
+
+```elixir
+@spec count_records_by_board([Ecto.UUID.t()]) :: %{
+  required(Ecto.UUID.t()) =&gt; non_neg_integer()
+}
+```
+
+How many records each of `leaderboard_ids` holds, every key and every
+player (the admin's view), in one grouped query: `%{id => count}`, a board
+without records absent.
 
 # `create_leaderboard`
 
@@ -251,6 +295,9 @@ Like `get_record/1`, but raises `Ecto.NoResultsError` when there is none.
 Gets a user's record with their rank (within its key: `key:`, default `""`).
 Returns `{:ok, record_with_rank}` or `{:error, :not_found}`.
 
+`all_time: true` answers their best row of every season, ranked all time
+(*All time* above).
+
 # `host_action`
 
 ```elixir
@@ -290,7 +337,8 @@ the TTL.
 
 The keys a board holds, sorted, from its listed records; with `prefix:`
 only the keys starting with it (`"match|"`: every language Word match has
-runs in). A key only guests have played is not offered.
+runs in). A key only guests have played is not offered. `all_time: true`
+names the keys of every season of the slug (*All time* above).
 
 # `list_leaderboard_groups`
 
@@ -374,6 +422,9 @@ See `t:Gamend.Types.pagination_opts/0` for available options, plus:
     row only: one board read across keys, a player once.
   * `:guests` — `true` lists guests' records on a public board too, when
     the host keeps them off it (`Gamend.AccountRequired`): the admin's view.
+  * `:all_time` — `true` reads every season of the board's slug as one
+    ranking (*All time* above), with `:key` and `:search` only. A board
+    without seasons reads as itself.
 
 # `list_records_above`
 
@@ -415,6 +466,43 @@ Returns records above and below the user's rank.
   * `:limit` - Total number of records to return (default 11, centered on user)
   * `:key` - The ranking (default `""`)
 
+# `list_records_beside`
+
+```elixir
+@spec list_records_beside(String.t(), Gamend.Leaderboards.Record.t(), keyword()) ::
+  {[Gamend.Leaderboards.Record.t()], [Gamend.Leaderboards.Record.t()]}
+```
+
+The listed records either side of `record` on its key: `{above, below}`,
+each nearest first, each carrying its rank. Above is sorting ahead of it
+the way ranks count (a better score, or the same one set earlier), below
+sorting behind it, so the ranks run on from the record's own: `rank - 1`,
+`rank - 2`… above, `rank + 1`… below. `record` must carry its rank
+(`get_user_record/3`'s).
+
+A record kept off the board (a guest's, `Gamend.AccountRequired`) reads
+the same: its rank is where it would stand, and the rows behind it are
+numbered as if it stood there. Read off the rank index, as
+`list_records_above/3` is: the key is never ranked whole.
+
+## Options
+
+  * `:above`, `:below` — how many on each side (default 1)
+
+# `list_records_last`
+
+```elixir
+@spec list_records_last(String.t(), keyword()) :: [Gamend.Leaderboards.Record.t()]
+```
+
+The last records listed on a key, in rank order, each carrying its rank:
+the bottom of the board, where a player with no score yet comes in.
+
+## Options
+
+  * `:key` — the ranking (default `""`)
+  * `:limit` — how many (default 3)
+
 # `merge_user_records`
 
 ```elixir
@@ -433,6 +521,18 @@ fires: these scores were submitted once already.
 
 A guest's records left behind go with the guest account. Answers how many
 records reached the account.
+
+# `rebuild_all_time`
+
+```elixir
+@spec rebuild_all_time(String.t()) :: {:ok, non_neg_integer()} | :error
+```
+
+Fills the all-time board of `slug`'s seasons again from them (*All time*
+above). Reads make and fill it on their own the first time; this is for
+rows written around `submit_score/5`, such as a bulk import or
+`mix demo.seed`. Answers how many rows it holds, or `:error` when no board
+under `slug` has an all-time ranking.
 
 # `resolve_slugs`
 

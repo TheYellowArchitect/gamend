@@ -17,8 +17,9 @@ Default: none, so a guest does everything a registered player does.
     public board (one not `hidden`): no list, count or rank includes them,
     so a guest moves nobody. Their own record still reads, ranked where it
     would stand, with `hidden: true` (`Gamend.Leaderboards.get_user_record/3`,
-    the API's `GET …/me`). Registering lists them at once: it is read from
-    the account as it is now, never stored on the record.
+    the API's `GET …/me`). Registering lists them at once: each record
+    keeps a `guest` flag that the database sets from the account and moves
+    when the account gains its first identity (or loses its last).
 
 Both apply in core, so every client meets the same rule; a client reads
 the 403 or the `hidden` flag to say why and offer registration.

@@ -57,6 +57,16 @@ can filter a list without knowing the raw id.
 `nil` leaves the query alone. Economy, inventory and quests each carried an
 identical private copy of this.
 
+# `filter_user_named`
+
+```elixir
+@spec filter_user_named(Ecto.Queryable.t(), atom(), String.t()) :: Ecto.Query.t()
+```
+
+Narrows `query` to the rows whose `field` holds a player named by
+`pattern` (`users_named/1`): by their ids when few, else joined to the
+names as `:named_user`.
+
 # `maybe_page`
 
 ```elixir
@@ -65,6 +75,15 @@ identical private copy of this.
 
 Applies the window when `:page` is given, and otherwise caps the read at
 `unpaginated_limit/0`.
+
+# `name_match`
+
+```elixir
+@spec name_match(String.t(), atom()) :: Ecto.Query.dynamic_expr()
+```
+
+The condition a player search reads, on a user bound as `binding`
+(`:named_user`): the expressions the trigram indexes cover.
 
 # `page`
 
@@ -83,6 +102,24 @@ Applies `:page` and `:page_size`, both clamped, defaulting to the first page.
 ```
 
 The ceiling applied to a read that requested no page.
+
+# `users_named`
+
+```elixir
+@spec users_named(String.t()) :: {:few, [Ecto.UUID.t()]} | :many
+```
+
+The users whose username or display name holds `pattern` (a
+`Repo.search_pattern/1`): `{:few, ids}` when at most 500 do,
+`:many` past that.
+
+Every player search across a big table goes through it: when a term names
+few players, the table is read by their ids, through its index; when it
+names many, the caller reads the table in its own order, joined to the
+names, and stops at a page. Joining every row to the names first read a
+whole leaderboard or member list per search, 0.5 s at 100,000 rows. On
+Postgres the names are found through their trigram indexes
+(`UserNameTrigramIndexes`).
 
 ---
 

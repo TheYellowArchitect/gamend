@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1335">
+    <meta name="project" content="gamend_core v1.1.1336">
 
 
-    <title>Gamend.DemoSeed — gamend_core v1.1.1335</title>
+    <title>Gamend.DemoSeed — gamend_core v1.1.1336</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-2FE24F26.js"></script>
+    <script defer src="dist/sidebar_items-F240CFC9.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1335
+          v1.1.1336
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />DemoSeed</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1335)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1336)</small>
 
     </h1>
 
@@ -128,7 +128,12 @@ twelve-member group that lists as one card, with per-user progress in
 every state (including claimable rows)</li><li><code class="inline">ready_check</code> — one check per seeded lobby in every outcome (open,
 passed, timed out, declined), also capped at 12</li><li><code class="inline">chat_moderation</code> — a blocklist across every severity and match mode, a
 report queue deep enough to page through (every status, some filter-filed,
-some resolved) and mutes in every scope, including expired ones</li></ul><p>The <code class="inline">lobby_snapshot</code> set goes through the real <code class="inline">capture_lobby/3</code> path rather
+some resolved) and mutes in every scope, including expired ones</li></ul><p>The volume sets, one per admin list, sized from N:</p><ul><li><code class="inline">kv</code> — a profile row per player plus N/10 global keys (<code class="inline">/admin/kv</code>)</li><li><code class="inline">notification</code> — one per player, and N/10 more for the first player
+(<code class="inline">/admin/notifications</code>, <code class="inline">/notifications</code>)</li><li><code class="inline">analytics</code> — 2N events over 90 days, a few activity days per player,
+daily counters for a year (<code class="inline">/admin/analytics/*</code>)</li><li><code class="inline">economy</code> — a wallet per player, 2N ledger entries, N/100 of them the
+first player's (<code class="inline">/admin/economy</code>)</li><li><code class="inline">payment</code> — N/10 purchases, each with its entitlement (<code class="inline">/admin/payments</code>)</li><li><code class="inline">report</code> — N/10 page reports over 500 pages (<code class="inline">/admin/reports</code>)</li><li><code class="inline">friend</code> — a friendship per player, N/100 friends for the first player
+(<code class="inline">/admin/friends</code>)</li><li><code class="inline">session</code> — a session token per player (<code class="inline">/admin/sessions</code>)</li><li><code class="inline">lobby</code> — N/10 lobbies (<code class="inline">/admin/lobbies</code>)</li><li><code class="inline">ban</code> — N/100 account and IP bans (<code class="inline">/admin/bans</code>)</li><li><code class="inline">inventory</code> — two items per player (<code class="inline">/admin/economy</code>)</li></ul><p>The first player is the heavy one: <code class="inline">mix demo.bench</code> signs in as them for the
+player pages, so their lists are the long ones.</p><p>The <code class="inline">lobby_snapshot</code> set goes through the real <code class="inline">capture_lobby/3</code> path rather
 than inserting rows, so what you see is shaped exactly like production data —
 including content-addressed section dedup. One of its runs reproduces the July
 2026 rubber-banding bug (a distance that reverts between snapshots), which is
@@ -137,7 +142,10 @@ completed runs outlive theirs, since a lobby is deleted when its last member
 leaves.</p><p>All sets share one pool of N anonymous device accounts, so the same players
 appear across them (as they would in a real deployment).</p><p>Rows are inserted in bulk rather than through the contexts: this is about
 volume, not about exercising business rules, and 1000 individual writes on
-SQLite is slow. The cache is flushed afterwards so pages read the new rows.</p>
+SQLite is slow. Rows are streamed in statements of up to 30,000 parameters,
+four at a time on Postgres, so a million rows a set fits in memory and takes
+seconds per set. The cache is flushed afterwards so pages read the new rows,
+and Postgres re-analyses the tables so the planner sees their new size.</p>
     </section>
 
 </div>
@@ -153,6 +161,53 @@ SQLite is slow. The cache is flushed afterwards so pages read the new rows.</p>
   <h3>
     <a href="#functions">Functions</a>
   </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#analyze_tables/0" data-no-tooltip="" translate="no">analyze_tables()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Re-analyses the tables after a bulk load (Postgres; nothing on SQLite).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#bench_context/0" data-no-tooltip="" translate="no">bench_context()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>What <code class="inline">mix demo.bench</code> signs in with and links to: a session token for an
+admin (created on first call as <code class="inline">demo-seed-admin</code>, removed by <code class="inline">--clean</code>)
+and one for the heavy player (the first, whose lists are the long ones),
+plus the ids of the seeded pages. Raises <a href="https://elixir.hexdocs.pm/ArgumentError.html"><code class="inline">ArgumentError</code></a> before a seed.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#insert_rows/2" data-no-tooltip="" translate="no">insert_rows(rows, schema)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>For a host's own seed: streams <code class="inline">rows</code> into <code class="inline">schema</code> the way every set here
+does (statements under the bind-parameter limit, four at once on
+Postgres) and answers how many went in. <code class="inline">analyze/0</code> after a bulk load.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#player_ids/1" data-no-tooltip="" translate="no">player_ids(count \\ nil)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>For a host's own seed (<code class="inline">mix polyglot.demo.seed</code>): the demo players' ids in
+order, the heavy one first, <code class="inline">count</code> of them (every one by default). Empty
+before <code class="inline">demo.seed</code> has run.</p></div>
+
+    </div>
 
     <div class="summary-row">
       <div class="summary-signature">
@@ -180,6 +235,131 @@ SQLite is slow. The cache is flushed afterwards so pages read the new rows.</p>
     </h2>
 
     <div class="functions-list">
+<section class="detail" id="analyze_tables/0">
+
+  <div class="detail-header">
+    <a href="#analyze_tables/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">analyze_tables()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L324" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> analyze_tables() :: :ok</pre>
+
+      </div>
+
+<p>Re-analyses the tables after a bulk load (Postgres; nothing on SQLite).</p>
+  </section>
+</section>
+<section class="detail" id="bench_context/0">
+
+  <div class="detail-header">
+    <a href="#bench_context/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">bench_context()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L252" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> bench_context() :: %{
+  admin_token: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">binary</a>(),
+  player_token: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">binary</a>(),
+  params: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()
+}</pre>
+
+      </div>
+
+<p>What <code class="inline">mix demo.bench</code> signs in with and links to: a session token for an
+admin (created on first call as <code class="inline">demo-seed-admin</code>, removed by <code class="inline">--clean</code>)
+and one for the heavy player (the first, whose lists are the long ones),
+plus the ids of the seeded pages. Raises <a href="https://elixir.hexdocs.pm/ArgumentError.html"><code class="inline">ArgumentError</code></a> before a seed.</p>
+  </section>
+</section>
+<section class="detail" id="insert_rows/2">
+
+  <div class="detail-header">
+    <a href="#insert_rows/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">insert_rows(rows, schema)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L320" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> insert_rows(<a href="https://elixir.hexdocs.pm/Enumerable.html#t:t/0">Enumerable.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">module</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>For a host's own seed: streams <code class="inline">rows</code> into <code class="inline">schema</code> the way every set here
+does (statements under the bind-parameter limit, four at once on
+Postgres) and answers how many went in. <code class="inline">analyze/0</code> after a bulk load.</p>
+  </section>
+</section>
+<section class="detail" id="player_ids/1">
+
+    <span id="player_ids/0"></span>
+
+  <div class="detail-header">
+    <a href="#player_ids/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">player_ids(count \\ nil)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L304" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> player_ids(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>() | nil) :: [<a href="https://ecto.hexdocs.pm/3.14.2/Ecto.UUID.html#t:t/0">Ecto.UUID.t</a>()]</pre>
+
+      </div>
+
+<p>For a host's own seed (<code class="inline">mix polyglot.demo.seed</code>): the demo players' ids in
+order, the heavy one first, <code class="inline">count</code> of them (every one by default). Empty
+before <code class="inline">demo.seed</code> has run.</p>
+  </section>
+</section>
 <section class="detail" id="run/1">
 
   <div class="detail-header">
@@ -190,7 +370,7 @@ SQLite is slow. The cache is flushed afterwards so pages read the new rows.</p>
       <h1 class="signature" translate="no">run(args)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L161" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L202" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -219,9 +399,9 @@ SQLite is slow. The cache is flushed afterwards so pages read the new rows.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1335">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1336">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1335">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1336">Hex Preview</a>
 
             </span>
 
