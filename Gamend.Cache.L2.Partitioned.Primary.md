@@ -61,6 +61,10 @@ This is the cache for the primary storage.
 
 # `generations`
 
+```elixir
+@spec generations() :: [:ets.tid()]
+```
+
 A convenience function for retrieving the current generations.
 
 # `get`
@@ -121,9 +125,17 @@ A convenience function for retrieving the current generations.
 
 # `new_generation`
 
+```elixir
+@spec new_generation(keyword()) :: :ok
+```
+
 A convenience function for creating new generations.
 
 # `newer_generation`
+
+```elixir
+@spec newer_generation() :: :ets.tid()
+```
 
 A convenience function for retrieving the newer generation.
 
@@ -177,7 +189,11 @@ A convenience function for retrieving the newer generation.
 
 # `reset_gc_interval`
 
-A convenience function for reset the GC interval.
+```elixir
+@spec reset_gc_interval() :: :ok
+```
+
+Resets the GC interval.
 
 # `stream`
 

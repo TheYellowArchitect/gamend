@@ -288,7 +288,7 @@ Uses an upsert to create or update the read cursor.
 
 ```elixir
 @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-  {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
+  {:ok, Gamend.Bans.Ban.t()} | {:error, Ecto.Changeset.t()}
 ```
 
 Mute `user_id` in `scope` (`"global"`, `"lobby"`, `"group"` or `"party"`).

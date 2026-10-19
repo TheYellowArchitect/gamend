@@ -151,7 +151,7 @@ List mutes, newest first. Filters: `:user_id`, `:scope`, `:scope_ref_id`,
 
 ```elixir
 @spec mute_user(Ecto.UUID.t(), String.t(), Ecto.UUID.t() | nil, map()) ::
-  {:ok, Gamend.Bans.Ban.t()} | {:error, term()}
+  {:ok, Gamend.Bans.Ban.t()} | {:error, Ecto.Changeset.t()}
 ```
 
 Mute `user_id`.
