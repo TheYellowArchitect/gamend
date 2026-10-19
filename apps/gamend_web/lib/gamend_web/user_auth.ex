@@ -38,9 +38,7 @@ defmodule GamendWeb.UserAuth do
     secret = Application.fetch_env!(:gamend_web, GamendWeb.Endpoint)[:secret_key_base]
 
     conn =
-      put_resp_cookie(%Plug.Conn{secret_key_base: secret}, @remember_me_cookie, token,
-        sign: true
-      )
+      put_resp_cookie(%Plug.Conn{secret_key_base: secret}, @remember_me_cookie, token, sign: true)
 
     {@remember_me_cookie, conn.resp_cookies[@remember_me_cookie].value}
   end
