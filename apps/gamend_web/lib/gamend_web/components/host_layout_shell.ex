@@ -24,6 +24,10 @@ defmodule GamendWeb.HostLayoutShell do
   slot :inner_block, required: true
 
   def app(assigns) do
+    # `nav_key` is `Layouts.app`'s attr; a shell rendered on its own (a core
+    # template, a test) has none. Put, not assigned: nothing changes.
+    assigns = Map.put_new(assigns, :nav_key, nil)
+
     ~H"""
     <%!-- First focusable element on every page: invisible until it receives
           keyboard focus, then lets the reader jump past the navbar straight
@@ -137,6 +141,7 @@ defmodule GamendWeb.HostLayoutShell do
             current_query={@current_query}
             navigation={@navigation}
             notif_unread_count={@notif_unread_count}
+            nav_key={@nav_key}
             locale={@locale}
             known_locales={@known_locales}
           />
@@ -181,6 +186,7 @@ defmodule GamendWeb.HostLayoutShell do
             current_query={@current_query}
             navigation={@navigation}
             notif_unread_count={@notif_unread_count}
+            nav_key={@nav_key}
             locale={@locale}
             known_locales={@known_locales}
           />

@@ -14,6 +14,11 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :locale, :string, required: true
   attr :known_locales, :list, default: []
 
+  attr :nav_key, :any,
+    default: nil,
+    doc:
+      "what the page changes that an entry shows (`Layouts.app`'s): a change re-renders the bar, since no other attr of it moves"
+
   def desktop_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
 
@@ -237,6 +242,11 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :notif_unread_count, :integer, default: 0
   attr :locale, :string, required: true
   attr :known_locales, :list, default: []
+
+  attr :nav_key, :any,
+    default: nil,
+    doc:
+      "what the page changes that an entry shows (`Layouts.app`'s): a change re-renders the bar, since no other attr of it moves"
 
   def mobile_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
@@ -615,38 +625,44 @@ defmodule GamendWeb.HostLayoutNavigation do
   # with an icon shows the icon alone, its label for a screen reader and on
   # hover: five pinned sections fit a phone's bar as icons, not as words. A
   # readonly entry (a coin balance) keeps its label: the number is the point.
+  # An entry the host draws (`"render"`) is drawn as it draws it, `:pinned`.
   defp mobile_pinned_links(assigns) do
     ~H"""
-    <a
-      :for={link <- @links}
-      href={if(inert?(link), do: nil, else: link["href"])}
-      title={if(icon_only?(link), do: translate_label(link["label"]))}
-      aria-disabled={if(inert?(link), do: "true")}
-      data-motion-text={if(readonly?(link), do: "pop")}
-      class={
-        cond do
-          readonly?(link) ->
-            "inline-flex items-center gap-1 px-2 pointer-events-none cursor-default"
+    <%= for link <- @links do %>
+      <%= if rendered?(link) do %>
+        {link["render_fun"].(:pinned)}
+      <% else %>
+        <a
+          href={if(inert?(link), do: nil, else: link["href"])}
+          title={if(icon_only?(link), do: translate_label(link["label"]))}
+          aria-disabled={if(inert?(link), do: "true")}
+          data-motion-text={if(readonly?(link), do: "pop")}
+          class={
+            cond do
+              readonly?(link) ->
+                "inline-flex items-center gap-1 px-2 pointer-events-none cursor-default"
 
-          disabled?(link) ->
-            "btn btn-ghost btn-sm gap-1 px-2 pointer-events-none cursor-default opacity-70"
+              disabled?(link) ->
+                "btn btn-ghost btn-sm gap-1 px-2 pointer-events-none cursor-default opacity-70"
 
-          # The page's own link is `btn-primary`, as on the desktop bar.
-          true ->
-            [
-              "btn btn-sm gap-1 px-2",
-              if(entry_active?(link, @current_path), do: "btn-primary", else: "btn-ghost")
-            ]
-        end
-      }
-    >
-      <.icon :if={link["icon"]} name={link["icon"]} class={icon_class(link["color"])} />
-      <span class={["text-sm font-semibold", icon_only?(link) && "sr-only"]}>
-        {translate_label(link["label"])}
-      </span>
-      <.nav_badge entry={link} />
-      <.count_pill count={link["count"]} />
-    </a>
+              # The page's own link is `btn-primary`, as on the desktop bar.
+              true ->
+                [
+                  "btn btn-sm gap-1 px-2",
+                  if(entry_active?(link, @current_path), do: "btn-primary", else: "btn-ghost")
+                ]
+            end
+          }
+        >
+          <.icon :if={link["icon"]} name={link["icon"]} class={icon_class(link["color"])} />
+          <span class={["text-sm font-semibold", icon_only?(link) && "sr-only"]}>
+            {translate_label(link["label"])}
+          </span>
+          <.nav_badge entry={link} />
+          <.count_pill count={link["count"]} />
+        </a>
+      <% end %>
+    <% end %>
     """
   end
 
@@ -800,30 +816,34 @@ defmodule GamendWeb.HostLayoutNavigation do
         </ul>
       </details>
     <% else %>
-      <a
-        href={if(inert?(@link), do: nil, else: @link["href"])}
-        target={if(@link["external"], do: "_blank", else: nil)}
-        rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
-        aria-disabled={if(inert?(@link), do: "true")}
-        data-motion-text={if(readonly?(@link), do: "pop")}
-        class={
-          cond do
-            readonly?(@link) ->
-              "inline-flex items-center gap-2 px-2 pointer-events-none cursor-default"
+      <%= if rendered?(@link) do %>
+        {@link["render_fun"].(:desktop)}
+      <% else %>
+        <a
+          href={if(inert?(@link), do: nil, else: @link["href"])}
+          target={if(@link["external"], do: "_blank", else: nil)}
+          rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
+          aria-disabled={if(inert?(@link), do: "true")}
+          data-motion-text={if(readonly?(@link), do: "pop")}
+          class={
+            cond do
+              readonly?(@link) ->
+                "inline-flex items-center gap-2 px-2 pointer-events-none cursor-default"
 
-            disabled?(@link) ->
-              ["btn pointer-events-none cursor-default opacity-70", @inactive_class]
+              disabled?(@link) ->
+                ["btn pointer-events-none cursor-default opacity-70", @inactive_class]
 
-            true ->
-              ["btn", if(@active?, do: "btn-primary", else: @inactive_class)]
-          end
-        }
-      >
-        <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
-        {translate_label(@link["label"])}
-        <.nav_badge entry={@link} />
-        <.count_pill count={@link["count"]} />
-      </a>
+              true ->
+                ["btn", if(@active?, do: "btn-primary", else: @inactive_class)]
+            end
+          }
+        >
+          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
+          {translate_label(@link["label"])}
+          <.nav_badge entry={@link} />
+          <.count_pill count={@link["count"]} />
+        </a>
+      <% end %>
     <% end %>
     """
   end
@@ -870,33 +890,37 @@ defmodule GamendWeb.HostLayoutNavigation do
         </ul>
       </details>
     <% else %>
-      <a
-        href={if(inert?(@link), do: nil, else: @link["href"])}
-        target={if(@link["external"], do: "_blank", else: nil)}
-        rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
-        aria-disabled={if(inert?(@link), do: "true")}
-        data-motion-text={if(readonly?(@link), do: "pop")}
-        class={
-          cond do
-            readonly?(@link) ->
-              "inline-flex items-center gap-2 px-2 w-full pointer-events-none cursor-default"
+      <%= if rendered?(@link) do %>
+        {@link["render_fun"].(:menu)}
+      <% else %>
+        <a
+          href={if(inert?(@link), do: nil, else: @link["href"])}
+          target={if(@link["external"], do: "_blank", else: nil)}
+          rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
+          aria-disabled={if(inert?(@link), do: "true")}
+          data-motion-text={if(readonly?(@link), do: "pop")}
+          class={
+            cond do
+              readonly?(@link) ->
+                "inline-flex items-center gap-2 px-2 w-full pointer-events-none cursor-default"
 
-            disabled?(@link) ->
-              [
-                "btn w-full justify-start pointer-events-none cursor-default opacity-70",
-                @inactive_class
-              ]
+              disabled?(@link) ->
+                [
+                  "btn w-full justify-start pointer-events-none cursor-default opacity-70",
+                  @inactive_class
+                ]
 
-            true ->
-              ["btn w-full justify-start", if(@active?, do: "btn-primary", else: @inactive_class)]
-          end
-        }
-      >
-        <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
-        {translate_label(@link["label"])}
-        <.nav_badge entry={@link} />
-        <.count_pill count={@link["count"]} />
-      </a>
+              true ->
+                ["btn w-full justify-start", if(@active?, do: "btn-primary", else: @inactive_class)]
+            end
+          }
+        >
+          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
+          {translate_label(@link["label"])}
+          <.nav_badge entry={@link} />
+          <.count_pill count={@link["count"]} />
+        </a>
+      <% end %>
     <% end %>
     """
   end
@@ -969,6 +993,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       |> section_entries(key, auth_level, default_auth, scope)
       |> Enum.map(&resolve_entry_count(&1, scope))
       |> Enum.map(&resolve_entry_href(&1, scope, assigns[:current_path], assigns[:locale]))
+      |> Enum.map(&resolve_entry_render(&1, scope, assigns[:current_path], assigns[:nav_key]))
     end
 
     assign(assigns,
@@ -1032,6 +1057,55 @@ defmodule GamendWeb.HostLayoutNavigation do
   end
 
   defp resolve_entry_href(entry, _scope, _current_path, _locale), do: entry
+
+  # An entry's `"render"`: a `{Module.fun}` token naming a host function
+  # component that draws the whole entry (a wallet of two balances, each a
+  # link), given `%{scope, current_path, variant}`: `:desktop` on the wide
+  # bar, `:pinned` in a phone's bar (`"mobile": "pinned"`), `:menu` in its
+  # menu. The host owns the markup, the bar where it goes. Resolved here
+  # into a function of the variant, since the three places draw one entry;
+  # a token that names nothing draws nothing. A `"label"` is still required
+  # (`valid_link?/1`), and `"readonly": true` keeps it out of the search
+  # index (`flat_links/2`), since it is not a place to go.
+  # `nav_key` rides in the closure on purpose: two closures over the same
+  # values are equal, so an entry whose function captured only the scope and
+  # the path never read as changed, and the bar kept the first render (a
+  # wallet's km stood still after the round that earned them). With the
+  # page's `nav_key` captured, the entry changes when it does.
+  defp resolve_entry_render(%{"render" => "{" <> _ = token} = entry, scope, current_path, nav_key) do
+    name = token |> String.trim("{") |> String.trim("}") |> String.trim()
+
+    Map.put(entry, "render_fun", fn variant ->
+      render_token(name, %{
+        scope: scope,
+        current_path: current_path,
+        variant: variant,
+        nav_key: nav_key
+      })
+    end)
+  end
+
+  defp resolve_entry_render(entry, _scope, _current_path, _nav_key), do: entry
+
+  defp render_token(name, assigns) do
+    {fun_str, mod_parts} = name |> String.split(".") |> List.pop_at(-1)
+
+    with false <- mod_parts == [],
+         module = Module.concat(mod_parts),
+         true <- Code.ensure_loaded?(module),
+         fun = String.to_atom(fun_str),
+         true <- function_exported?(module, fun, 1) do
+      apply(module, fun, [assigns])
+    else
+      _ -> nil
+    end
+  rescue
+    _ -> nil
+  catch
+    _, _ -> nil
+  end
+
+  defp rendered?(entry), do: is_function(Map.get(entry, "render_fun"), 1)
 
   defp section_entries(navigation, key, auth_level, default_auth, scope) do
     navigation
