@@ -120,11 +120,6 @@ Gamend.Lobbies.Lobby.html
 Gamend.Lobbies.SpectatorTracker.html
 Gamend.Lobbies.States.html
 Gamend.Lobbies.html
-Gamend.LobbySnapshots.Blob.html
-Gamend.LobbySnapshots.Event.html
-Gamend.LobbySnapshots.Snapshot.html
-Gamend.LobbySnapshots.Writer.html
-Gamend.LobbySnapshots.html
 Gamend.Lock.Local.html
 Gamend.Lock.Queue.html
 Gamend.Lock.html
@@ -209,6 +204,9 @@ Gamend.Reports.Kinds.Page.html
 Gamend.Reports.Notices.html
 Gamend.Reports.Report.html
 Gamend.Reports.html
+Gamend.Results.Event.html
+Gamend.Results.Result.html
+Gamend.Results.html
 Gamend.Retention.html
 Gamend.Schedule.html
 Gamend.Schema.html
@@ -256,8 +254,8 @@ dist/lato-latin-700-normal-2XVSBPG4.woff2
 dist/lato-latin-ext-400-normal-N27NCBWW.woff2
 dist/lato-latin-ext-700-normal-Q2L5DVMW.woff2
 dist/remixicon-ZWU5GQ4X.woff2
-dist/search_data-77563519.js
-dist/sidebar_items-7B372141.js
+dist/search_data-8D3EA8FF.js
+dist/sidebar_items-83389E80.js
 index.html
 readme.html
 search.html

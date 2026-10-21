@@ -23,9 +23,9 @@ same arguments:
   * `leaderboard` — a leaderboard with N scored records
   * `group`       — a public group with N members
   * `tournament`  — a tournament with N registered entries, still open
-  * `lobby_snapshot` — recorded runs for `/admin/lobby_snapshots`, capped at 12
-    regardless of `--count` (this set is about having something to read, not
-    volume)
+  * `result` — finished and open plays for `/admin/results`, a dozen per
+    player for the first 12 players, regardless of `--count` (this set is
+    about having something to read, not volume)
   * `quest` — a daily, an auto-claim achievement, a chained follow-up and a
     twelve-member group that lists as one card, with per-user progress in
     every state (including claimable rows)
@@ -56,11 +56,9 @@ The volume sets, one per admin list, sized from N:
 The first player is the heavy one: `mix demo.bench` signs in as them for the
 player pages, so their lists are the long ones.
 
-The `lobby_snapshot` set goes through the real `capture_lobby/3` path rather
-than inserting rows, so what you see is shaped exactly like production data —
-including content-addressed section dedup. One of its runs reproduces the July
-2026 rubber-banding bug (a distance that reverts between snapshots), which is
-the case the section diff exists to make obvious.
+The `result` set goes through `Gamend.Results`, so what you see is shaped
+exactly like a game's writes, then moves each play back in time so the list
+spans the last weeks.
 
 Seeded runs keep their lobby row so `--clean` can find them again. Real
 completed runs outlive theirs, since a lobby is deleted when its last member

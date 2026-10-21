@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1339">
+    <meta name="project" content="gamend_core v1.1.1340">
 
 
-    <title>Gamend.LobbySnapshots.Snapshot — gamend_core v1.1.1339</title>
+    <title>Gamend.Results.Event — gamend_core v1.1.1340</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-7B372141.js"></script>
+    <script defer src="dist/sidebar_items-83389E80.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1339
+          v1.1.1340
         </div>
       </div>
     </div>
@@ -93,19 +93,19 @@ gamend_core
 <div id="top-content">
   <div class="heading-with-actions top-heading">
     <h1>
-      <span translate="no">Gamend.<wbr />LobbySnapshots.<wbr />Snapshot</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1339)</small>
+      <span translate="no">Gamend.<wbr />Results.<wbr />Event</span> 
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1340)</small>
 
     </h1>
 
-<a href="Gamend.LobbySnapshots.Snapshot.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+<a href="Gamend.Results.Event.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
   <i class="ri-markdown-line" aria-hidden="true"></i>
   <span class="sr-only">Copy Markdown</span>
 </a>
 
 
 
-      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/snapshot.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
+      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results/event.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
         <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         <span class="sr-only">View Source</span>
       </a>
@@ -114,11 +114,12 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>One capture of a lobby's state at a mutation entry point.</p><p><code class="inline">section_hashes</code> maps section name to a <code class="inline">Blob</code> hash; the blobs hold the
-content. Sections whose content did not change resolve to the hash already
-stored, so an unchanged section costs one map entry and no blob row.</p><p>Ordered by <code class="inline">(inserted_at, id)</code> — <code class="inline">id</code> is UUIDv7 and therefore time-ordered, so
-it breaks ties without a stored counter. <code class="inline">lobby_id</code> has no foreign key. See
-the migration for both.</p>
+<p>Ecto schema for <code class="inline">result_events</code>: one thing that happened in a play
+(<a href="Gamend.Results.html#record/4"><code class="inline">Gamend.Results.record/4</code></a>).</p><p>Its <code class="inline">id</code> is its place: UUIDv7 ids are strictly ordered on a node, so a
+result's events sorted by id are the order they were written in.
+<code class="inline">elapsed_ms</code> is the time into the play, on the server's clock. <code class="inline">key</code> says
+what happened, <code class="inline">value</code> the number it carries (summed by
+<a href="Gamend.Results.html#stats/1"><code class="inline">Gamend.Results.stats/1</code></a>), <code class="inline">metadata</code> anything else.</p>
     </section>
 
 </div>
@@ -138,28 +139,6 @@ the migration for both.</p>
     <div class="summary-row">
       <div class="summary-signature">
         <a href="#t:t/0" data-no-tooltip="" translate="no">t()</a>
-
-      </div>
-
-    </div>
-
-</div>
-<div class="summary-functions summary">
-  <h3>
-    <a href="#functions">Functions</a>
-  </h3>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#changeset/2" data-no-tooltip="" translate="no">changeset(snapshot, attrs)</a>
-
-      </div>
-
-    </div>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#sections/0" data-no-tooltip="" translate="no">sections()</a>
 
       </div>
 
@@ -189,7 +168,7 @@ the migration for both.</p>
       <h1 class="signature" translate="no">t()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/snapshot.ex#L17" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results/event.ex#L18" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -200,86 +179,16 @@ the migration for both.</p>
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@type</span> t() :: %Gamend.LobbySnapshots.Snapshot{
+          <pre translate="no"><span class="attribute">@type</span> t() :: %Gamend.Results.Event{
   __meta__: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  flagged: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  elapsed_ms: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
   id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  inserted_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  lobby_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  section_hashes: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  trigger: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  user: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  user_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()
+  key: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  metadata: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  result: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  result_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  value: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()
 }</pre>
-
-      </div>
-
-
-  </section>
-</section>
-
-    </div>
-  </section>
-
-  <section id="functions" class="details-list">
-    <h2 class="section-heading">
-      <a class="hover-link" href="#functions">
-        <i class="ri-link-m" aria-hidden="true"></i>
-      </a>
-      <span class="text">Functions</span>
-    </h2>
-
-    <div class="functions-list">
-<section class="detail" id="changeset/2">
-
-  <div class="detail-header">
-    <a href="#changeset/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">changeset(snapshot, attrs)</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/snapshot.ex#L36" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> changeset(<a href="#t:t/0">t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()) :: <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Changeset.html#t:t/0">Ecto.Changeset.t</a>()</pre>
-
-      </div>
-
-
-  </section>
-</section>
-<section class="detail" id="sections/0">
-
-  <div class="detail-header">
-    <a href="#sections/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-    </a>
-    <div class="heading-with-actions">
-      <h1 class="signature" translate="no">sections()</h1>
-
-
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/snapshot.ex#L33" class="icon-action" rel="help nofollow" aria-label="View Source">
-          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-        </a>
-
-    </div>
-  </div>
-
-  <section class="docstring">
-
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">@spec</span> sections() :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
 
       </div>
 
@@ -295,9 +204,9 @@ the migration for both.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1339">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1340">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1339">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1340">Hex Preview</a>
 
             </span>
 

@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1339">
+    <meta name="project" content="gamend_core v1.1.1340">
 
 
-    <title>Gamend.LobbySnapshots.Blob — gamend_core v1.1.1339</title>
+    <title>Gamend.Results.Result — gamend_core v1.1.1340</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-7B372141.js"></script>
+    <script defer src="dist/sidebar_items-83389E80.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1339
+          v1.1.1340
         </div>
       </div>
     </div>
@@ -93,19 +93,19 @@ gamend_core
 <div id="top-content">
   <div class="heading-with-actions top-heading">
     <h1>
-      <span translate="no">Gamend.<wbr />LobbySnapshots.<wbr />Blob</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1339)</small>
+      <span translate="no">Gamend.<wbr />Results.<wbr />Result</span> 
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1340)</small>
 
     </h1>
 
-<a href="Gamend.LobbySnapshots.Blob.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+<a href="Gamend.Results.Result.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
   <i class="ri-markdown-line" aria-hidden="true"></i>
   <span class="sr-only">Copy Markdown</span>
 </a>
 
 
 
-      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/blob.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
+      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results/result.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
         <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         <span class="sr-only">View Source</span>
       </a>
@@ -114,10 +114,10 @@ gamend_core
 
 
     <section id="moduledoc">
-<p>Content-addressed storage for one snapshot section.</p><p>The hash is the primary key, so identical content stores a single row however
-many sections, snapshots or lobbies reference it. This subsumes per-section
-change detection: an unchanged section hashes to the value already stored.</p><p><code class="inline">last_referenced_at</code> is what retention prunes on — see the migration for why
-<code class="inline">inserted_at</code> cannot be used for that.</p>
+<p>Ecto schema for <code class="inline">results</code>: one play by one player (<a href="Gamend.Results.html"><code class="inline">Gamend.Results</code></a>).</p><p><code class="inline">metadata</code> is what the play was (its settings), set when it starts; what
+happened is its events (<a href="Gamend.Results.Event.html"><code class="inline">Gamend.Results.Event</code></a>). <code class="inline">lobby_id</code> is the lobby
+it ran in, kept as a plain id: the lobby is deleted long before the
+result is.</p>
     </section>
 
 </div>
@@ -150,9 +150,21 @@ change detection: an unchanged section hashes to the value already stored.</p><p
 
     <div class="summary-row">
       <div class="summary-signature">
-        <a href="#changeset/2" data-no-tooltip="" translate="no">changeset(blob, attrs)</a>
+        <a href="#statuses/0" data-no-tooltip="" translate="no">statuses()</a>
 
       </div>
+
+        <div class="summary-synopsis"><p>Where a play is: <code class="inline">open</code> while it runs, <code class="inline">ended</code> once it is over.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#visibilities/0" data-no-tooltip="" translate="no">visibilities()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Who may read a result: KV's access words.</p></div>
 
     </div>
 
@@ -180,7 +192,7 @@ change detection: an unchanged section hashes to the value already stored.</p><p
       <h1 class="signature" translate="no">t()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/blob.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results/result.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -191,13 +203,18 @@ change detection: an unchanged section hashes to the value already stored.</p><p
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@type</span> t() :: %Gamend.LobbySnapshots.Blob{
+          <pre translate="no"><span class="attribute">@type</span> t() :: %Gamend.Results.Result{
   __meta__: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  byte_size: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  content: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  hash: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  inserted_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
-  last_referenced_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()
+  ended_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  kind: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  lobby_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  metadata: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  started_at: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  status: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  user: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  user_id: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>(),
+  visibility: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()
 }</pre>
 
       </div>
@@ -218,17 +235,17 @@ change detection: an unchanged section hashes to the value already stored.</p><p
     </h2>
 
     <div class="functions-list">
-<section class="detail" id="changeset/2">
+<section class="detail" id="statuses/0">
 
   <div class="detail-header">
-    <a href="#changeset/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+    <a href="#statuses/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
       <i class="ri-link-m" aria-hidden="true"></i>
     </a>
     <div class="heading-with-actions">
-      <h1 class="signature" translate="no">changeset(blob, attrs)</h1>
+      <h1 class="signature" translate="no">statuses()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/lobby_snapshots/blob.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results/result.ex#L41" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -239,11 +256,39 @@ change detection: an unchanged section hashes to the value already stored.</p><p
 
       <div class="specs">
 
-          <pre translate="no"><span class="attribute">@spec</span> changeset(<a href="#t:t/0">t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()) :: <a href="https://ecto.hexdocs.pm/3.14.2/Ecto.Changeset.html#t:t/0">Ecto.Changeset.t</a>()</pre>
+          <pre translate="no"><span class="attribute">@spec</span> statuses() :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
 
       </div>
 
+<p>Where a play is: <code class="inline">open</code> while it runs, <code class="inline">ended</code> once it is over.</p>
+  </section>
+</section>
+<section class="detail" id="visibilities/0">
 
+  <div class="detail-header">
+    <a href="#visibilities/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">visibilities()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results/result.ex#L37" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> visibilities() :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
+
+      </div>
+
+<p>Who may read a result: KV's access words.</p>
   </section>
 </section>
 
@@ -255,9 +300,9 @@ change detection: an unchanged section hashes to the value already stored.</p><p
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1339">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1340">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1339">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1340">Hex Preview</a>
 
             </span>
 

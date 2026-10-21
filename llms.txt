@@ -1,4 +1,4 @@
-# gamend_core v1.1.1339 - Table of Contents
+# gamend_core v1.1.1340 - Table of Contents
 
 > Core functionality for Gamend, including user management, authentication, friends, matchmaking, and more.
 
@@ -84,6 +84,10 @@ everywhere.
 - [Gamend.Presence](Gamend.Presence.md): Cluster-wide tracking of who is connected where.
 - [Gamend.Query](Gamend.Query.md): Query-building pieces shared by the contexts. Right now: paging.
 - [Gamend.Release](Gamend.Release.md): Release-time equivalents of the `host.*` mix tasks.
+- [Gamend.Results](Gamend.Results.md): What happened in a play (priv/docs/40-gameplay/45-results.md).
+- [Gamend.Results.Event](Gamend.Results.Event.md): Ecto schema for `result_events`: one thing that happened in a play
+(`Gamend.Results.record/4`).
+- [Gamend.Results.Result](Gamend.Results.Result.md): Ecto schema for `results`: one play by one player (`Gamend.Results`).
 - [Gamend.Secrets](Gamend.Secrets.md): Somewhere to keep a credential that belongs to a *customer*.
 - [Gamend.Secrets.Secret](Gamend.Secrets.Secret.md): One encrypted value, and the metadata a person needs to manage something
 they can never read back.
@@ -158,11 +162,6 @@ generator.
   - [Gamend.Lobbies.Lobby](Gamend.Lobbies.Lobby.md): Ecto schema for the `lobbies` table and changeset helpers.
   - [Gamend.Lobbies.SpectatorTracker](Gamend.Lobbies.SpectatorTracker.md): Who is watching a lobby without being a member.
   - [Gamend.Lobbies.States](Gamend.Lobbies.States.md): The vocabulary a lobby's `state` commonly uses.
-  - [Gamend.LobbySnapshots](Gamend.LobbySnapshots.md): Durable record of how a lobby's state evolved during a run.
-  - [Gamend.LobbySnapshots.Blob](Gamend.LobbySnapshots.Blob.md): Content-addressed storage for one snapshot section.
-  - [Gamend.LobbySnapshots.Event](Gamend.LobbySnapshots.Event.md): A decision worth explaining, recorded between two snapshots.
-  - [Gamend.LobbySnapshots.Snapshot](Gamend.LobbySnapshots.Snapshot.md): One capture of a lobby's state at a mutation entry point.
-  - [Gamend.LobbySnapshots.Writer](Gamend.LobbySnapshots.Writer.md): Buffers snapshots and events and bulk-inserts them.
 
 - Matchmaking
   - [Gamend.Matchmaking](Gamend.Matchmaking.md): Public API for the built-in matchmaking system.

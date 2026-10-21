@@ -10,11 +10,8 @@ env vars `GAMEND_RETENTION_*`); `0` or unset keeps data forever:
 - `GAMEND_RETENTION_NOTIFICATIONS_DAYS` — `notifications` older than N days
 - `GAMEND_RETENTION_PAYMENT_EVENTS_DAYS` — payment provider webhook events older
   than N days (purchases/entitlements are never pruned)
-- `GAMEND_RETENTION_LOBBY_SNAPSHOTS_DAYS` — lobby snapshots, events and their
-  content blobs. Unlike the others this defaults to 30 rather than "keep
-  forever": snapshots hold user metadata, and the window is what bounds that
-  exposure. Runs flagged anomalous keep
-  `GAMEND_RETENTION_LOBBY_SNAPSHOTS_FLAGGED_DAYS` instead (default 90).
+- `GAMEND_RETENTION_RESULTS_DAYS` — results (`Gamend.Results`) started more
+  than N days ago, with their events
 - Closed reports (`Gamend.Reports`) and their images, on that module's own
   `retention_days` (180), counted from when they were closed. Open reports
   are never pruned.

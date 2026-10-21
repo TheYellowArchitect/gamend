@@ -59,6 +59,21 @@ See `Supervisor`.
 @spec hook_modules() :: [{plugin_name(), module()}]
 ```
 
+# `host_rpc_modules`
+
+```elixir
+@spec host_rpc_modules() :: [{plugin_name(), module()}]
+```
+
+The host's modules that answer client calls, by the name a client calls
+them under: `config :gamend_core, :host_rpc_modules, %{"word_games" =>
+MyApp.WordGamesRpc}`. A host serves a call the way a plugin does
+(`call_rpc/4`: every public function, the caller in the process, the same
+limits and reserved names), from code that is the host's own. A name a
+loaded plugin also has is the plugin's; the host's is dropped with a
+warning when the plugins load. Host calls take JSON arguments and reply
+JSON: there are no typed schemas for them.
+
 # `list`
 
 ```elixir
@@ -102,6 +117,14 @@ See `Supervisor`.
 Loads one plugin from disk again and runs its `after_startup/0`, the
 counterpart of `suspend/1`. Returns the plugin (its `status` says whether it
 started), or `nil` when the manager is not running or skips the name.
+
+# `rpc_modules`
+
+```elixir
+@spec rpc_modules() :: [{plugin_name(), module()}]
+```
+
+Every module a client can call, plugins first, then the host's (`host_rpc_modules/0`).
 
 # `start_link`
 

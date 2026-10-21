@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1339">
+    <meta name="project" content="gamend_core v1.1.1340">
 
 
-    <title>Gamend.DemoSeed — gamend_core v1.1.1339</title>
+    <title>Gamend.DemoSeed — gamend_core v1.1.1340</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-7B372141.js"></script>
+    <script defer src="dist/sidebar_items-83389E80.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1339
+          v1.1.1340
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />DemoSeed</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1339)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1340)</small>
 
     </h1>
 
@@ -121,9 +121,9 @@ same arguments:</p><pre><code class="makeup elixir" translate="no"><span class="
 </span><span class="n">mix</span><span class="w"> </span><span class="n">demo</span><span class="o">.</span><span class="n">seed</span><span class="w"> </span><span class="o">--</span><span class="n">count</span><span class="w"> </span><span class="mi">250</span><span class="w">           </span><span class="c1"># smaller run</span><span class="w">
 </span><span class="n">mix</span><span class="w"> </span><span class="n">demo</span><span class="o">.</span><span class="n">seed</span><span class="w"> </span><span class="o">--</span><span class="n">only</span><span class="w"> </span><span class="n">leaderboard</span><span class="w">    </span><span class="c1"># one set (comma-separated)</span><span class="w">
 </span><span class="n">mix</span><span class="w"> </span><span class="n">demo</span><span class="o">.</span><span class="n">seed</span><span class="w"> </span><span class="o">--</span><span class="n">only</span><span class="w"> </span><span class="n">group</span><span class="p">,</span><span class="n">tournament</span><span class="w">
-</span><span class="n">mix</span><span class="w"> </span><span class="n">demo</span><span class="o">.</span><span class="n">seed</span><span class="w"> </span><span class="o">--</span><span class="n">clean</span><span class="w">               </span><span class="c1"># remove everything this task created</span></code></pre><h2 id="module-sets" class="section-heading"><a href="#module-sets" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Sets</span></h2><ul><li><code class="inline">leaderboard</code> — a leaderboard with N scored records</li><li><code class="inline">group</code>       — a public group with N members</li><li><code class="inline">tournament</code>  — a tournament with N registered entries, still open</li><li><code class="inline">lobby_snapshot</code> — recorded runs for <code class="inline">/admin/lobby_snapshots</code>, capped at 12
-regardless of <code class="inline">--count</code> (this set is about having something to read, not
-volume)</li><li><code class="inline">quest</code> — a daily, an auto-claim achievement, a chained follow-up and a
+</span><span class="n">mix</span><span class="w"> </span><span class="n">demo</span><span class="o">.</span><span class="n">seed</span><span class="w"> </span><span class="o">--</span><span class="n">clean</span><span class="w">               </span><span class="c1"># remove everything this task created</span></code></pre><h2 id="module-sets" class="section-heading"><a href="#module-sets" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Sets</span></h2><ul><li><code class="inline">leaderboard</code> — a leaderboard with N scored records</li><li><code class="inline">group</code>       — a public group with N members</li><li><code class="inline">tournament</code>  — a tournament with N registered entries, still open</li><li><code class="inline">result</code> — finished and open plays for <code class="inline">/admin/results</code>, a dozen per
+player for the first 12 players, regardless of <code class="inline">--count</code> (this set is
+about having something to read, not volume)</li><li><code class="inline">quest</code> — a daily, an auto-claim achievement, a chained follow-up and a
 twelve-member group that lists as one card, with per-user progress in
 every state (including claimable rows)</li><li><code class="inline">ready_check</code> — one check per seeded lobby in every outcome (open,
 passed, timed out, declined), also capped at 12</li><li><code class="inline">chat_moderation</code> — a blocklist across every severity and match mode, a
@@ -133,11 +133,9 @@ some resolved) and mutes in every scope, including expired ones</li></ul><p>The 
 daily counters for a year (<code class="inline">/admin/analytics/*</code>)</li><li><code class="inline">economy</code> — a wallet per player, 2N ledger entries, N/100 of them the
 first player's (<code class="inline">/admin/economy</code>)</li><li><code class="inline">payment</code> — N/10 purchases, each with its entitlement (<code class="inline">/admin/payments</code>)</li><li><code class="inline">report</code> — N/10 page reports over 500 pages (<code class="inline">/admin/reports</code>)</li><li><code class="inline">friend</code> — a friendship per player, N/100 friends for the first player
 (<code class="inline">/admin/friends</code>)</li><li><code class="inline">session</code> — a session token per player (<code class="inline">/admin/sessions</code>)</li><li><code class="inline">lobby</code> — N/10 lobbies (<code class="inline">/admin/lobbies</code>)</li><li><code class="inline">ban</code> — N/100 account and IP bans (<code class="inline">/admin/bans</code>)</li><li><code class="inline">inventory</code> — two items per player (<code class="inline">/admin/economy</code>)</li></ul><p>The first player is the heavy one: <code class="inline">mix demo.bench</code> signs in as them for the
-player pages, so their lists are the long ones.</p><p>The <code class="inline">lobby_snapshot</code> set goes through the real <code class="inline">capture_lobby/3</code> path rather
-than inserting rows, so what you see is shaped exactly like production data —
-including content-addressed section dedup. One of its runs reproduces the July
-2026 rubber-banding bug (a distance that reverts between snapshots), which is
-the case the section diff exists to make obvious.</p><p>Seeded runs keep their lobby row so <code class="inline">--clean</code> can find them again. Real
+player pages, so their lists are the long ones.</p><p>The <code class="inline">result</code> set goes through <a href="Gamend.Results.html"><code class="inline">Gamend.Results</code></a>, so what you see is shaped
+exactly like a game's writes, then moves each play back in time so the list
+spans the last weeks.</p><p>Seeded runs keep their lobby row so <code class="inline">--clean</code> can find them again. Real
 completed runs outlive theirs, since a lobby is deleted when its last member
 leaves.</p><p>All sets share one pool of N anonymous device accounts, so the same players
 appear across them (as they would in a real deployment).</p><p>Rows are inserted in bulk rather than through the contexts: this is about
@@ -245,7 +243,7 @@ before <code class="inline">demo.seed</code> has run.</p></div>
       <h1 class="signature" translate="no">analyze_tables()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L324" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L318" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -273,7 +271,7 @@ before <code class="inline">demo.seed</code> has run.</p></div>
       <h1 class="signature" translate="no">bench_context()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L252" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L246" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -308,7 +306,7 @@ plus the ids of the seeded pages. Raises <a href="https://elixir.hexdocs.pm/Argu
       <h1 class="signature" translate="no">insert_rows(rows, schema)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L320" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L314" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -340,7 +338,7 @@ Postgres) and answers how many went in. <code class="inline">analyze/0</code> af
       <h1 class="signature" translate="no">player_ids(count \\ nil)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L304" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L298" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -370,7 +368,7 @@ before <code class="inline">demo.seed</code> has run.</p>
       <h1 class="signature" translate="no">run(args)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L202" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/demo_seed.ex#L196" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -399,9 +397,9 @@ before <code class="inline">demo.seed</code> has run.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1339">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1340">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1339">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1340">Hex Preview</a>
 
             </span>
 

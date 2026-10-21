@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1339">
+    <meta name="project" content="gamend_core v1.1.1340">
 
 
-    <title>Gamend.Hooks.PluginManager — gamend_core v1.1.1339</title>
+    <title>Gamend.Hooks.PluginManager — gamend_core v1.1.1340</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-7B372141.js"></script>
+    <script defer src="dist/sidebar_items-83389E80.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1339
+          v1.1.1340
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Hooks.<wbr />PluginManager</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1339)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1340)</small>
 
     </h1>
 
@@ -200,6 +200,22 @@ path and uses <a href="https://elixir.hexdocs.pm/Application.html#load/1"><code 
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#host_rpc_modules/0" data-no-tooltip="" translate="no">host_rpc_modules()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The host's modules that answer client calls, by the name a client calls
+them under: <code class="inline">config :gamend_core, :host_rpc_modules, %{&quot;word_games&quot; =&gt; MyApp.WordGamesRpc}</code>. A host serves a call the way a plugin does
+(<a href="#call_rpc/4"><code class="inline">call_rpc/4</code></a>: every public function, the caller in the process, the same
+limits and reserved names), from code that is the host's own. A name a
+loaded plugin also has is the plugin's; the host's is dropped with a
+warning when the plugins load. Host calls take JSON arguments and reply
+JSON: there are no typed schemas for them.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#list/0" data-no-tooltip="" translate="no">list()</a>
 
       </div>
@@ -247,6 +263,16 @@ path and uses <a href="https://elixir.hexdocs.pm/Application.html#load/1"><code 
         <div class="summary-synopsis"><p>Loads one plugin from disk again and runs its <code class="inline">after_startup/0</code>, the
 counterpart of <a href="#suspend/1"><code class="inline">suspend/1</code></a>. Returns the plugin (its <code class="inline">status</code> says whether it
 started), or <code class="inline">nil</code> when the manager is not running or skips the name.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#rpc_modules/0" data-no-tooltip="" translate="no">rpc_modules()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Every module a client can call, plugins first, then the host's (<a href="#host_rpc_modules/0"><code class="inline">host_rpc_modules/0</code></a>).</p></div>
 
     </div>
 
@@ -365,7 +391,7 @@ manager is not running.</p></div>
       <h1 class="signature" translate="no">call_rpc(plugin, fn_name, args, opts \\ [])</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L177" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L230" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -463,6 +489,40 @@ manager is not running.</p></div>
 
   </section>
 </section>
+<section class="detail" id="host_rpc_modules/0">
+
+  <div class="detail-header">
+    <a href="#host_rpc_modules/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">host_rpc_modules()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L143" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> host_rpc_modules() :: [{<a href="#t:plugin_name/0">plugin_name</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">module</a>()}]</pre>
+
+      </div>
+
+<p>The host's modules that answer client calls, by the name a client calls
+them under: <code class="inline">config :gamend_core, :host_rpc_modules, %{&quot;word_games&quot; =&gt; MyApp.WordGamesRpc}</code>. A host serves a call the way a plugin does
+(<a href="#call_rpc/4"><code class="inline">call_rpc/4</code></a>: every public function, the caller in the process, the same
+limits and reserved names), from code that is the host's own. A name a
+loaded plugin also has is the plugin's; the host's is dropped with a
+warning when the plugins load. Host calls take JSON arguments and reply
+JSON: there are no typed schemas for them.</p>
+  </section>
+</section>
 <section class="detail" id="list/0">
 
   <div class="detail-header">
@@ -530,7 +590,7 @@ manager is not running.</p></div>
       <h1 class="signature" translate="no">plugins_dir()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L290" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L353" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -558,7 +618,7 @@ manager is not running.</p></div>
       <h1 class="signature" translate="no">reload()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L137" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L190" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -586,7 +646,7 @@ manager is not running.</p></div>
       <h1 class="signature" translate="no">reload_and_after_startup()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L142" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L195" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -617,7 +677,7 @@ manager is not running.</p></div>
       <h1 class="signature" translate="no">resume(name)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L171" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L224" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -635,6 +695,34 @@ manager is not running.</p></div>
 <p>Loads one plugin from disk again and runs its <code class="inline">after_startup/0</code>, the
 counterpart of <a href="#suspend/1"><code class="inline">suspend/1</code></a>. Returns the plugin (its <code class="inline">status</code> says whether it
 started), or <code class="inline">nil</code> when the manager is not running or skips the name.</p>
+  </section>
+</section>
+<section class="detail" id="rpc_modules/0">
+
+  <div class="detail-header">
+    <a href="#rpc_modules/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">rpc_modules()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L153" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> rpc_modules() :: [{<a href="#t:plugin_name/0">plugin_name</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">module</a>()}]</pre>
+
+      </div>
+
+<p>Every module a client can call, plugins first, then the host's (<a href="#host_rpc_modules/0"><code class="inline">host_rpc_modules/0</code></a>).</p>
   </section>
 </section>
 <section class="detail" id="start_link/1">
@@ -677,7 +765,7 @@ started), or <code class="inline">nil</code> when the manager is not running or 
       <h1 class="signature" translate="no">suspend(name)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L159" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/hooks/plugin_manager.ex#L212" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -711,9 +799,9 @@ back.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1339">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1340">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1339">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1340">Hex Preview</a>
 
             </span>
 

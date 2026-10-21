@@ -119,11 +119,6 @@ Gamend.Lobbies.Lobby.md
 Gamend.Lobbies.SpectatorTracker.md
 Gamend.Lobbies.States.md
 Gamend.Lobbies.md
-Gamend.LobbySnapshots.Blob.md
-Gamend.LobbySnapshots.Event.md
-Gamend.LobbySnapshots.Snapshot.md
-Gamend.LobbySnapshots.Writer.md
-Gamend.LobbySnapshots.md
 Gamend.Lock.Local.md
 Gamend.Lock.Queue.md
 Gamend.Lock.md
@@ -208,6 +203,9 @@ Gamend.Reports.Kinds.Page.md
 Gamend.Reports.Notices.md
 Gamend.Reports.Report.md
 Gamend.Reports.md
+Gamend.Results.Event.md
+Gamend.Results.Result.md
+Gamend.Results.md
 Gamend.Retention.md
 Gamend.Schedule.md
 Gamend.Schema.md

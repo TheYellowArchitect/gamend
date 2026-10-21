@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="gamend_core v1.1.1340">
+
+
+    <title>Gamend.Results — gamend_core v1.1.1340</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-83389E80.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+gamend_core
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.1.1340
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of gamend_core</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">Gamend.<wbr />Results</span> 
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1340)</small>
+
+    </h1>
+
+<a href="Gamend.Results.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+
+      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p>What happened in a play (priv/docs/40-gameplay/45-results.md).</p><p>A <strong>result</strong> is one play by one player (<a href="Gamend.Results.Result.html"><code class="inline">Gamend.Results.Result</code></a>), its
+<strong>events</strong> what happened in it, in order (<a href="Gamend.Results.Event.html"><code class="inline">Gamend.Results.Event</code></a>). The game
+writes an event when something happens and nothing else: no summary kept up
+to date, no copy of the play's state. The lobby holds the live state; the
+result is the record it leaves. The same rows are the replay (the events by
+id), the play at a glance (<a href="#stats/1"><code class="inline">stats/1</code></a>: each key's count and sum) and the
+player's history (<a href="#list/2"><code class="inline">list/2</code></a>).</p><p><strong>Writes are the server's.</strong> A plugin, the host app or a hook handling a
+move calls <a href="#start/3"><code class="inline">start/3</code></a>, <a href="#record/4"><code class="inline">record/4</code></a> and <a href="#finish/1"><code class="inline">finish/1</code></a>; no client writes a result.
+An event is one insert, and <a href="#finish/1"><code class="inline">finish/1</code></a> one update that only matches an
+open row, so a play ends once.</p><p><strong>Reads follow the result's visibility</strong>, KV's words (<a href="#readable?/2"><code class="inline">readable?/2</code></a>), and
+every write is pushed as it happens (<code class="inline">result_started</code>, <code class="inline">result_event</code>,
+<code class="inline">result_ended</code>) to the owner's <code class="inline">user:&lt;id&gt;</code> topic and, when its lobby's
+members may read it, the lobby's <code class="inline">lobby:&lt;id&gt;</code>.</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h2>
+<div class="summary-functions summary">
+  <h3>
+    <a href="#functions">Functions</a>
+  </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#count/1" data-no-tooltip="" translate="no">count(filters \\ %{})</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>How many results match <code class="inline">filters</code> (as <a href="#list/2"><code class="inline">list/2</code></a>).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#count_events/1" data-no-tooltip="" translate="no">count_events(result_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>How many events a result holds.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#delete/1" data-no-tooltip="" translate="no">delete(result)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A result and its events, deleted.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#events/2" data-no-tooltip="" translate="no">events(result_id, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A result's events, oldest first. Opts: <code class="inline">:after</code>, an event id (the events
+written after it: a reconnect's catch-up), <code class="inline">:limit</code> (500, at most 2,000).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#events_by_key/2" data-no-tooltip="" translate="no">events_by_key(result_ids, keys)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The events of many results whose key is one of <code class="inline">keys</code>, by result id, each
+list oldest first: one query, for a page of results read whole (a
+history list).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#finish/1" data-no-tooltip="" translate="no">finish(result_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The play over: <code class="inline">{:ok, result}</code>, ended now. One update that only matches an
+open row, so a second finish answers <code class="inline">{:error, :already_ended}</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#get/1" data-no-tooltip="" translate="no">get(id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A result by id, or nil.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#kinds/0" data-no-tooltip="" translate="no">kinds()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The kinds results have been written under, for a filter.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list/2" data-no-tooltip="" translate="no">list(filters \\ %{}, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Results, newest first. Filters: <code class="inline">:user_id</code>, <code class="inline">:kind</code> (one, or a list),
+<code class="inline">:status</code>, <code class="inline">:lobby_id</code>. Opts: <code class="inline">:page</code> and <code class="inline">:page_size</code>; with no <code class="inline">:page</code>, the first
+<a href="Gamend.Query.html#unpaginated_limit/0"><code class="inline">Gamend.Query.unpaginated_limit/0</code></a>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#move_user/2" data-no-tooltip="" translate="no">move_user(from_user_id, to_user_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A guest's results made the account's (<a href="Gamend.Accounts.GuestMerge.html"><code class="inline">Gamend.Accounts.GuestMerge</code></a>): their
+plays join the account's history instead of going with the guest.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#prune_before/2" data-no-tooltip="" translate="no">prune_before(cutoff, batch)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Results started before <code class="inline">cutoff</code> deleted with their events, <code class="inline">batch</code> at a
+time; answers how many results went.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#readable?/2" data-no-tooltip="" translate="no">readable?(r, user)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Whether <code class="inline">user</code> may read <code class="inline">result</code>, by its visibility: <code class="inline">public</code> anyone,
+<code class="inline">owner_only</code> its player, <code class="inline">lobby_members_only</code> a player seated in its
+lobby now, <code class="inline">owner_or_lobby_member</code> either, <code class="inline">admin_only</code> and every other
+an admin. <code class="inline">server_only</code> no client.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#record/4" data-no-tooltip="" translate="no">record(result, key, value \\ nil, metadata \\ %{})</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>One thing that happened in a play: <code class="inline">key</code> what (<code class="inline">answer</code>, <code class="inline">hint</code>), <code class="inline">value</code>
+the number it carries (or nil), <code class="inline">metadata</code> anything else. <code class="inline">{:ok, event}</code>;
+<code class="inline">{:error, :ended}</code> once the play is over, <code class="inline">{:error, :not_found}</code>,
+<code class="inline">{:error, :too_many_events}</code> past <code class="inline">GAMEND_LIMITS_MAX_RESULT_EVENTS</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#record_lobby/4" data-no-tooltip="" translate="no">record_lobby(lobby_id, key, value \\ nil, metadata \\ %{})</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p><a href="#record/4"><code class="inline">record/4</code></a> on every open result of <code class="inline">lobby_id</code>, for code that knows the
+lobby and not its players (a timer, a disconnect). Answers how many it
+wrote.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start/3" data-no-tooltip="" translate="no">start(user_id, kind, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A play begun by <code class="inline">user_id</code>, of <code class="inline">kind</code> (<code class="inline">match</code>, <code class="inline">boat_run</code>): <code class="inline">{:ok, result}</code>. Opts: <code class="inline">:lobby_id</code> the lobby it runs in, <code class="inline">:visibility</code> who may
+read it (KV's words, atom or string; <code class="inline">owner_only</code> by default),
+<code class="inline">:metadata</code> what the play is (its settings; never its outcome).</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stats/1" data-no-tooltip="" translate="no">stats(ids)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Each event key's <code class="inline">count</code> and <code class="inline">sum</code> of <code class="inline">value</code>, for one result
+(<code class="inline">%{&quot;answer&quot; =&gt; %{count: 10, sum: 7.0}}</code>) or a list of result ids (by id:
+one query whatever their number). A key whose events carry no value sums
+to 0.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h2>
+
+    <div class="functions-list">
+<section class="detail" id="count/1">
+
+    <span id="count/0"></span>
+
+  <div class="detail-header">
+    <a href="#count/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">count(filters \\ %{})</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L188" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> count(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>How many results match <code class="inline">filters</code> (as <a href="#list/2"><code class="inline">list/2</code></a>).</p>
+  </section>
+</section>
+<section class="detail" id="count_events/1">
+
+  <div class="detail-header">
+    <a href="#count_events/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">count_events(result_id)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L275" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> count_events(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>How many events a result holds.</p>
+  </section>
+</section>
+<section class="detail" id="delete/1">
+
+  <div class="detail-header">
+    <a href="#delete/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">delete(result)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L155" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> delete(<a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>()) ::
+  {:ok, <a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>A result and its events, deleted.</p>
+  </section>
+</section>
+<section class="detail" id="events/2">
+
+    <span id="events/1"></span>
+
+  <div class="detail-header">
+    <a href="#events/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">events(result_id, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L226" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> events(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="Gamend.Results.Event.html#t:t/0">Gamend.Results.Event.t</a>()]</pre>
+
+      </div>
+
+<p>A result's events, oldest first. Opts: <code class="inline">:after</code>, an event id (the events
+written after it: a reconnect's catch-up), <code class="inline">:limit</code> (500, at most 2,000).</p>
+  </section>
+</section>
+<section class="detail" id="events_by_key/2">
+
+  <div class="detail-header">
+    <a href="#events_by_key/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">events_by_key(result_ids, keys)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L248" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> events_by_key([<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()], [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]) :: %{
+  required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; [<a href="Gamend.Results.Event.html#t:t/0">Gamend.Results.Event.t</a>()]
+}</pre>
+
+      </div>
+
+<p>The events of many results whose key is one of <code class="inline">keys</code>, by result id, each
+list oldest first: one query, for a page of results read whole (a
+history list).</p>
+  </section>
+</section>
+<section class="detail" id="finish/1">
+
+  <div class="detail-header">
+    <a href="#finish/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">finish(result_id)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L131" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> finish(<a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>() | <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) ::
+  {:ok, <a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>The play over: <code class="inline">{:ok, result}</code>, ended now. One update that only matches an
+open row, so a second finish answers <code class="inline">{:error, :already_ended}</code>.</p>
+  </section>
+</section>
+<section class="detail" id="get/1">
+
+  <div class="detail-header">
+    <a href="#get/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">get(id)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L170" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> get(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>() | nil</pre>
+
+      </div>
+
+<p>A result by id, or nil.</p>
+  </section>
+</section>
+<section class="detail" id="kinds/0">
+
+  <div class="detail-header">
+    <a href="#kinds/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">kinds()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L192" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> kinds() :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
+
+      </div>
+
+<p>The kinds results have been written under, for a filter.</p>
+  </section>
+</section>
+<section class="detail" id="list/2">
+
+    <span id="list/0"></span>
+
+    <span id="list/1"></span>
+
+  <div class="detail-header">
+    <a href="#list/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list(filters \\ %{}, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L178" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> list(<a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: [<a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>()]</pre>
+
+      </div>
+
+<p>Results, newest first. Filters: <code class="inline">:user_id</code>, <code class="inline">:kind</code> (one, or a list),
+<code class="inline">:status</code>, <code class="inline">:lobby_id</code>. Opts: <code class="inline">:page</code> and <code class="inline">:page_size</code>; with no <code class="inline">:page</code>, the first
+<a href="Gamend.Query.html#unpaginated_limit/0"><code class="inline">Gamend.Query.unpaginated_limit/0</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="move_user/2">
+
+  <div class="detail-header">
+    <a href="#move_user/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">move_user(from_user_id, to_user_id)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L264" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> move_user(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>A guest's results made the account's (<a href="Gamend.Accounts.GuestMerge.html"><code class="inline">Gamend.Accounts.GuestMerge</code></a>): their
+plays join the account's history instead of going with the guest.</p>
+  </section>
+</section>
+<section class="detail" id="prune_before/2">
+
+  <div class="detail-header">
+    <a href="#prune_before/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">prune_before(cutoff, batch)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L338" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> prune_before(<a href="https://elixir.hexdocs.pm/DateTime.html#t:t/0">DateTime.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p>Results started before <code class="inline">cutoff</code> deleted with their events, <code class="inline">batch</code> at a
+time; answers how many results went.</p>
+  </section>
+</section>
+<section class="detail" id="readable?/2">
+
+  <div class="detail-header">
+    <a href="#readable?/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">readable?(r, user)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L309" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> readable?(<a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>(), <a href="Gamend.Accounts.User.html#t:t/0">Gamend.Accounts.User.t</a>() | nil) ::
+  <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>()</pre>
+
+      </div>
+
+<p>Whether <code class="inline">user</code> may read <code class="inline">result</code>, by its visibility: <code class="inline">public</code> anyone,
+<code class="inline">owner_only</code> its player, <code class="inline">lobby_members_only</code> a player seated in its
+lobby now, <code class="inline">owner_or_lobby_member</code> either, <code class="inline">admin_only</code> and every other
+an admin. <code class="inline">server_only</code> no client.</p>
+  </section>
+</section>
+<section class="detail" id="record/4">
+
+    <span id="record/2"></span>
+
+    <span id="record/3"></span>
+
+  <div class="detail-header">
+    <a href="#record/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">record(result, key, value \\ nil, metadata \\ %{})</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L76" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> record(
+  <a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>() | <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(),
+  <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(),
+  <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">number</a>() | nil,
+  <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()
+) ::
+  {:ok, <a href="Gamend.Results.Event.html#t:t/0">Gamend.Results.Event.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>One thing that happened in a play: <code class="inline">key</code> what (<code class="inline">answer</code>, <code class="inline">hint</code>), <code class="inline">value</code>
+the number it carries (or nil), <code class="inline">metadata</code> anything else. <code class="inline">{:ok, event}</code>;
+<code class="inline">{:error, :ended}</code> once the play is over, <code class="inline">{:error, :not_found}</code>,
+<code class="inline">{:error, :too_many_events}</code> past <code class="inline">GAMEND_LIMITS_MAX_RESULT_EVENTS</code>.</p>
+  </section>
+</section>
+<section class="detail" id="record_lobby/4">
+
+    <span id="record_lobby/2"></span>
+
+    <span id="record_lobby/3"></span>
+
+  <div class="detail-header">
+    <a href="#record_lobby/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">record_lobby(lobby_id, key, value \\ nil, metadata \\ %{})</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L120" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> record_lobby(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">number</a>() | nil, <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()</pre>
+
+      </div>
+
+<p><a href="#record/4"><code class="inline">record/4</code></a> on every open result of <code class="inline">lobby_id</code>, for code that knows the
+lobby and not its players (a timer, a disconnect). Answers how many it
+wrote.</p>
+  </section>
+</section>
+<section class="detail" id="start/3">
+
+    <span id="start/2"></span>
+
+  <div class="detail-header">
+    <a href="#start/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start(user_id, kind, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L48" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> start(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) ::
+  {:ok, <a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>A play begun by <code class="inline">user_id</code>, of <code class="inline">kind</code> (<code class="inline">match</code>, <code class="inline">boat_run</code>): <code class="inline">{:ok, result}</code>. Opts: <code class="inline">:lobby_id</code> the lobby it runs in, <code class="inline">:visibility</code> who may
+read it (KV's words, atom or string; <code class="inline">owner_only</code> by default),
+<code class="inline">:metadata</code> what the play is (its settings; never its outcome).</p>
+  </section>
+</section>
+<section class="detail" id="stats/1">
+
+  <div class="detail-header">
+    <a href="#stats/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stats(ids)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/results.ex#L286" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> stats(<a href="Gamend.Results.Result.html#t:t/0">Gamend.Results.Result.t</a>() | [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]) :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">map</a>()</pre>
+
+      </div>
+
+<p>Each event key's <code class="inline">count</code> and <code class="inline">sum</code> of <code class="inline">value</code>, for one result
+(<code class="inline">%{&quot;answer&quot; =&gt; %{count: 10, sum: 7.0}}</code>) or a list of result ids (by id:
+one query whatever their number). A key whose events carry no value sums
+to 0.</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/gamend_core/1.1.1340">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1340">Hex Preview</a>
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="gamend_core.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

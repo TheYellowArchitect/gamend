@@ -163,9 +163,9 @@ a copy of it.
 
 Lobbies this session was in, oldest first.
 
-The link back to the server's own view of the same runs: each id addresses a
-`lobby_snapshots` timeline, so a client-side symptom and the server-side
-state that produced it are one click apart.
+The link back to the server's own view of the same runs: each id finds the
+results of plays in that lobby (`Gamend.Results`, `/admin/results`), so a
+client-side symptom and what the server recorded are one click apart.
 
 # `set_flagged`
 
