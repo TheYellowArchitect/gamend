@@ -479,7 +479,7 @@ defmodule GamendWeb.AdminLive.Logs do
         <span class="opacity-70">Lobbies:</span>
         <.link
           :for={lobby_id <- @selected_lobbies}
-          navigate={~p"/admin/lobby_snapshots?lobby_id=#{lobby_id}"}
+          navigate={~p"/admin/results?#{[lobby_id: lobby_id]}"}
           class="link link-primary font-mono"
         >
           {short(lobby_id)}

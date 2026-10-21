@@ -59,7 +59,7 @@ A user with `is_admin` set can open the console; everyone else gets redirected. 
 |---|---|
 | [/admin/kv](/admin/kv) | The key-value store: filter, create, edit, delete and bulk delete entries. |
 | [/admin/storage](/admin/storage) | Object storage usage, a paginated object list with preview and delete, and a direct upload — the same view whether the backend is local disk or S3/R2. |
-| [/admin/lobby_snapshots](/admin/lobby_snapshots) | Durable per-run lobby snapshots (when `GAMEND_LOBBY_SNAPSHOTS_ENABLED` is on), with their event timelines and a flagged-only toggle. |
+| [/admin/results](/admin/results) | Every play (`Gamend.Results`), filtered by kind, status, player and lobby, with each one's duration and stats by event key; one play opens on its events in order. |
 | [/admin/retention](/admin/retention) | The configured retention windows with per-table row counts, and a manual prune that runs the sweep immediately instead of waiting for the schedule. |
 
 ## System

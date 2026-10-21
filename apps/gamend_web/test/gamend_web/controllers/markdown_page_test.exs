@@ -23,6 +23,7 @@ defmodule GamendWeb.MarkdownPageTest do
     """)
 
     File.write!(Path.join(root, "help/install.md"), "# Installing\n\nSteps.\n")
+    File.write!(Path.join(root, "privacy.md"), "---\ntitle: Host privacy\n---\n\nWe keep keys.\n")
     File.write!(Path.join(root, "wide.md"), "---\ntitle: Wide\nlayout: wide\n---\n\nRoom.\n")
 
     Content.register_path(:pages, kind: :dir, path: root, nesting: :tree, base_path: "/")
@@ -51,6 +52,15 @@ defmodule GamendWeb.MarkdownPageTest do
   test "`layout: wide` widens the frame", %{conn: conn} do
     assert conn |> get("/wide") |> html_response(200) =~ "2xl:max-w-screen-2xl"
     refute conn |> get("/faq") |> html_response(200) =~ "2xl:max-w-screen-2xl"
+  end
+
+  test "a host page replaces core's legal page at the same path", %{conn: conn} do
+    html = conn |> get("/privacy") |> html_response(200)
+
+    assert html =~ "We keep keys."
+    refute html =~ "Information We Collect"
+    # No page for it, so core's own stays.
+    assert conn |> get("/terms") |> html_response(200) =~ "Acceptance of Terms"
   end
 
   test "a path with no page is still a 404", %{conn: conn} do

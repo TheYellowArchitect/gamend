@@ -21,6 +21,21 @@
   },
   {
     "channel": "user",
+    "event": "result_started",
+    "signal": "result_started"
+  },
+  {
+    "channel": "user",
+    "event": "result_event",
+    "signal": "result_event"
+  },
+  {
+    "channel": "user",
+    "event": "result_ended",
+    "signal": "result_ended"
+  },
+  {
+    "channel": "user",
     "event": "kv_updated",
     "signal": "kv_updated"
   },
@@ -228,6 +243,21 @@
     "channel": "lobby",
     "event": "ready_check_failed",
     "signal": "ready_check_failed"
+  },
+  {
+    "channel": "lobby",
+    "event": "result_started",
+    "signal": "lobby_result_started"
+  },
+  {
+    "channel": "lobby",
+    "event": "result_event",
+    "signal": "lobby_result_event"
+  },
+  {
+    "channel": "lobby",
+    "event": "result_ended",
+    "signal": "lobby_result_ended"
   },
   {
     "channel": "lobbies",

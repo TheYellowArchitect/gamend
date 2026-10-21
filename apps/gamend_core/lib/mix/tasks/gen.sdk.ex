@@ -53,7 +53,10 @@ defmodule Mix.Tasks.Gen.Sdk do
     {Gamend.Signals, "signals.ex"},
     # So a plugin can ban a cheater (`source: :plugin`) and read a player's
     # ban, alongside the `after_ban_*` hooks.
-    {Gamend.Bans, "bans.ex"}
+    {Gamend.Bans, "bans.ex"},
+    # What a play leaves: a plugin starts a result, records events as things
+    # happen and finishes it (`Gamend.Results`).
+    {Gamend.Results, "results.ex"}
   ]
 
   # Modules a plugin may call whose SDK stub is hand-written rather than
@@ -542,6 +545,13 @@ defmodule Mix.Tasks.Gen.Sdk do
        "{:ok, #{chat_report_placeholder_expr()}}"},
       {fn rt -> String.contains?(rt, "{:ok, Gamend.Bans.Ban.t()}") end,
        "{:ok, #{ban_placeholder_expr()}}"},
+      {fn rt -> String.contains?(rt, "{:ok, Gamend.Results.Result.t()}") end,
+       "if :erlang.phash2(make_ref(), 2) == 0, do: {:error, :not_found}, else: {:ok, #{result_placeholder_expr()}}"},
+      {fn rt -> String.contains?(rt, "{:ok, Gamend.Results.Event.t()}") end,
+       "if :erlang.phash2(make_ref(), 2) == 0, do: {:error, :ended}, else: {:ok, #{result_event_placeholder_expr()}}"},
+      {fn rt ->
+         String.contains?(rt, "Gamend.Results.Result.t()") and String.contains?(rt, "| nil")
+       end, "if :erlang.phash2(make_ref(), 2) == 0, do: nil, else: #{result_placeholder_expr()}"},
       {fn rt -> String.contains?(rt, "{:ok, Gamend.Quests.Quest.t()}") end,
        "{:ok, #{quest_placeholder_expr()}}"},
       {fn rt -> String.contains?(rt, "{:ok, Gamend.Quests.QuestProgress.t()}") end,
@@ -781,6 +791,16 @@ defmodule Mix.Tasks.Gen.Sdk do
     dt = dt_placeholder_expr()
 
     "%Gamend.Bans.Ban{id: \"\", kind: :account, subject: \"\", user_id: nil, expires_at: nil, reason: nil, source: :plugin, scope: nil, scope_ref_id: nil, banned_by: nil, lifted_at: nil, lifted_by: nil, inserted_at: #{dt}, updated_at: #{dt}}"
+  end
+
+  defp result_placeholder_expr do
+    dt = dt_placeholder_expr()
+
+    "%Gamend.Results.Result{id: \"\", user_id: \"\", lobby_id: nil, kind: \"\", visibility: \"owner_only\", status: \"open\", metadata: %{}, started_at: #{dt}, ended_at: nil}"
+  end
+
+  defp result_event_placeholder_expr do
+    "%Gamend.Results.Event{id: \"\", result_id: \"\", elapsed_ms: 0, key: \"\", value: nil, metadata: %{}}"
   end
 
   defp push_token_placeholder_expr do

@@ -221,7 +221,8 @@ invariants code must keep.
 | `Gamend.Storage` | [object storage](priv/docs/45-storage/20-object-storage.md) | Local disk or S3. Uploads are two steps per entity (`…/upload_url`, then confirm); there is no generic upload endpoint |
 | `Gamend.Retention` | [data retention](priv/docs/45-storage/30-data-retention.md) | A table that grows without bound needs a retention class, or a stated reason it is bounded |
 | `Gamend.Jobs`, `Gamend.Schedule` | [background jobs](priv/docs/60-operations/45-background-jobs.md) | Oban; the engine follows the Repo adapter (Lite on SQLite) |
-| `Gamend.Analytics`, `Gamend.ClientLogs`, `Gamend.LobbySnapshots` | [analytics](priv/docs/60-operations/50-player-analytics.md), [client logs](priv/docs/30-clients/60-client-logs.md), [snapshots](priv/docs/60-operations/55-lobby-snapshots.md) | |
+| `Gamend.Analytics`, `Gamend.ClientLogs` | [analytics](priv/docs/60-operations/50-player-analytics.md), [client logs](priv/docs/30-clients/60-client-logs.md) | |
+| `Gamend.Results` | [results](priv/docs/40-gameplay/45-results.md) | What a play leaves: one row per play per player and its events, written by the game as things happen; the only record of a play (lobby snapshots were removed 2026-10-21) |
 | `Gamend.Signaling`, `Gamend.Realtime`, `Gamend.Presence` | [realtime](priv/docs/30-clients/30-realtime.md), [webrtc](priv/docs/30-clients/50-webrtc.md) | |
 | `Gamend.Settings`, `Gamend.Limits`, `Gamend.Config` | [settings](priv/docs/60-operations/40-settings.md) | Size and count caps live in `Gamend.Limits` and are enforced in the changeset |
 | `Gamend.Hooks` | [server scripting](priv/docs/40-gameplay/90-server-scripting.md) | See Hooks below |

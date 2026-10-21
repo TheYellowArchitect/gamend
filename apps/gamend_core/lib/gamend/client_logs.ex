@@ -543,9 +543,9 @@ defmodule Gamend.ClientLogs do
   @doc """
   Lobbies this session was in, oldest first.
 
-  The link back to the server's own view of the same runs: each id addresses a
-  `lobby_snapshots` timeline, so a client-side symptom and the server-side
-  state that produced it are one click apart.
+  The link back to the server's own view of the same runs: each id finds the
+  results of plays in that lobby (`Gamend.Results`, `/admin/results`), so a
+  client-side symptom and what the server recorded are one click apart.
   """
   @spec session_lobby_ids(String.t()) :: [String.t()]
   def session_lobby_ids(client_session_id) when is_binary(client_session_id) do

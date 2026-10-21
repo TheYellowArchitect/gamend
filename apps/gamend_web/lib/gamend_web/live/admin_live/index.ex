@@ -103,8 +103,8 @@ defmodule GamendWeb.AdminLive.Index do
           <.link navigate={~p"/admin/logs"} class="btn btn-surface">
             Logs ({ngettext("%{count} error", "%{count} errors", @log_recent_errors)}/1h)
           </.link>
-          <.link navigate={~p"/admin/lobby_snapshots"} class="btn btn-surface">
-            Lobby Snapshots ({@lobby_snapshot_runs.total})
+          <.link navigate={~p"/admin/results"} class="btn btn-surface">
+            Results ({@result_counts.open} open)
           </.link>
           <.link navigate={~p"/admin/geo"} class="btn btn-surface">
             Geo Traffic ({format_number(@geo_total_1h)}/1h)
@@ -623,24 +623,22 @@ defmodule GamendWeb.AdminLive.Index do
                 </div>
               </div>
 
-              <%!-- 16. Lobby snapshots --%>
+              <%!-- 16. Results --%>
               <div class="card bg-base-100 p-4">
                 <div class="flex items-center justify-between mb-2">
-                  <div class="text-sm font-semibold">Lobby snapshots</div>
-                  <.link navigate={~p"/admin/lobby_snapshots"} class="link link-primary text-xs">
+                  <div class="text-sm font-semibold">Results</div>
+                  <.link navigate={~p"/admin/results"} class="link link-primary text-xs">
                     View →
                   </.link>
                 </div>
                 <div class="text-2xl font-bold">
-                  {@lobby_snapshot_runs.total}
-                  <span class="text-sm font-normal text-muted ml-1">recent runs</span>
+                  {@result_counts.total}
+                  <span class="text-sm font-normal text-muted ml-1">plays</span>
                 </div>
                 <div class="text-xs text-muted mt-2 space-y-1">
                   <div class="flex justify-between">
-                    <span>Flagged</span>
-                    <span class={["font-mono", @lobby_snapshot_runs.flagged > 0 && "text-error"]}>
-                      {@lobby_snapshot_runs.flagged}
-                    </span>
+                    <span>Open</span>
+                    <span class="font-mono">{@result_counts.open}</span>
                   </div>
                 </div>
               </div>
@@ -993,7 +991,7 @@ defmodule GamendWeb.AdminLive.Index do
        log_level_counts: log_level_counts,
        log_total_buffered: log_total_buffered,
        log_recent_errors: log_recent_errors,
-       lobby_snapshot_runs: safe_lobby_snapshot_runs(),
+       result_counts: safe_result_counts(),
        analytics_stats: r.analytics_stats,
        users_unactivated: r.users_unactivated,
        oban_stats: r.oban_stats,
@@ -1184,12 +1182,9 @@ defmodule GamendWeb.AdminLive.Index do
     _ -> %{total: 0, executing: 0, available: 0, scheduled: 0, retryable: 0}
   end
 
-  defp safe_lobby_snapshot_runs do
-    %{
-      total: length(Gamend.LobbySnapshots.list_lobbies(limit: 50)),
-      flagged: length(Gamend.LobbySnapshots.list_lobbies(limit: 50, flagged_only: true))
-    }
+  defp safe_result_counts do
+    %{total: Gamend.Results.count(), open: Gamend.Results.count(%{status: "open"})}
   rescue
-    _ -> %{total: 0, flagged: 0}
+    _ -> %{total: 0, open: 0}
   end
 end

@@ -164,6 +164,11 @@ defmodule Gamend.Limits do
   setting(:max_kv_value_size, :integer, default: 65_536)
   setting(:max_kv_entries_per_user, :integer, default: 1_000)
 
+  # ── Results ─────────────────────────────────────────────
+  # The events one result may hold (`Gamend.Results.record/4`): a play
+  # records what a player did, never a simulation's ticks.
+  setting(:max_result_events, :integer, default: 10_000)
+
   # ── Leaderboards ────────────────────────────────────────
   setting(:max_leaderboard_title, :integer, default: 255)
   setting(:max_leaderboard_description, :integer, default: 1_000)

@@ -69,6 +69,7 @@ defmodule Gamend.Accounts.GuestMerge do
         step(:inventory, fn -> merge_inventory(guest_id, user_id) end)
         step(:leaderboards, fn -> Gamend.Leaderboards.merge_user_records(guest_id, user_id) end)
         step(:quests, fn -> Gamend.Quests.merge_user_progress(guest_id, user_id) end)
+        step(:results, fn -> Gamend.Results.move_user(guest_id, user_id) end)
         step(:activity, fn -> merge_activity(guest_id, user_id) end)
         step(:metadata, fn -> merge_metadata(guest_id, user_id) end)
         step(:preferences, fn -> merge_preferences(guest_id, user) end)

@@ -286,6 +286,10 @@ defmodule GamendWeb.ApiSpec do
         },
         %Tag{name: "KV", description: "Per-user key-value storage"},
         %Tag{
+          name: "Results",
+          description: "What happened in each play: the caller's results and their events"
+        },
+        %Tag{
           name: "Economy",
           description: "Currency wallets and item inventory (read-only for clients)"
         },
@@ -295,6 +299,7 @@ defmodule GamendWeb.ApiSpec do
         %Tag{name: "Admin – Users", description: "Admin user management"},
         %Tag{name: "Admin – Sessions", description: "Admin session management"},
         %Tag{name: "Admin – Bans", description: "IP address and account bans"},
+        %Tag{name: "Admin – Results", description: "Every play and its events"},
         %Tag{name: "Admin – Lobbies", description: "Admin lobby management"},
         %Tag{name: "Admin – Groups", description: "Admin group management"},
         %Tag{name: "Admin – Chat", description: "Admin chat management"},

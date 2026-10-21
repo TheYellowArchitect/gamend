@@ -11,9 +11,9 @@ defmodule GamendWeb.HostSupervision do
 
   That is not hypothetical. Before this module existed, one host had drifted by
   six children (`Cache.Stats`, `Cache.Sync`, `IpBanSync`, `Retention`,
-  `Tournaments.Ticker`, `Matchmaking.Worker`), an unbounded task supervisor, and
-  the lobby-snapshots writer — the last of which cost a full debugging session
-  to find, because every other signal said capture was working.
+  `Tournaments.Ticker`, `Matchmaking.Worker`), an unbounded task supervisor and
+  a buffered writer, the last of which cost a full debugging session to find,
+  because every other signal said it was working.
 
   So the list lives here, next to the features that populate it, and hosts call
   `children/1`. Host-specific processes go in `:extra` rather than into a fork
@@ -227,9 +227,6 @@ defmodule GamendWeb.HostSupervision do
         {Oban, Gamend.Jobs.oban_config()},
         # Worker that drives the matchmaking sweep
         Gamend.Matchmaking.Worker,
-        # Buffers lobby snapshots/events and assigns seq. :global-registered, so
-        # only one node runs it and start_link returns :ignore on the others.
-        Gamend.LobbySnapshots.Writer,
         # Signaling relay for WebRTC user-to-user and client-server topologies
         {Gamend.Presence, pool_size: pool_size(:presence_pool_size)},
         # Cuts the theme's srcset width variants for a project's own static

@@ -249,6 +249,7 @@ Use the navigation object to move nav structure into config. Each section accept
 | `guest_links` | Additional links shown only to signed-out visitors |
 | `authenticated_links` | Additional links shown only to signed-in users |
 | `account_links` | Custom links inserted into the account dropdown |
+| `label_class` | Classes on each desktop label beside an icon. `"max-[110rem]:sr-only"` draws the links as icons below 1760 px, each label kept for screen readers and as the tooltip. Your Tailwind must scan the config file. |
 
 | Property | Type | Description |
 |---|---|---|

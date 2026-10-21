@@ -497,11 +497,6 @@ defmodule Gamend.Hooks do
             {:exit, reason} -> {:error, {:exit, reason}}
           end
 
-        # Snapshot the caller's lobby now that the mutation finished, errors
-        # included — a failed hook is the case most worth having a record of.
-        # No-op unless lobby snapshots are enabled.
-        _ = Gamend.LobbySnapshots.capture_hook(name, Keyword.get(opts, :caller), result)
-
         result
     end
   end

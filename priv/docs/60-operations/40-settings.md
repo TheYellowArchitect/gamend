@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-332 settings across 30 groups.
+329 settings across 29 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -256,6 +256,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_LIMITS_MAX_QUEST_TITLE` | integer | `255` |  |
 | `GAMEND_LIMITS_MAX_READY_CHECK_PARTICIPANTS` | integer | `64` | Hard cap on participants in one check. |
 | `GAMEND_LIMITS_MAX_REPORT_REASON` | integer | `500` |  |
+| `GAMEND_LIMITS_MAX_RESULT_EVENTS` | integer | `10000` |  |
 | `GAMEND_LIMITS_MAX_SOCKETS_PER_USER` | integer | `20` | Concurrent sockets per user. 0 disables; counted per app instance. |
 | `GAMEND_LIMITS_MAX_TOURNAMENT_BRACKET_SIZE` | integer | `256` |  |
 | `GAMEND_LIMITS_MAX_TOURNAMENT_DESCRIPTION` | integer | `1000` |  |
@@ -268,15 +269,6 @@ Live values, and where each one came from, are on the
 | `GAMEND_LIMITS_MIN_USERNAME` | integer | `3` |  |
 | `GAMEND_LIMITS_READY_CHECK_TIMEOUT_MS` | integer | `15000` | Default answering window. Overridable per check by the caller. |
 | `GAMEND_LIMITS_USERNAME_ASCII_ONLY` | boolean | `false` | Keep username handles to a-z, 0-9 and . _ - (the GitHub and Discord model). Input is still normalized first, so WANG in fullwidth becomes wang; display names stay Unicode. |
-
-
-## Lobby snapshots
-
-| Variable | Type | Default | Notes |
-|---|---|---|---|
-| `GAMEND_LOBBY_SNAPSHOTS_ENABLED` | boolean | `false` | Record a durable per-run snapshot of lobby state, browsable at /admin/lobby_snapshots. |
-| `GAMEND_LOBBY_SNAPSHOTS_MAX_KV_ENTRIES` | integer | `200` | Cap on KV entries captured per snapshot. |
-| `GAMEND_LOBBY_SNAPSHOTS_USER_KV_KEYS` | list | - | User-scoped KV keys to capture. Empty captures none — the widest exposure in a snapshot. |
 
 
 ## OAuth providers
@@ -470,12 +462,11 @@ Live values, and where each one came from, are on the
 | `GAMEND_RETENTION_INVITES_DAYS` | integer | `30` | Delete resolved invites and join requests N days after resolution. |
 | `GAMEND_RETENTION_LEDGER_DAYS` | integer | `0` | Delete wallet/inventory ledger entries older than N days. 0 keeps forever. |
 | `GAMEND_RETENTION_LIVE_INTERVAL_SECONDS` | integer | `60` | Seconds between sweeps of the classes that free live state: offline lobby and party seats, abandoned parties, abandoned lobbies. 0 leaves them to the full sweep. |
-| `GAMEND_RETENTION_LOBBY_SNAPSHOTS_DAYS` | integer | `30` | Delete lobby snapshots, events and blobs older than N days. |
-| `GAMEND_RETENTION_LOBBY_SNAPSHOTS_FLAGGED_DAYS` | integer | `90` | Longer window for snapshots of runs flagged anomalous. |
 | `GAMEND_RETENTION_MATCHMAKING_TICKETS_HOURS` | integer | `24` | Delete matchmaking tickets older than N hours, in any status. |
 | `GAMEND_RETENTION_NOTIFICATIONS_DAYS` | integer | `0` | Delete notifications older than N days. 0 keeps forever. |
 | `GAMEND_RETENTION_PAYMENT_EVENTS_DAYS` | integer | `0` | Delete payment provider webhook events older than N days. Purchases are never pruned. |
 | `GAMEND_RETENTION_PUSH_TOKENS_DAYS` | integer | `270` | Delete push tokens untouched for N days. Defaults to Google's stale-token guidance. |
+| `GAMEND_RETENTION_RESULTS_DAYS` | integer | `0` | Delete results (Gamend.Results) started more than N days ago, with their events. |
 | `GAMEND_RETENTION_TOURNAMENTS_DAYS` | integer | `0` | Delete finished tournaments older than N days. 0 keeps forever. |
 | `GAMEND_RETENTION_UNCONFIRMED_USERS_DAYS` | integer | `30` | Delete email accounts that never confirmed their address and have been inactive for N days. 0 keeps forever. Accounts that also have a provider login are kept. |
 

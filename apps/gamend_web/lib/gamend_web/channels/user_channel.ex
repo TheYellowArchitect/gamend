@@ -60,6 +60,7 @@ defmodule GamendWeb.UserChannel do
   alias GamendWeb.ChannelUpdates
   alias GamendWeb.HookErrors
   alias GamendWeb.Plugs.ClientSession
+  alias GamendWeb.ResultReads
   alias GamendWeb.Serializers
 
   # WebSocket message rate limits (per user) — defaults, overridden by config
@@ -194,6 +195,32 @@ defmodule GamendWeb.UserChannel do
   def handle_in("kv:unsubscribe", payload, socket) do
     with :ok <- check_ws_rate_limit(socket) do
       {:reply, {:error, kv_reply_payload(%{error: "invalid_key"}, payload)}, socket}
+    end
+  end
+
+  # ── Results via channel (`GamendWeb.ResultReads`) ─────────────────────────
+
+  @impl true
+  def handle_in("results:list", payload, socket) when is_map(payload) do
+    with :ok <- check_ws_rate_limit(socket) do
+      user_id = socket.assigns.current_scope.user_id
+      {:reply, {:ok, ResultReads.list(user_id, payload)}, socket}
+    end
+  end
+
+  @impl true
+  def handle_in("results:get", payload, socket) when is_map(payload) do
+    with :ok <- check_ws_rate_limit(socket) do
+      user_id = socket.assigns.current_scope.user_id
+      {:reply, result_reply(ResultReads.get(user_id, payload["id"])), socket}
+    end
+  end
+
+  @impl true
+  def handle_in("results:events", payload, socket) when is_map(payload) do
+    with :ok <- check_ws_rate_limit(socket) do
+      user_id = socket.assigns.current_scope.user_id
+      {:reply, result_reply(ResultReads.events(user_id, payload["id"], payload)), socket}
     end
   end
 
@@ -371,6 +398,22 @@ defmodule GamendWeb.UserChannel do
 
   def handle_info({:inventory_updated, payload}, socket) do
     push_event(socket, "inventory_updated", payload)
+    {:noreply, socket}
+  end
+
+  # A result of the user's, as it is written (`Gamend.Results`).
+  def handle_info({:result_started, result}, socket) do
+    push_event(socket, "result_started", result_payload(result))
+    {:noreply, socket}
+  end
+
+  def handle_info({:result_event, %{result_id: result_id, event: event}}, socket) do
+    push_event(socket, "result_event", %{result_id: result_id, event: event_payload(event)})
+    {:noreply, socket}
+  end
+
+  def handle_info({:result_ended, result}, socket) do
+    push_event(socket, "result_ended", result_payload(result))
     {:noreply, socket}
   end
 
@@ -710,6 +753,14 @@ defmodule GamendWeb.UserChannel do
   # connect-time snapshot, so live state (lobby_id/party_id/online) is current.
   # nil only if the account was deleted mid-session.
   defp current_user(socket), do: Scope.user(socket.assigns.current_scope)
+
+  defp result_reply({:ok, data}), do: {:ok, %{data: data}}
+  defp result_reply({:error, reason}), do: {:error, %{error: to_string(reason)}}
+
+  # Plain maps: the channel's JSON serializer encodes structs through their
+  # Jason implementation, but a map is what every push carries.
+  defp result_payload(result), do: result |> Jason.encode!() |> Jason.decode!()
+  defp event_payload(event), do: event |> Jason.encode!() |> Jason.decode!()
 
   # `Phoenix.PubSub` is a duplicate registry, so a client that asks twice for the
   # same key would be registered twice and get every `kv_updated` twice. The

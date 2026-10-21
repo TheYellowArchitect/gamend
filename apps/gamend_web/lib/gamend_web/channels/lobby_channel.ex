@@ -163,6 +163,28 @@ defmodule GamendWeb.LobbyChannel do
     {:noreply, socket}
   end
 
+  # A result its members may read, as it is written (`Gamend.Results`). The
+  # owner seated here gets it on their own topic too: the event's id is the
+  # same, and a client keeps one.
+  @impl true
+  def handle_info({:result_started, result}, socket) do
+    push_event(socket, "result_started", result |> Jason.encode!() |> Jason.decode!())
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:result_event, %{result_id: result_id, event: event}}, socket) do
+    payload = %{result_id: result_id, event: event |> Jason.encode!() |> Jason.decode!()}
+    push_event(socket, "result_event", payload)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:result_ended, result}, socket) do
+    push_event(socket, "result_ended", result |> Jason.encode!() |> Jason.decode!())
+    {:noreply, socket}
+  end
+
   # A burst of members readying at once coalesces into one frame; a resolution
   # is not a state refresh, so it is never held in the debounce timer.
   @impl true

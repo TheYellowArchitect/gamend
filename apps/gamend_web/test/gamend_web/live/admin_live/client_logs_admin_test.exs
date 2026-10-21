@@ -115,7 +115,7 @@ defmodule GamendWeb.AdminLive.ClientLogsAdminTest do
 
     assert html =~ sid
     assert html =~ "lob-77"
-    assert html =~ "/admin/lobby_snapshots?lobby_id=lob-77"
+    assert html =~ "/admin/results?lobby_id=lob-77"
     # The page hands over the search that works in the host's log store.
     assert html =~ "session=#{sid}"
   end

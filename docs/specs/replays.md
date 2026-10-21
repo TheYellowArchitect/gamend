@@ -3,7 +3,7 @@
 # Replays — recorded sessions from a deterministic client
 
 Design spec. Builds on **Object storage** (Phase 0, shipped), `Gamend.ClientLogs`
-(shipped) and `Gamend.LobbySnapshots` (shipped). Sibling of
+(shipped) and `Gamend.Results` (shipped). Sibling of
 [cloud-saves.md](cloud-saves.md) — both are thin, indexed layers over
 `Gamend.Storage`, and they should share its presigned upload path unchanged.
 
@@ -137,7 +137,7 @@ Modelled on `client_sessions`: the row is an **index**, not the content. See
 | `replay_id` | client-generated, like `client_session_id` — the client must name it before it can reach us; bound to an owner on first write |
 | `user_id` | `belongs_to`, nullable; adopted on login exactly as a client-log session is (`bind_owner/2`) |
 | `client_session_id` | the correlation key into `Gamend.ClientLogs` — same run, client's own log lines |
-| `lobby_id` | the correlation key into `Gamend.LobbySnapshots` — same run, server's view |
+| `lobby_id` | the correlation key into `Gamend.Results` — same run, what the server recorded of it |
 | `project`, `format`, `seed` | straight from the recording's header |
 | `engine`, `engine_version` | `"balaur"` + version; the format is not balaur-specific, and a second engine must not need a second table |
 | `tick_count`, `duration_ms` | how long the run was |
@@ -169,18 +169,18 @@ One run, three views, already keyed the same way:
 
 ```
 client logs      client_session_id ──┐
-lobby snapshots  lobby_id ───────────┼──> replays
+results          lobby_id ───────────┼──> replays
 input recording  replay_id ──────────┘
 ```
 
 `Gamend.ClientLogs` already stamps `client_session_id` onto server-side lines
 from the `x-gamend-session` header, and already links a session to its lobbies
 through `session_lobby_ids/1`. So a replay row makes the last connection: the
-player's log lines, the server's state timeline, and the exact inputs, from one
+player's log lines, the server's record of the play, and the exact inputs, from one
 id. That is the feature; the storage is plumbing.
 
 Admin pages cross-link in both directions —
-`admin_live/logs.ex` already links a lobby id to `/admin/lobby_snapshots`, and
+`admin_live/logs.ex` already links a lobby id to its plays at `/admin/results`, and
 this adds the third corner.
 
 ## API
@@ -223,7 +223,7 @@ Limits (`Gamend.Limits`): `max_replay_bytes`, `max_replay_trace_points`,
 - **Server-side re-simulation: rejected.** See "Why not verify server-side".
   The server has no engine and should not grow one.
 - **Storing the recording in a database blob table: rejected as the default.**
-  `lobby_snapshot_blobs` is content-addressed and would dedupe nicely, but a
+  A content-addressed blob table would dedupe nicely, but a
   0.5 MB gzipped row per 5-minute session puts megabytes per player per day
   into a table that a SQLite deployment backs up whole. Object storage is where
   this shape of data already goes here. Revisit **if** balaur delta-encodes: at
@@ -261,7 +261,7 @@ Limits (`Gamend.Limits`): `max_replay_bytes`, `max_replay_trace_points`,
 - [ ] Retention prunes rows **and** their blobs; flagged window honoured.
 - [ ] Paginated `list_*`/`count_*`; `Limits` caps enforced.
 - [ ] Admin page + `/admin` card + route + nav + `admin_pages_render_test`;
-      cross-links to `/admin/logs` and `/admin/lobby_snapshots`, and those two
+      cross-links to `/admin/logs` and `/admin/results`, and those two
       link back.
 - [ ] Docs, `.env.example`, CHANGELOG, README, `api_spec.ex`; i18n 30 locales.
 - [ ] Tests: context + controller + admin + LiveView, both adapters (Local +

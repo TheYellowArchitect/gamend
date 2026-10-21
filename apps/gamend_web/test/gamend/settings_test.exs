@@ -396,7 +396,7 @@ defmodule Gamend.SettingsTest do
 
     test "reads through Settings with its documented defaults" do
       assert Settings.get(Gamend.Retention, :push_tokens_days) == 270
-      assert Settings.get(Gamend.Retention, :lobby_snapshots_days) == 30
+      assert Settings.get(Gamend.Retention, :results_days) == 0
     end
   end
 

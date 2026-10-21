@@ -42,6 +42,28 @@ defmodule GamendWeb.HostLayoutNavigationTest do
     assert html =~ "hero-star"
   end
 
+  test "the navigation's label_class hides an icon link's label, and the label becomes its tooltip" do
+    links = [
+      %{"label" => "Games", "href" => "/games", "icon" => "hero-puzzle-piece"},
+      %{"label" => "News", "href" => "/news"}
+    ]
+
+    html =
+      render_component(
+        &HostLayoutNavigation.desktop_nav/1,
+        put_in(base_assigns(links), [:navigation, "label_class"], "max-2xl:sr-only")
+      )
+
+    assert html =~ ~r/<a[^>]*href="\/games"[^>]*title="Games"/
+    assert html =~ ~s(<span class="max-2xl:sr-only">Games</span>)
+    refute html =~ ~s(title="News")
+    refute html =~ ~s(<span class="max-2xl:sr-only">News</span>)
+
+    plain = render_component(&HostLayoutNavigation.desktop_nav/1, base_assigns(links))
+    refute plain =~ "sr-only"
+    refute plain =~ ~s(title="Games")
+  end
+
   test "{Module.func} label tokens resolve via the named function" do
     html =
       render_component(

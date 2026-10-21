@@ -37,7 +37,7 @@ defmodule GamendWeb.AdminPagesRenderTest do
     {"/admin/quests", "Quests"},
     {"/admin/payments", "Payments"},
     {"/admin/translations", "Translation"},
-    {"/admin/lobby_snapshots", "Lobby snapshots"},
+    {"/admin/results", "Results"},
     {"/admin/retention", "Retention"},
     {"/admin/storage", "Storage"},
     {"/admin/economy", "Economy"},

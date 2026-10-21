@@ -129,8 +129,61 @@ defmodule Gamend.Hooks.PluginManager do
   @spec hook_modules() :: [{plugin_name(), module()}]
   def hook_modules, do: snapshot().hook_modules
 
+  @doc """
+  The host's modules that answer client calls, by the name a client calls
+  them under: `config :gamend_core, :host_rpc_modules, %{"word_games" =>
+  MyApp.WordGamesRpc}`. A host serves a call the way a plugin does
+  (`call_rpc/4`: every public function, the caller in the process, the same
+  limits and reserved names), from code that is the host's own. A name a
+  loaded plugin also has is the plugin's; the host's is dropped with a
+  warning when the plugins load. Host calls take JSON arguments and reply
+  JSON: there are no typed schemas for them.
+  """
+  @spec host_rpc_modules() :: [{plugin_name(), module()}]
+  def host_rpc_modules do
+    # Before the plugins first load there is no snapshot: the config as it is.
+    case :persistent_term.get(@snapshot_key, nil) do
+      %{host_rpc_modules: modules} -> modules
+      _ -> configured_host_rpc_modules(%{})
+    end
+  end
+
+  @doc "Every module a client can call, plugins first, then the host's (`host_rpc_modules/0`)."
+  @spec rpc_modules() :: [{plugin_name(), module()}]
+  def rpc_modules, do: hook_modules() ++ host_rpc_modules()
+
   defp snapshot do
     :persistent_term.get(@snapshot_key, %{list: [], by_name: %{}, hook_modules: []})
+  end
+
+  # The configured host modules, less any name a loaded plugin has. A name
+  # that is not a string or a module that is not an atom is a config error,
+  # logged and skipped.
+  defp configured_host_rpc_modules(plugins_by_name) do
+    :gamend_core
+    |> Application.get_env(:host_rpc_modules, %{})
+    |> Enum.flat_map(fn
+      {name, mod} when is_binary(name) and is_atom(mod) and not is_nil(mod) ->
+        if Map.has_key?(plugins_by_name, name) do
+          Logger.warning(
+            "host RPC module #{inspect(mod)} is not callable as #{inspect(name)}: " <>
+              "a plugin has that name, and the plugin's wins"
+          )
+
+          []
+        else
+          [{name, mod}]
+        end
+
+      other ->
+        Logger.warning(
+          "host_rpc_modules entry #{inspect(other)} skipped: " <>
+            "expected a string name and a module"
+        )
+
+        []
+    end)
+    |> Enum.sort()
   end
 
   @spec reload() :: [Plugin.t()]
@@ -187,17 +240,6 @@ defmodule Gamend.Hooks.PluginManager do
             "Slow Hook: #{format_rpc_context(plugin, fn_name, args, opts)} result=#{rpc_result_status(result)} took #{format_duration_ms(duration_ms)}ms"
           )
         end
-
-        # Every client-driven hook lands here — HTTP, user channel and WebRTC
-        # DataChannel all route through call_rpc, never through Hooks.do_call/3.
-        # Capturing only there recorded nothing for real traffic, leaving player
-        # intent (the main mutation source) missing from the timeline.
-        _ =
-          Gamend.LobbySnapshots.capture_hook(
-            fn_name,
-            Keyword.get(opts, :caller),
-            result
-          )
 
         result
 
@@ -281,8 +323,29 @@ defmodule Gamend.Hooks.PluginManager do
       {:ok, %Plugin{hooks_module: nil}} ->
         {:error, :missing_hooks_module}
 
-      {:error, _} = err ->
+      {:error, :not_found} = err ->
+        case List.keyfind(host_rpc_modules(), plugin, 0) do
+          {_name, mod} -> call_host_rpc(mod, fn_name, args, opts)
+          nil -> err
+        end
+    end
+  end
+
+  # A host module answers as a plugin's hooks module does, minus the
+  # runtime-registered calls (`DynamicRpcs`), which are a plugin's.
+  defp call_host_rpc(mod, fn_name, args, opts) do
+    timeout = Keyword.get_lazy(opts, :timeout_ms, &call_timeout_ms/0)
+
+    with {:module, _} <- Code.ensure_loaded(mod),
+         {:ok, fun_atom} <- resolve_function_atom(mod, fn_name, length(args)) do
+      safe_apply_with_caller(mod, fun_atom, args, opts, timeout)
+    else
+      {:error, :not_implemented} = err ->
         err
+
+      {:error, reason} ->
+        Logger.error("host RPC module #{inspect(mod)} did not load: #{inspect(reason)}")
+        {:error, :missing_hooks_module}
     end
   end
 
@@ -372,7 +435,13 @@ defmodule Gamend.Hooks.PluginManager do
           []
       end)
 
-    :persistent_term.put(@snapshot_key, %{list: list, by_name: state, hook_modules: hook_modules})
+    :persistent_term.put(@snapshot_key, %{
+      list: list,
+      by_name: state,
+      hook_modules: hook_modules,
+      host_rpc_modules: configured_host_rpc_modules(state)
+    })
+
     MetadataSchemas.refresh(list)
     HookSchemas.refresh(list)
     KvSchemas.refresh(list)

@@ -523,6 +523,11 @@ defmodule GamendWeb.Router.Shared do
         pipe_through [:api, :api_auth]
 
         get "/kv/:key", KvController, :show
+
+        # The caller's results (`Gamend.Results`), read under their visibility.
+        get "/results", ResultController, :index
+        get "/results/:id", ResultController, :show
+        get "/results/:id/events", ResultController, :events
       end
     end
   end
@@ -793,6 +798,10 @@ defmodule GamendWeb.Router.Shared do
         get "/bans", BanController, :index
         post "/bans", BanController, :create
         delete "/bans/:id", BanController, :delete
+        get "/results", ResultController, :index
+        get "/results/:id", ResultController, :show
+        get "/results/:id/events", ResultController, :events
+        delete "/results/:id", ResultController, :delete
         get "/storage", StorageController, :index
         get "/storage/usage", StorageController, :usage
         delete "/storage", StorageController, :delete
@@ -957,7 +966,8 @@ defmodule GamendWeb.Router.Shared do
           live "/admin/rate_limiting", AdminLive.RateLimiting, :index
           live "/admin/bans", AdminLive.Bans, :index
           live "/admin/logs", AdminLive.Logs, :index
-          live "/admin/lobby_snapshots", AdminLive.LobbySnapshots, :index
+          live "/admin/results", AdminLive.Results, :index
+          live "/admin/results/:id", AdminLive.Results, :show
           live "/admin/geo", AdminLive.Geo, :index
           live "/admin/system", AdminLive.System, :index
           live "/admin/retention", AdminLive.Retention, :index

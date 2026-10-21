@@ -9,11 +9,8 @@ defmodule Gamend.Retention do
   - `GAMEND_RETENTION_NOTIFICATIONS_DAYS` — `notifications` older than N days
   - `GAMEND_RETENTION_PAYMENT_EVENTS_DAYS` — payment provider webhook events older
     than N days (purchases/entitlements are never pruned)
-  - `GAMEND_RETENTION_LOBBY_SNAPSHOTS_DAYS` — lobby snapshots, events and their
-    content blobs. Unlike the others this defaults to 30 rather than "keep
-    forever": snapshots hold user metadata, and the window is what bounds that
-    exposure. Runs flagged anomalous keep
-    `GAMEND_RETENTION_LOBBY_SNAPSHOTS_FLAGGED_DAYS` instead (default 90).
+  - `GAMEND_RETENTION_RESULTS_DAYS` — results (`Gamend.Results`) started more
+    than N days ago, with their events
   - Closed reports (`Gamend.Reports`) and their images, on that module's own
     `retention_days` (180), counted from when they were closed. Open reports
     are never pruned.
@@ -97,7 +94,6 @@ defmodule Gamend.Retention do
   alias Gamend.ClientLogs.SessionLobby
   alias Gamend.Lobbies
   alias Gamend.Lobbies.Lobby
-  alias Gamend.LobbySnapshots.{Blob, Event, Snapshot}
   alias Gamend.Parties
   alias Gamend.Parties.Party
   alias Gamend.Payments.{Entitlement, Purchase}
@@ -382,9 +378,8 @@ defmodule Gamend.Retention do
       login_lockouts: fn -> delete_in_batches(LoginLockouts.expired_query()) end,
       scheduled_deletions: &delete_due_accounts/0,
       dead_api_tokens: &prune_dead_api_tokens/0,
-      lobby_snapshots: &prune_lobby_snapshots/0,
+      results: &prune_results/0,
       client_sessions: &prune_client_sessions/0,
-      lobby_snapshot_blobs: &prune_lobby_snapshot_blobs/0,
       offline_lobby_memberships: &release_offline_lobby_memberships/0,
       offline_party_memberships: &release_offline_party_memberships/0,
       abandoned_parties: &disband_abandoned_parties/0,
@@ -421,76 +416,20 @@ defmodule Gamend.Retention do
     count
   end
 
-  # Lobby snapshots and events expire together, per run rather than per row: a
-  # run is flagged if *any* of its snapshots is, and a flagged run keeps its
-  # events too. Retention is not just housekeeping here — snapshots hold user
-  # metadata and KV, and an account deletion cannot reach data embedded in
-  # JSONB, so this window is the mechanism that actually bounds that exposure.
-  defp prune_lobby_snapshots do
-    days = config(:lobby_snapshots_days)
+  # Results with their events, by when the play began. In batches, each its
+  # own statement: SQLite has one writer, and a single DELETE over a long
+  # history held it until it finished while every other write queued.
+  defp prune_results do
+    days = config(:results_days)
 
-    if is_integer(days) and days > 0 do
-      # Never shorter than the normal window, or flagged runs would expire first
-      # — the opposite of the point.
-      flagged_days = max(config(:lobby_snapshots_flagged_days), days)
-
-      cutoff = cutoff(days)
-      flagged_cutoff = cutoff(flagged_days)
-
-      # Outer window first: it applies to every run, flagged included.
-      prune_snapshots_before(flagged_cutoff, :all) +
-        prune_snapshots_before(cutoff, :unflagged_runs)
-    else
-      0
-    end
+    if is_integer(days) and days > 0,
+      do: Gamend.Results.prune_before(cutoff(days), batch()),
+      else: 0
   end
 
-  defp prune_snapshots_before(cutoff, scope) do
-    delete_in_batches(Event, cutoff, scope, 0) + delete_in_batches(Snapshot, cutoff, scope, 0)
-  end
-
-  # In batches, each its own statement. SQLite has ONE writer: a single DELETE
-  # over a big history held the write lock until it finished, and every other
-  # write in the app queued behind it — page loads hung. On a dev database
-  # with 115k snapshots it ran past the 15 s checkout timeout, rolled back and
-  # started over at the next sweep, so it never finished and hung the app
-  # again each time. Small batches let other writes in between, and a sweep
-  # interrupted part-way keeps what it already deleted.
-  @prune_batch 500
-
-  defp delete_in_batches(schema, cutoff, scope, deleted) do
-    ids =
-      from(r in schema, where: r.inserted_at < ^cutoff, select: r.id, limit: @prune_batch)
-      |> scope_to_unflagged(scope)
-      |> Repo.all()
-
-    case ids do
-      [] ->
-        deleted
-
-      ids ->
-        {count, _} = Repo.delete_all(from(r in schema, where: r.id in ^ids))
-
-        if length(ids) < @prune_batch,
-          do: deleted + count,
-          else: delete_in_batches(schema, cutoff, scope, deleted + count)
-    end
-  end
-
-  defp scope_to_unflagged(query, :all), do: query
-
-  # Flagged is a property of the RUN: any flagged snapshot keeps its lobby's
-  # whole timeline. The flagged lobbies are found once, not per row — the
-  # correlated NOT EXISTS this replaced re-scanned a lobby's snapshots for
-  # every candidate row.
-  defp scope_to_unflagged(query, :unflagged_runs) do
-    flagged_lobbies = from(s in Snapshot, where: s.flagged, distinct: true, select: s.lobby_id)
-    from r in query, where: r.lobby_id not in subquery(flagged_lobbies)
-  end
-
-  # Client log sessions, on the same flagged/unflagged split as lobby snapshots
-  # and for the same reason: a session that errored is the one someone will
-  # come back to, and it is worth outliving the ordinary window.
+  # Client log sessions, split flagged and unflagged: a session that errored
+  # is the one someone will come back to, and it is worth outliving the
+  # ordinary window.
   #
   # By `last_seen_at`, not `inserted_at` — a session is a run, and a long one
   # should not start expiring from the moment it began.
@@ -536,22 +475,6 @@ defmodule Gamend.Retention do
         Repo.delete_all(from(s in ClientSession, where: s.client_session_id in ^ids))
 
       lobby_count + session_count
-    end
-  end
-
-  # Safe to prune by age only because the writer touches last_referenced_at on
-  # every reference. The window is the flagged one, so a blob outlives the
-  # longest-lived snapshot that could still point at it.
-  defp prune_lobby_snapshot_blobs do
-    days = config(:lobby_snapshots_days)
-
-    if is_integer(days) and days > 0 do
-      cutoff = cutoff(max(config(:lobby_snapshots_flagged_days), days))
-
-      {count, _} = Repo.delete_all(from(b in Blob, where: b.last_referenced_at < ^cutoff))
-      count
-    else
-      0
     end
   end
 
@@ -1158,14 +1081,9 @@ defmodule Gamend.Retention do
     doc: "Delete payment provider webhook events older than N days. Purchases are never pruned."
   )
 
-  setting(:lobby_snapshots_days, :integer,
-    default: 30,
-    doc: "Delete lobby snapshots, events and blobs older than N days."
-  )
-
-  setting(:lobby_snapshots_flagged_days, :integer,
-    default: 90,
-    doc: "Longer window for snapshots of runs flagged anomalous."
+  setting(:results_days, :integer,
+    default: 0,
+    doc: "Delete results (Gamend.Results) started more than N days ago, with their events."
   )
 
   setting(:push_tokens_days, :integer,

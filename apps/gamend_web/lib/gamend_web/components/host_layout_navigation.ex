@@ -20,7 +20,10 @@ defmodule GamendWeb.HostLayoutNavigation do
       "what the page changes that an entry shows (`Layouts.app`'s): a change re-renders the bar, since no other attr of it moves"
 
   def desktop_nav(assigns) do
-    assigns = prepare_navigation_assigns(assigns)
+    assigns =
+      assigns
+      |> prepare_navigation_assigns()
+      |> assign(:label_class, label_class(assigns.navigation))
 
     ~H"""
     <ul class="hidden xl:flex flex-row px-1 space-x-4 items-center">
@@ -28,6 +31,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         links={@primary_links}
         current_path={@current_path}
         inactive_class="btn-surface"
+        label_class={@label_class}
       />
 
       <%= if @current_scope do %>
@@ -37,6 +41,7 @@ defmodule GamendWeb.HostLayoutNavigation do
             links={@authenticated_links}
             current_path={@current_path}
             inactive_class="btn-surface"
+            label_class={@label_class}
           />
         <% end %>
       <% else %>
@@ -46,6 +51,7 @@ defmodule GamendWeb.HostLayoutNavigation do
             links={@guest_links}
             current_path={@current_path}
             inactive_class="btn-surface"
+            label_class={@label_class}
           />
         <% end %>
 
@@ -576,6 +582,7 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :links, :list, default: []
   attr :current_path, :string, default: nil
   attr :inactive_class, :string, required: true
+  attr :label_class, :string, default: nil
 
   defp main_nav_links(assigns) do
     assigns = assign(assigns, :best_href, best_href(assigns.links, assigns.current_path))
@@ -588,6 +595,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           current_path={@current_path}
           best_href={@best_href}
           inactive_class={@inactive_class}
+          label_class={@label_class}
         />
       </li>
     <% end %>
@@ -671,9 +679,15 @@ defmodule GamendWeb.HostLayoutNavigation do
     Map.get(entry, "mobile") == "pinned" and not dropdown_entry?(entry)
   end
 
-  # A pinned link drawn as its icon on a phone: one with an icon that is not
-  # a readonly badge.
+  # A link that can be drawn as its icon (a phone's bar, or the desktop bar
+  # under its `"label_class"`): one with an icon that is not a readonly badge.
   defp icon_only?(entry), do: is_binary(entry["icon"]) and not readonly?(entry)
+
+  # The navigation's `"label_class"`: classes on each desktop label beside an
+  # icon, so a host whose labels outgrow the bar hides them below a width it
+  # names (`"max-[110rem]:sr-only"`). The host's Tailwind must scan its config.
+  defp label_class(%{"label_class" => class}) when is_binary(class) and class != "", do: class
+  defp label_class(_navigation), do: nil
 
   attr :current_scope, :map, required: true
   attr :current_path, :string, default: nil
@@ -793,21 +807,33 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :current_path, :string, default: nil
   attr :inactive_class, :string, required: true
   attr :best_href, :string, default: nil
+  attr :label_class, :string, default: nil
 
   defp main_nav_link_item(assigns) do
     active? = sibling_active?(assigns.link, assigns.current_path, assigns[:best_href])
+    # The navigation's `"label_class"` reaches only a label beside an icon;
+    # the label is then also the tooltip, for when the class hides it.
+    label_class = if(icon_only?(assigns.link), do: assigns.label_class)
 
-    assigns = assign(assigns, active?: active?)
+    assigns =
+      assign(assigns,
+        active?: active?,
+        label_class: label_class,
+        title: if(label_class, do: translate_label(assigns.link["label"]))
+      )
 
     ~H"""
     <%= if dropdown_entry?(@link) do %>
       <details class="dropdown" data-navbar-dropdown>
-        <summary class={[
-          "btn list-none",
-          if(@active?, do: "btn-primary", else: @inactive_class)
-        ]}>
+        <summary
+          title={@title}
+          class={[
+            "btn list-none",
+            if(@active?, do: "btn-primary", else: @inactive_class)
+          ]}
+        >
           <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
-          {translate_label(@link["label"])}
+          <span class={@label_class}>{translate_label(@link["label"])}</span>
           <.count_pill count={@link["count"]} />
           <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
         </summary>
@@ -825,6 +851,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
           aria-disabled={if(inert?(@link), do: "true")}
           data-motion-text={if(readonly?(@link), do: "pop")}
+          title={@title}
           class={
             cond do
               readonly?(@link) ->
@@ -839,7 +866,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           }
         >
           <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
-          {translate_label(@link["label"])}
+          <span class={@label_class}>{translate_label(@link["label"])}</span>
           <.nav_badge entry={@link} />
           <.count_pill count={@link["count"]} />
         </a>

@@ -29,19 +29,10 @@ defmodule GamendWeb.PageController do
     |> render(:markdown_page)
   end
 
-  def privacy(conn, _params) do
-    conn
-    |> assign(:page_title, gettext("Privacy"))
-    |> assign_contact_email()
-    |> render(:privacy)
-  end
+  def privacy(conn, _params), do: legal_page(conn, :privacy, gettext("Privacy"))
 
-  def data_deletion(conn, _params) do
-    conn
-    |> assign(:page_title, gettext("Data deletion"))
-    |> assign_contact_email()
-    |> render(:data_deletion)
-  end
+  def data_deletion(conn, _params),
+    do: legal_page(conn, :data_deletion, gettext("Data deletion"))
 
   # The site's building blocks on one page, each captioned with the classes
   # that draw it, so a new screen copies them instead of inventing a look. A
@@ -53,11 +44,26 @@ defmodule GamendWeb.PageController do
     |> render(:ui)
   end
 
-  def terms(conn, _params) do
-    conn
-    |> assign(:page_title, gettext("Terms"))
-    |> assign_contact_email()
-    |> render(:terms)
+  def terms(conn, _params), do: legal_page(conn, :terms, gettext("Terms"))
+
+  # Core's legal pages describe core: accounts, players, payments. A host that
+  # does more with a person's data (runs their code, holds their keys) says so
+  # in `content/pages/<slug>.md`, which then answers the same path. Routed
+  # rather than left to the fallback, because the route is declared first and
+  # the URL is what a store review or a Stripe setting points at.
+  defp legal_page(conn, template, title) do
+    slug = Atom.to_string(template)
+
+    case Gamend.Content.get_doc(:pages, slug) do
+      nil ->
+        conn
+        |> assign(:page_title, title)
+        |> assign_contact_email()
+        |> render(template)
+
+      page ->
+        render_markdown_page(conn, page, slug)
+    end
   end
 
   # The legal pages name an address when the theme gives one (`contact_email`).

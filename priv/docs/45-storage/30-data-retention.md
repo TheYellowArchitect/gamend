@@ -13,8 +13,7 @@ A supervised sweeper (`Gamend.Retention`) prunes unbounded tables on a schedule:
 | `GAMEND_RETENTION_CHAT_MESSAGES_DAYS` | `0` | Chat messages older than N days. |
 | `GAMEND_RETENTION_NOTIFICATIONS_DAYS` | `0` | Notifications older than N days. |
 | `GAMEND_RETENTION_PAYMENT_EVENTS_DAYS` | `0` | Payment provider webhook events. Purchases and entitlements are never pruned. |
-| `GAMEND_RETENTION_LOBBY_SNAPSHOTS_DAYS` | `30` | Lobby snapshots, events and content blobs. Defaults *on*: snapshots hold user metadata and KV, and this window is what bounds that exposure. |
-| `GAMEND_RETENTION_LOBBY_SNAPSHOTS_FLAGGED_DAYS` | `90` | Longer window for snapshots of runs flagged anomalous. |
+| `GAMEND_RETENTION_RESULTS_DAYS` | `0` | Results started more than N days ago, with their events ([results](/docs/results)). |
 | `GAMEND_RETENTION_MATCHMAKING_TICKETS_HOURS` | `24` | Matchmaking tickets in any status — note: hours. |
 | `GAMEND_RETENTION_INVITES_DAYS` | `30` | Resolved group/party invites and join requests, N days after resolution. Pending rows are never touched. |
 | `GAMEND_RETENTION_PUSH_TOKENS_DAYS` | `270` | Push tokens untouched (registered, used, or disabled) for N days. |

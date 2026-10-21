@@ -1206,13 +1206,6 @@ defmodule Gamend.Lobbies do
   end
 
   defp do_delete_lobby(%Lobby{id: lobby_id} = lobby) when is_binary(lobby_id) do
-    # Before anything is unwound: members are about to be detached and the
-    # lobby's KV deleted, so this is the last moment the run's final state is
-    # readable. Gathered before the lock rather than inside it: reading up to
-    # the KV cap, encoding and hashing it held the lobby and, on SQLite, the
-    # only write lock. The write is buffered, so a rollback still keeps it.
-    _ = Gamend.LobbySnapshots.capture_lobby(lobby_id, "lobby:deleted", sync: true)
-
     Lock.serialize(:lobby, lobby_id, fn ->
       # Whole structs rather than ids: delete_lobby/1 announces the detachment
       # to each of them afterwards, and this is the last moment they are
@@ -1336,7 +1329,6 @@ defmodule Gamend.Lobbies do
 
   defp do_leave_lobby(membership, lobby, user_id) do
     lobby_id = lobby.id
-    emptied_capture = prepare_emptied_capture(lobby, user_id, membership.id)
 
     # The lobby's lock, as join and delete take: "no one is left, so delete
     # it" spans the members and the lobby, and a join landing in between was
@@ -1354,8 +1346,6 @@ defmodule Gamend.Lobbies do
           {0, _} -> Repo.rollback(:not_in_lobby)
         end
       end)
-
-    if match?({:ok, :lobby_deleted}, result), do: Gamend.LobbySnapshots.record(emptied_capture)
 
     # Let plugins react to the state that is about to be wiped (e.g. bank cargo
     # collected in a level the player is abandoning). Runs synchronously, before
@@ -1394,22 +1384,6 @@ defmodule Gamend.Lobbies do
   end
 
   defp clear_lobby_scoped_kv(_user_id, _lobby_id), do: 0
-
-  # The host's leave deletes the lobby when no one else is seated; its final
-  # state is read here, before the transaction, rather than inside it, where
-  # reading and hashing it held the only SQLite write lock. It is recorded only
-  # if the lobby was then deleted. No one else seated is checked again inside:
-  # a player joining in between keeps the lobby, and the capture is dropped.
-  # Not the host as read here: a leave just before may have handed it over.
-  defp prepare_emptied_capture(lobby, _user_id, membership_id) do
-    if not lobby.hostless and
-         not Repo.exists?(
-           from u in Gamend.Accounts.User,
-             where: u.lobby_id == ^lobby.id and u.id != ^membership_id
-         ) do
-      Gamend.LobbySnapshots.prepare(lobby.id, "lobby:emptied")
-    end
-  end
 
   defp handle_host_transfer(nil, _user_id, _membership_id), do: :ok
 

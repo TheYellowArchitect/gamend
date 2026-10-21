@@ -31,7 +31,7 @@ defmodule GamendWeb.Api.V1.HookController do
 
   def index(conn, params) do
     static_functions =
-      PluginManager.hook_modules()
+      PluginManager.rpc_modules()
       |> Enum.flat_map(fn {plugin_name, mod} ->
         Gamend.Hooks.exported_functions(mod)
         |> Enum.map(&Map.merge(&1, %{plugin: plugin_name, dynamic: false, meta: %{}}))

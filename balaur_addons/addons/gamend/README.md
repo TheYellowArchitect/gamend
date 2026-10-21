@@ -1,21 +1,22 @@
 # The Gamend SDK for Balaur
 
-Written by `clients/sdkgen` (balaur). Copy this directory into a
-project as `addons/gamend/`. Each file is a module every script
-reaches by path, beside the engine's own `gamend::login` and
-`gamend::rest`:
+Written by `clients/sdkgen` (balaur), in Balaur Script. Copy this
+directory into a project as `addons/gamend/`. A script links a module
+with `use addons::gamend::<module>;`, beside the engine's own
+`gamend::login` and `gamend::rest`:
 
-```rune
+```rust
+use addons::gamend::lobbies;
+use addons::gamend::events::lobby;
+
 gamend::configure("https://gamend.org");
-let reply = task::wait(gamend::lobbies::quick_join(this.node, #{
-    "title": "duel", "max_users": 2,
-})).await;
-if e["kind"] == gamend::events::lobby::MEMBER_JOINED { }
+let reply = await task::wait(lobbies::quick_join(self.node, map().with("title", "duel").with("max_users", 2)));
+if e.get("kind").as_str() == lobby::MEMBER_JOINED { }
 ```
 
-266 operations in 42 modules, and 92 realtime events.
+266 operations in 42 modules, and 98 realtime events.
 
-Beside the generated modules and `events.rn`, written by hand:
+Beside the generated modules and `events.bs`, written by hand:
 
 | Module | For |
 | --- | --- |
@@ -23,11 +24,11 @@ Beside the generated modules and `events.rn`, written by hand:
 | `gamend::auth` | Sign-in through a provider, and the kept session |
 | `gamend::presence` | The user cache |
 | `gamend::prefs` | The player's prefs on this device |
-| `gamend::logs` | This run's log, shipped in batches; put `log_sink.rn` on a node that lives as long as the game |
+| `gamend::logs` | This run's log, shipped in batches; put `log_sink.bs` on a node that lives as long as the game |
 | `gamend::core` | The query string, the required-field check and the reply helpers |
-| `editor/gamend.rn` | The Gamend dock in the Balaur editor |
+| `editor/gamend.rn` | The Gamend dock in the Balaur editor (Rune until the editor takes Balaur Script plugins) |
 
-## gamend::admin_analytics
+## admin_analytics
 
 Admin – Analytics.
 
@@ -39,7 +40,7 @@ Admin – Analytics.
 | `get_analytics_snapshot(node)` | `GET /api/v1/admin/analytics/snapshot` | Live counters: players, lobbies, parties, quests, matchmaking, tournaments (admin) |
 | `get_analytics_summary(node, options)` | `GET /api/v1/admin/analytics` | DAU / WAU / MAU, D1 / D7 / D30 and payer conversion (admin) |
 
-## gamend::admin_bans
+## admin_bans
 
 Admin – Bans.
 
@@ -49,7 +50,7 @@ Admin – Bans.
 | `lift_ban(node, id)` | `DELETE /api/v1/admin/bans/{id}` | Lift a ban (admin) |
 | `list_bans(node, options)` | `GET /api/v1/admin/bans` | List bans (admin) |
 
-## gamend::admin_chat
+## admin_chat
 
 Admin – Chat.
 
@@ -70,7 +71,7 @@ Admin – Chat.
 | `test_chat_phrase(node, params)` | `POST /api/v1/admin/chat/filter_words/test` | Test a phrase against the filter (admin) |
 | `update_chat_filter_word(node, id, params)` | `PATCH /api/v1/admin/chat/filter_words/{id}` | Update a blocklist word (admin) |
 
-## gamend::admin_economy
+## admin_economy
 
 Admin – Economy.
 
@@ -84,7 +85,7 @@ Admin – Economy.
 | `list_wallets(node, options)` | `GET /api/v1/admin/economy/wallets` | List wallets (admin) |
 | `spend_currency(node, params)` | `POST /api/v1/admin/economy/spend` | Spend currency from a user (admin) |
 
-## gamend::admin_groups
+## admin_groups
 
 Admin – Groups.
 
@@ -94,7 +95,7 @@ Admin – Groups.
 | `list_groups(node, options)` | `GET /api/v1/admin/groups` | List all groups (admin) |
 | `update_group(node, id, params)` | `PATCH /api/v1/admin/groups/{id}` | Update a group (admin) |
 
-## gamend::admin_kv
+## admin_kv
 
 Admin – KV.
 
@@ -107,7 +108,7 @@ Admin – KV.
 | `update_kv_entry(node, id, params)` | `PATCH /api/v1/admin/kv/entries/{id}` | Update KV entry by id (admin) |
 | `upsert_kv(node, params)` | `PUT /api/v1/admin/kv` | Upsert KV by key (admin) |
 
-## gamend::admin_leaderboards
+## admin_leaderboards
 
 Admin – Leaderboards.
 
@@ -124,7 +125,7 @@ Admin – Leaderboards.
 | `update_leaderboard(node, id, params)` | `PATCH /api/v1/admin/leaderboards/{id}` | Update leaderboard (admin) |
 | `update_leaderboard_record(node, id, record_id, params)` | `PATCH /api/v1/admin/leaderboards/{id}/records/{record_id}` | Update leaderboard record (admin) |
 
-## gamend::admin_lobbies
+## admin_lobbies
 
 Admin – Lobbies.
 
@@ -134,7 +135,7 @@ Admin – Lobbies.
 | `list_lobbies(node, options)` | `GET /api/v1/admin/lobbies` | List all lobbies (admin) |
 | `update_lobby(node, id, params)` | `PATCH /api/v1/admin/lobbies/{id}` | Update lobby by id (admin) |
 
-## gamend::admin_matchmaking
+## admin_matchmaking
 
 Admin – Matchmaking.
 
@@ -144,7 +145,7 @@ Admin – Matchmaking.
 | `list_matchmaking_tickets(node, options)` | `GET /api/v1/admin/matchmaking/tickets` | List matchmaking tickets (admin) |
 | `stats(node)` | `GET /api/v1/admin/matchmaking/stats` | Matchmaking statistics (admin) |
 
-## gamend::admin_notifications
+## admin_notifications
 
 Admin – Notifications.
 
@@ -154,7 +155,7 @@ Admin – Notifications.
 | `delete_notification(node, id)` | `DELETE /api/v1/admin/notifications/{id}` | Delete a notification (admin) |
 | `list_notifications(node, options)` | `GET /api/v1/admin/notifications` | List all notifications (admin) |
 
-## gamend::admin_push
+## admin_push
 
 Admin – Push.
 
@@ -164,7 +165,7 @@ Admin – Push.
 | `list_push_tokens(node, options)` | `GET /api/v1/admin/push/tokens` | List registered device push tokens (admin) |
 | `send_push(node, params)` | `POST /api/v1/admin/push/send` | Send a push notification to a user (admin) |
 
-## gamend::admin_quests
+## admin_quests
 
 Admin – Quests.
 
@@ -182,7 +183,7 @@ Admin – Quests.
 | `set_quest_icon(node, id, params)` | `POST /api/v1/admin/quests/{id}/icon` | Confirm an uploaded quest icon (admin) |
 | `update_quest(node, id, params)` | `PATCH /api/v1/admin/quests/{id}` | Update quest (admin) |
 
-## gamend::admin_ready_checks
+## admin_ready_checks
 
 Admin – Ready checks.
 
@@ -192,7 +193,7 @@ Admin – Ready checks.
 | `list_ready_checks(node, options)` | `GET /api/v1/admin/ready_checks` | List ready checks (admin) |
 | `ready_check_stats(node)` | `GET /api/v1/admin/ready_checks/stats` | Ready check outcomes over the last 24 hours (admin) |
 
-## gamend::admin_retention
+## admin_retention
 
 Admin – Retention.
 
@@ -201,7 +202,7 @@ Admin – Retention.
 | `get_retention_status(node)` | `GET /api/v1/admin/retention` | Last retention sweep (admin) |
 | `run_retention(node)` | `POST /api/v1/admin/retention/run` | Run a retention sweep now (admin) |
 
-## gamend::admin_sessions
+## admin_sessions
 
 Admin – Sessions.
 
@@ -211,7 +212,7 @@ Admin – Sessions.
 | `delete_user_sessions(node, id)` | `DELETE /api/v1/admin/users/{id}/sessions` | Delete all session tokens for a user (admin) |
 | `list_sessions(node, options)` | `GET /api/v1/admin/sessions` | List sessions (admin) |
 
-## gamend::admin_storage
+## admin_storage
 
 Admin – Storage.
 
@@ -223,7 +224,7 @@ Admin – Storage.
 | `usage(node, options)` | `GET /api/v1/admin/storage/usage` | Objects and bytes stored under a prefix (admin) |
 | `upload_storage_object(node, params, options)` | `PUT /api/v1/admin/storage/object` | Upload or overwrite an object at any key (admin) |
 
-## gamend::admin_tournaments
+## admin_tournaments
 
 Admin – Tournaments.
 
@@ -240,7 +241,7 @@ Admin – Tournaments.
 | `tournament_icon_upload_url(node, id, params)` | `POST /api/v1/admin/tournaments/{id}/icon/upload_url` | Request an upload ticket for a tournament icon (admin) |
 | `update_tournament(node, id, params)` | `PATCH /api/v1/admin/tournaments/{id}` | Update tournament (admin) |
 
-## gamend::admin_users
+## admin_users
 
 Admin – Users.
 
@@ -249,7 +250,7 @@ Admin – Users.
 | `delete_user(node, id)` | `DELETE /api/v1/admin/users/{id}` | Delete user (admin) |
 | `update_user(node, id, params)` | `PATCH /api/v1/admin/users/{id}` | Update user (admin) |
 
-## gamend::authentication
+## authentication
 
 Authentication.
 
@@ -277,7 +278,7 @@ Authentication.
 | `unlink_device(node)` | `DELETE /api/v1/me/device` | Unlink device ID |
 | `unlink_provider(node, provider)` | `DELETE /api/v1/me/providers/{provider}` | Unlink OAuth provider |
 
-## gamend::chat
+## chat
 
 Chat.
 
@@ -301,7 +302,7 @@ Chat.
 | `unmute_party_member(node, params)` | `POST /api/v1/parties/unmute` | Lift a mute in your party |
 | `update_chat_message(node, id, params)` | `PATCH /api/v1/chat/messages/{id}` | Update your own chat message |
 
-## gamend::client_logs
+## client_logs
 
 Client logs.
 
@@ -310,7 +311,7 @@ Client logs.
 | `get_client_log_policy(node)` | `GET /api/v1/client_logs/policy` | Client log capture policy |
 | `upload_client_logs(node, params)` | `POST /api/v1/client_logs` | Upload a batch of client log entries |
 
-## gamend::economy
+## economy
 
 Economy.
 
@@ -320,7 +321,7 @@ Economy.
 | `get_current_user_wallet(node)` | `GET /api/v1/me/wallet` | Current user's currency balances |
 | `list_current_user_ledger(node, options)` | `GET /api/v1/me/wallet/ledger` | Current user's ledger history |
 
-## gamend::friends
+## friends
 
 Friends.
 
@@ -339,7 +340,7 @@ Friends.
 | `unblock_friend(node, id)` | `POST /api/v1/friends/{id}/unblock` | Unblock a previously-blocked friendship |
 | `unblock_user(node, user_id)` | `POST /api/v1/users/{user_id}/unblock` | Remove a user from your blacklist |
 
-## gamend::groups
+## groups
 
 Groups.
 
@@ -370,7 +371,7 @@ Groups.
 | `set_group_icon(node, id, params)` | `POST /api/v1/groups/{id}/icon` | Confirm an uploaded group icon (admin only) |
 | `update_group(node, id, params)` | `PATCH /api/v1/groups/{id}` | Update a group (admin only) |
 
-## gamend::health
+## health
 
 Health.
 
@@ -378,7 +379,7 @@ Health.
 | --- | --- | --- |
 | `index(node)` | `GET /api/v1/health` | Health check |
 
-## gamend::hooks
+## hooks
 
 Hooks.
 
@@ -387,7 +388,7 @@ Hooks.
 | `call_hook(node, params)` | `POST /api/v1/hooks/call` | Invoke a hook function |
 | `list_hooks(node, options)` | `GET /api/v1/hooks` | List available hook functions |
 
-## gamend::kv
+## kv
 
 KV.
 
@@ -395,7 +396,7 @@ KV.
 | --- | --- | --- |
 | `get_kv(node, key, options)` | `GET /api/v1/kv/{key}` | Get a key/value entry |
 
-## gamend::leaderboards
+## leaderboards
 
 Leaderboards.
 
@@ -410,7 +411,7 @@ Leaderboards.
 | `list_records_around_user(node, id, user_id, options)` | `GET /api/v1/leaderboards/{id}/records/around/{user_id}` | List records around a user |
 | `resolve_leaderboard_slugs(node, params)` | `POST /api/v1/leaderboards/resolve` | Resolve multiple slugs to active leaderboards |
 
-## gamend::lobbies
+## lobbies
 
 Lobbies.
 
@@ -428,7 +429,7 @@ Lobbies.
 | `set_lobby_state(node, params)` | `POST /api/v1/lobbies/state` | Set lobby state (host or pinned WebRTC host) |
 | `update_lobby(node, params)` | `PATCH /api/v1/lobbies` | Update lobby (host or pinned WebRTC host) |
 
-## gamend::matchmaking
+## matchmaking
 
 Matchmaking.
 
@@ -439,7 +440,7 @@ Matchmaking.
 | `my_ticket(node)` | `GET /api/v1/matchmaking/tickets/me` | Get my current ticket |
 | `stats(node)` | `GET /api/v1/matchmaking/stats` | Queue statistics |
 
-## gamend::notifications
+## notifications
 
 Notifications.
 
@@ -449,7 +450,7 @@ Notifications.
 | `list_notifications(node, options)` | `GET /api/v1/notifications` | List own notifications |
 | `send_notification(node, params)` | `POST /api/v1/notifications` | Send a notification to a friend |
 
-## gamend::parties
+## parties
 
 Parties.
 
@@ -471,7 +472,7 @@ Parties.
 | `show_party(node)` | `GET /api/v1/parties/me` | Get current party |
 | `update_party(node, params)` | `PATCH /api/v1/parties` | Update party settings (leader only) |
 
-## gamend::payments
+## payments
 
 Payments.
 
@@ -487,7 +488,7 @@ Payments.
 | `stripe_webhook(node, params)` | `POST /api/v1/payments/webhooks/stripe` | Receive Stripe webhook events |
 | `validate_store_purchase(node, provider, params)` | `POST /api/v1/payments/validate/{provider}` | Validate an Apple, Google, or Steam purchase |
 
-## gamend::push_tokens
+## push_tokens
 
 Push.
 
@@ -497,7 +498,7 @@ Push.
 | `list_push_tokens(node, options)` | `GET /api/v1/me/push_tokens` | List the current user's registered devices |
 | `register_push_token(node, params)` | `POST /api/v1/me/push_tokens` | Register a device push token |
 
-## gamend::quests
+## quests
 
 Quests.
 
@@ -509,7 +510,7 @@ Quests.
 | `quest_stats(node)` | `GET /api/v1/quests/stats` | Quest progress counts |
 | `user_quests(node, user_id, options)` | `GET /api/v1/quests/user/{user_id}` | List a user's completed quests |
 
-## gamend::ready_checks
+## ready_checks
 
 Ready checks.
 
@@ -522,7 +523,7 @@ Ready checks.
 | `open_party_ready_check(node, params)` | `POST /api/v1/parties/ready_check` | Open (or reset) the ready board in the caller's party (leader only) |
 | `respond_ready_check(node, params)` | `POST /api/v1/me/ready_check` | Answer one of the caller's open ready checks |
 
-## gamend::reports
+## reports
 
 Reports.
 
@@ -531,7 +532,7 @@ Reports.
 | `create_report(node, params)` | `POST /api/v1/reports` | File a report |
 | `list_report_kinds(node)` | `GET /api/v1/reports/kinds` | Report kinds |
 
-## gamend::signaling
+## signaling
 
 Signaling.
 
@@ -539,7 +540,7 @@ Signaling.
 | --- | --- | --- |
 | `stats(node)` | `GET /api/v1/signaling/stats` | WebRTC room counts |
 
-## gamend::stats
+## stats
 
 Stats.
 
@@ -547,7 +548,7 @@ Stats.
 | --- | --- | --- |
 | `get_stats(node)` | `GET /api/v1/stats` | All public server counters in one call |
 
-## gamend::time
+## time
 
 Time.
 
@@ -555,7 +556,7 @@ Time.
 | --- | --- | --- |
 | `get_server_time(node)` | `GET /api/v1/time` | Server clock |
 
-## gamend::tournaments
+## tournaments
 
 Tournaments.
 
@@ -570,7 +571,7 @@ Tournaments.
 | `tournament_my_match(node, id)` | `GET /api/v1/tournaments/{id}/my_match` | The caller's current unresolved match |
 | `tournament_standings(node, id)` | `GET /api/v1/tournaments/{id}/standings` | Placements, wins and champions |
 
-## gamend::users
+## users
 
 Users.
 

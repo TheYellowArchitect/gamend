@@ -19,8 +19,8 @@ python3 clients/sdkgen balaur "$@"
 
 if [ -n "${APP_VERSION:-}" ]; then
   echo "Stamping ${APP_VERSION} into the addon"
-  cat > balaur_addons/addons/gamend/version.rn <<VERSION
+  cat > balaur_addons/addons/gamend/version.bs <<VERSION
 // Stamped by CI. A local generation leaves it as it is.
-pub const GAMEND_VERSION = "${APP_VERSION}";
+pub const GAMEND_VERSION: str = "${APP_VERSION}";
 VERSION
 fi

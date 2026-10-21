@@ -112,6 +112,9 @@ Detailed payload shapes for every event pushed from the server to the client, gr
 | match_found | The user's matchmaking ticket matched into a lobby | {lobby_id, match_params} |
 | wallet_updated | A currency balance changed | {currency, balance, delta} |
 | inventory_updated | An item count changed | {item, quantity, delta} |
+| result_started | A play of the user's began ([results](/docs/results)) | the result |
+| result_event | Something happened in a play of the user's | {result_id, event} |
+| result_ended | A play of the user's ended | the result |
 | tournament_updated / tournament_finished | A tournament the user entered changed state | {tournament_id, slug, state} |
 | tournament_match_ready / tournament_match_resolved | The user's tournament match became playable / got a verdict | {tournament_id, slug, match_id, round, deadline, winner_entry_id} |
 | chat_message_created | Friend DM received | {id, content, metadata, sender_id, sender_name, chat_type, chat_ref_id, inserted_at} |
@@ -151,6 +154,7 @@ The UserChannel also accepts a "call_hook" push from the client to invoke server
 | chat_message_updated | Lobby chat message edited | {id, content, metadata, sender_id, sender_name, chat_type, chat_ref_id, inserted_at} |
 | chat_message_deleted | Lobby chat message deleted | {id} |
 | state_changed | The lobby moved to another lifecycle state | {lobby_id, from, to, state_changed_at} |
+| result_started, result_event, result_ended | A play its members may read, as on `user:<id>` | as on `user:<id>` |
 | ready_check_started / ready_check_updated / ready_check_passed / ready_check_failed | A ready check opened, someone answered, or it resolved | The ready check with its participants |
 
 ### LobbiesChannel `lobbies`

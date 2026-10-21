@@ -1,12 +1,12 @@
-"""The Balaur emitter: Rune over `gamend::rest`.
+"""The Balaur emitter: Balaur Script over the engine's `gamend::rest`.
 
-The Godot client goes through openapi-generator, which has no Rune target;
-adding one is a Java generator plus a template set. Balaur mounts an addon's
-files as modules, so `addons/gamend/lobbies.rn` is `gamend::lobbies` in every
-script, and this writes one file per tag. A function is named for its
-operation without the tag: `gamend::lobbies::create_lobby`. `events.rn` holds
-one `pub mod` per channel of `clients/events.json`, each event without the
-channel (`gamend::events::lobby::MEMBER_JOINED`), and the decoder.
+The Godot client goes through openapi-generator, which has no Balaur Script
+target, so this writes one `.bs` module per tag. A script links one with
+`use addons::gamend::lobbies;` and calls `lobbies::create_lobby(..)`; a
+module inside the addon links its neighbours by name (`use core;`). A
+function is named for its operation without the tag. The realtime events
+are one file per channel under `events/` (`use addons::gamend::events::lobby;`,
+`lobby::MEMBER_JOINED`) and `events.bs`, the table and the decoder.
 `README.md` is the reference, by tag. Everything else in the addon is the
 hand-written `clients/balaur_template/`, copied over the top.
 """
@@ -20,21 +20,13 @@ TEMPLATE = CLIENTS / "balaur_template"
 OUT = ROOT / "balaur_addons" / "addons" / "gamend"
 REGENERATE = "clients/generate_balaur.sh"
 # Every file in OUT is this emitter's or the template's, so a file neither
-# writes any more (a tag renamed, the old `api.rn`) is removed.
+# writes any more (a tag renamed, the old `.rn` modules) is removed.
 OWNS_OUT = True
 
-# A tag whose file would read as something else: `gamend::push` is the
-# engine's own function.
+# A tag whose file would read as something else.
 FILE_NAMES = {"push": "push_tokens"}
-# What a tag's file must not take: the template's files and the engine's own
-# `gamend::` functions, which share the path.
-TAKEN = {
-    "auth", "client", "core", "events", "log_sink", "logs", "prefs",
-    "presence", "version",
-    "activity", "call_hook", "clear_activity", "close", "configure", "connect",
-    "connection", "join", "leave", "login", "push", "register", "reply",
-    "rest", "restore", "run_id", "session", "target",
-}
+# What a tag's file must not take: the template's files.
+TAKEN = {"auth", "client", "core", "events", "log_sink", "logs", "prefs", "presence", "version"}
 
 BANNER = (
     "// Written by clients/sdkgen (balaur) from the OpenAPI document.\n"
@@ -42,14 +34,13 @@ BANNER = (
     "// clients/generate_balaur.sh.\n"
 )
 
-# Rune's keywords, which a path parameter or a body field could otherwise
-# collide with when it becomes an argument name.
+# Balaur Script's keywords and built-in types, which a path parameter or a
+# body field could otherwise collide with when it becomes an argument name.
 RESERVED = {
-    "as", "async", "await", "break", "const", "continue", "crate", "default",
-    "else", "enum", "false", "fn", "for", "if", "impl", "in", "is", "let",
-    "loop", "match", "mod", "move", "mut", "not", "pub", "return", "select",
-    "self", "static", "struct", "super", "true", "typeof", "use", "while",
-    "yield",
+    "as", "async", "await", "break", "const", "continue", "else", "extern",
+    "false", "fn", "for", "if", "impl", "in", "let", "loop", "mut", "nil",
+    "pub", "return", "self", "struct", "true", "use", "while",
+    "int", "float", "bool", "str", "any", "Node",
 }
 
 
@@ -58,16 +49,11 @@ def safe(name: str) -> str:
 
 
 def path_expression(op: dict, with_query: bool) -> str:
-    """The path as a Rune string.
-
-    A path with no holes and no query is a plain literal; anything else is a
-    template, because the parameters and the query are interpolated into it.
-    """
-    filled = re.sub(r"\{([^}]+)\}", lambda m: "${" + safe(m.group(1)) + "}", op["path"])
-    if not op["path_params"] and not with_query:
-        return json.dumps(op["path"])
-    tail = "${query}" if with_query else ""
-    return f"`{filled}{tail}`"
+    """The path as a Balaur Script string: `{id}` interpolates `id`, which
+    is the OpenAPI spelling already, and `{query}` the query string."""
+    filled = re.sub(r"\{([^}]+)\}", lambda m: "{" + safe(m.group(1)) + "}", op["path"])
+    tail = "{query}" if with_query else ""
+    return json.dumps(filled + tail)
 
 
 def file_of(op: dict) -> str:
@@ -90,38 +76,34 @@ def short_name(op: dict, file: str) -> str:
 
 
 def emit_function(model: Model, op: dict, file: str, name: str) -> str:
-    """One operation as a Rune function over `gamend::rest`."""
-    args = ["node"] + [safe(p) for p in op["path_params"]]
+    """One operation as a function over `gamend::rest`. Path parameters are
+    `any`, so an id passes as a number or a string; the body and the query
+    are maps."""
+    args = ["node: Node"] + [f"{safe(p)}: any" for p in op["path_params"]]
     required_body: list[str] = []
     if op["body"]:
-        args.append("params")
+        args.append("params: any")
         required_body = list(resolve(model.spec, op["body"]["schema"]).get("required", []))
     if op["query"]:
-        args.append("options")
-    # A mounted function takes at most five arguments; the document's worst
-    # case is a node, two path parameters, a body and a query, exactly five.
-    if len(args) > 5:
-        raise SystemExit(f"{name}: {len(args)} arguments, more than a mount carries")
-
+        args.append("options: any")
     called = json.dumps(f"gamend::{file}::{name}")
     out = wrap(op["summary"], 76, "///")
     out.append(f"/// `{op['method']} {op['path']}`")
-    out.append(f"pub fn {name}({', '.join(args)}) {{")
+    out.append(f"pub fn {name}({', '.join(args)}) -> any {{")
     for field in required_body:
-        out.append(f'    if !gamend::core::given(params, {json.dumps(field)}) {{')
-        out.append(f'        return gamend::core::missing({called}, {json.dumps(field)});')
+        out.append(f"    if !core::given(params, {json.dumps(field)}) {{")
+        out.append(f"        return core::missing({called}, {json.dumps(field)});")
         out.append("    }")
     if op["query"]:
         for field in [q for q, needed in op["query"] if needed]:
-            out.append(f'    if !gamend::core::given(options, {json.dumps(field)}) {{')
-            out.append(f'        return gamend::core::missing({called}, {json.dumps(field)});')
+            out.append(f"    if !core::given(options, {json.dumps(field)}) {{")
+            out.append(f"        return core::missing({called}, {json.dumps(field)});")
             out.append("    }")
         allowed = ", ".join(json.dumps(q) for q, _ in op["query"])
-        out.append(f"    let query = gamend::core::query(options, [{allowed}]);")
+        out.append(f"    let query = core::query(options, [{allowed}]);")
     path = path_expression(op, bool(op["query"]))
-    call = f'gamend::rest(node, "{op["method"]}", {path}'
-    call += ", params)" if op["body"] else ")"
-    out.append(f"    {call}")
+    body = "params" if op["body"] else "nil()"
+    out.append(f'    gamend::rest(node, "{op["method"]}", {path}, {body})')
     out.append("}")
     return "\n".join(out)
 
@@ -147,33 +129,26 @@ def write_tags(model: Model) -> dict[str, str]:
         tag = ops[0][1]["tag"]
         chunks = [
             BANNER,
-            f"//! {tag}: one function per operation, as `gamend::{file}::<name>`.\n"
-            "//!\n"
-            "//! A call takes the node its result should reach, then the path's own\n"
-            "//! parameters, then `params` for the request body and `options` for the\n"
-            "//! query where the operation has them. It answers the id `gamend::rest`\n"
-            "//! answers, to await with `task::wait`.\n",
+            f"// {tag}: one function per operation, `{file}::<name>` once a\n"
+            f"// script says `use addons::gamend::{file};`.\n"
+            "//\n"
+            "// A call takes the node its result should reach, then the path's own\n"
+            "// parameters, then `params` for the request body and `options` for the\n"
+            "// query where the operation has them. It answers the id `gamend::rest`\n"
+            "// answers, to await with `task::wait`, or nil when it refused to send.\n"
+            "\nuse core;",
         ]
         chunks += [emit_function(model, op, file, name) for name, op in ops]
-        out[f"{file}.rn"] = "\n\n".join(chunks) + "\n"
+        out[f"{file}.bs"] = "\n\n".join(chunks) + "\n"
     return out
 
 
-def write_events(model: Model) -> str:
-    table = model.table
-    lines = [
-        BANNER,
-        "//! The realtime events, one `pub mod` per channel, and the decoder that\n"
-        "//! names a raw socket message: `gamend::events::lobby::MEMBER_JOINED` is\n"
-        "//! what `decode` answers as `kind` for a lobby's `user_joined`.\n"
-        "//!\n"
-        "//! OpenAPI does not describe the socket, so this comes from\n"
-        "//! `clients/events.json`, which the Godot client's dispatch seeded. An\n"
-        "//! event the table does not name still arrives, as `message`.\n",
-    ]
+def channels_of(model: Model) -> dict[str, dict[str, str]]:
+    """Each channel's events, as the constant name and the signal."""
     channels: dict[str, set[str]] = {}
-    for row in table:
+    for row in model.table:
         channels.setdefault(row["channel"], set()).add(row["signal"])
+    named: dict[str, dict[str, str]] = {}
     for channel in sorted(channels):
         names: dict[str, str] = {}
         for signal in sorted(channels[channel]):
@@ -181,51 +156,53 @@ def write_events(model: Model) -> str:
             if name in names:
                 raise SystemExit(f"events::{channel}::{name} is both {names[name]} and {signal}")
             names[name] = signal
-        body = "\n".join(f'    pub const {name} = "{signal}";' for name, signal in names.items())
-        lines.append(
-            f"/// What arrives on `{channel}` topics, as `decode` names it.\n"
-            f"pub mod {channel} {{\n{body}\n}}"
+        named[channel] = names
+    return named
+
+
+def write_events(model: Model) -> dict[str, str]:
+    """`events/<channel>.bs`, one constant per event, and `events.bs`."""
+    out = {}
+    for channel, names in channels_of(model).items():
+        body = "\n".join(f'pub const {name}: str = "{signal}";' for name, signal in names.items())
+        out[f"events/{channel}.bs"] = (
+            BANNER
+            + f"\n// What arrives on `{channel}` topics, as `events::decode` names it:\n"
+            + f"// `use addons::gamend::events::{channel};`, then `{channel}::<NAME>`.\n\n"
+            + body + "\n"
         )
     rows = ",\n".join(
-        f'    ["{row["channel"]}", "{row["event"]}", "{row["signal"]}"]' for row in table
+        f'        ["{row["channel"]}", "{row["event"]}", "{row["signal"]}"]' for row in model.table
     )
-    lines.append(
+    out["events.bs"] = (
+        BANNER
+        + "\n// The realtime events: the table, and the decoder that names a raw socket\n"
+        "// message. OpenAPI does not describe the socket, so this comes from\n"
+        "// `clients/events.json`. An event the table does not name still\n"
+        "// arrives, as `message`.\n\n"
         "/// Every row of the table: the channel a topic belongs to, the event the\n"
         "/// server sends, and what this client calls it.\n"
-        f"pub fn table() {{\n    [\n{rows},\n    ]\n}}"
-    )
-    lines.append(
-        '/// The channel a topic names: `lobby:12` is `lobby`, `lobbies` is itself.\n'
-        "pub fn channel_of(topic) {\n"
-        '    let parts = topic.split(":").collect::<Vec>();\n'
-        "    parts[0]\n"
-        "}"
-    )
-    lines.append(
-        "/// A socket message as this client names it. The payload is carried\n"
-        "/// through under `kind`; an event no row names comes back as `message`.\n"
-        "pub fn decode(topic, event, payload) {\n"
+        f"pub fn table() -> [[str]] {{\n    [\n{rows},\n    ]\n}}\n\n"
+        "/// The channel a topic names: `lobby:12` is `lobby`, `lobbies` is itself.\n"
+        "pub fn channel_of(topic: str) -> str {\n"
+        '    topic.split(":")[0]\n'
+        "}\n\n"
+        "/// A socket message as this client names it: `kind` (one of the\n"
+        "/// channels' constants, or `message`), `topic`, `event`, and the\n"
+        "/// server's `payload` as it came.\n"
+        "pub fn decode(topic: str, event: str, payload: any) -> any {\n"
         "    let channel = channel_of(topic);\n"
-        "    let named = \"message\";\n"
+        '    let named = "message";\n'
         "    for row in table() {\n"
         "        if row[0] == channel && row[1] == event {\n"
         "            named = row[2];\n"
         "            break;\n"
         "        }\n"
         "    }\n"
-        "    let out = #{};\n"
-        "    if payload is Object {\n"
-        "        for key in payload.keys() {\n"
-        "            out[key] = payload[key];\n"
-        "        }\n"
-        "    }\n"
-        '    out["kind"] = named;\n'
-        '    out["topic"] = topic;\n'
-        '    out["event"] = event;\n'
-        "    out\n"
-        "}"
+        '    map().with("kind", named).with("topic", topic).with("event", event).with("payload", payload)\n'
+        "}\n"
     )
-    return "\n\n".join(lines) + "\n"
+    return out
 
 
 def write_readme(model: Model) -> str:
@@ -233,23 +210,24 @@ def write_readme(model: Model) -> str:
     lines = [
         "# The Gamend SDK for Balaur",
         "",
-        "Written by `clients/sdkgen` (balaur). Copy this directory into a",
-        "project as `addons/gamend/`. Each file is a module every script",
-        "reaches by path, beside the engine's own `gamend::login` and",
-        "`gamend::rest`:",
+        "Written by `clients/sdkgen` (balaur), in Balaur Script. Copy this",
+        "directory into a project as `addons/gamend/`. A script links a module",
+        "with `use addons::gamend::<module>;`, beside the engine's own",
+        "`gamend::login` and `gamend::rest`:",
         "",
-        "```rune",
+        "```rust",
+        "use addons::gamend::lobbies;",
+        "use addons::gamend::events::lobby;",
+        "",
         'gamend::configure("https://gamend.org");',
-        "let reply = task::wait(gamend::lobbies::quick_join(this.node, #{",
-        '    "title": "duel", "max_users": 2,',
-        "})).await;",
-        "if e[\"kind\"] == gamend::events::lobby::MEMBER_JOINED { }",
+        'let reply = await task::wait(lobbies::quick_join(self.node, map().with("title", "duel").with("max_users", 2)));',
+        'if e.get("kind").as_str() == lobby::MEMBER_JOINED { }',
         "```",
         "",
         f"{len(model.ops)} operations in {len(files)} modules, and "
         f"{len(model.signals())} realtime events.",
         "",
-        "Beside the generated modules and `events.rn`, written by hand:",
+        "Beside the generated modules and `events.bs`, written by hand:",
         "",
         "| Module | For |",
         "| --- | --- |",
@@ -257,15 +235,15 @@ def write_readme(model: Model) -> str:
         "| `gamend::auth` | Sign-in through a provider, and the kept session |",
         "| `gamend::presence` | The user cache |",
         "| `gamend::prefs` | The player's prefs on this device |",
-        "| `gamend::logs` | This run's log, shipped in batches; put `log_sink.rn` on a node that lives as long as the game |",
+        "| `gamend::logs` | This run's log, shipped in batches; put `log_sink.bs` on a node that lives as long as the game |",
         "| `gamend::core` | The query string, the required-field check and the reply helpers |",
-        "| `editor/gamend.rn` | The Gamend dock in the Balaur editor |",
+        "| `editor/gamend.rn` | The Gamend dock in the Balaur editor (Rune until the editor takes Balaur Script plugins) |",
         "",
     ]
     for file in sorted(files):
         ops = files[file]
         lines += [
-            f"## gamend::{file}",
+            f"## {file}",
             "",
             f"{ops[0][1]['tag']}.",
             "",
@@ -287,7 +265,7 @@ def write_readme(model: Model) -> str:
 def emit(model: Model) -> dict[str, str]:
     return {
         **write_tags(model),
-        "events.rn": write_events(model),
+        **write_events(model),
         "README.md": write_readme(model),
     }
 

@@ -58,6 +58,7 @@ reload — the page painted at the top and glided down to where it had been. --%
     --%>
     <% doc_title = assigns[:seo_title] || assigns[:page_title] %>
     <% title = doc_title || site_title %>
+    <% title_suffix = if doc_title in [nil, site_title], do: nil, else: " | #{site_title}" %>
     <% description_raw =
       assigns[:meta_description] || Map.get(theme, "description") ||
         Map.get(theme, "tagline") || "" %>
@@ -145,8 +146,11 @@ reload — the page painted at the top and glided down to where it had been. --%
     `{doc_title}` on its own indented line rendered six spaces *inside* the
     title — "…Word Games      | <site name>" measured 61 characters against
     that 60 limit, six of them blank.
+
+    A page titled with the site's own name (the home page) is that name alone,
+    never "Balaur | Balaur".
     --%>
-    <.live_title default={site_title} suffix={" | #{site_title}"}>{doc_title}</.live_title>
+    <.live_title default={site_title} suffix={title_suffix}>{doc_title}</.live_title>
     <%!--
     schema.org JSON-LD. This is what search engines and AI answer engines read
     to understand what the site *is* rather than guessing from prose, and it

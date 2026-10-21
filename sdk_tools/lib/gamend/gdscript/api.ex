@@ -722,6 +722,24 @@ defmodule Gamend.GDScript.API do
       "stats" => [0, 1]
     },
     "Realtime" => %{"push_to_user" => [2, 3]},
+    "Results" => %{
+      "count" => [0, 1],
+      "count_events" => [1],
+      "delete" => [1],
+      "events" => [1, 2],
+      "events_by_key" => [2],
+      "finish" => [1],
+      "get" => [1],
+      "kinds" => [0],
+      "list" => [0, 1, 2],
+      "move_user" => [2],
+      "prune_before" => [2],
+      "readable?" => [2],
+      "record" => [2, 3, 4],
+      "record_lobby" => [2, 3, 4],
+      "start" => [2, 3],
+      "stats" => [1]
+    },
     "Schedule" => %{
       "cancel" => [1],
       "cron" => [3],

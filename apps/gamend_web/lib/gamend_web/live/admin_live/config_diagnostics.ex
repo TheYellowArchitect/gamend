@@ -33,6 +33,7 @@ defmodule GamendWeb.AdminLive.ConfigDiagnostics do
     "Friends" => ~w(max_friends_per_user max_pending_friend_requests)a,
     "Hooks" => ~w(max_hook_args_size max_hook_args_count)a,
     "KV" => ~w(max_kv_key max_kv_value_size max_kv_entries_per_user)a,
+    "Results" => ~w(max_result_events)a,
     "Leaderboards" => ~w(max_leaderboard_title max_leaderboard_description max_leaderboard_slug)a,
     "Quests" =>
       ~w(max_quests max_quest_key max_quest_title max_quest_category max_quest_description max_objectives_per_quest max_quest_reward_entries max_active_quests_per_user max_quest_period_history)a,
@@ -58,6 +59,7 @@ defmodule GamendWeb.AdminLive.ConfigDiagnostics do
     "Friends",
     "Hooks",
     "KV",
+    "Results",
     "Leaderboards",
     "Quests",
     "Tournaments",
@@ -178,7 +180,7 @@ defmodule GamendWeb.AdminLive.ConfigDiagnostics do
   defp file_exists_in_static?(path), do: GamendWeb.ProjectStatic.path_for(path) != nil
 
   def exported_plugin_functions do
-    plugins = PluginManager.hook_modules()
+    plugins = PluginManager.rpc_modules()
 
     static =
       plugins

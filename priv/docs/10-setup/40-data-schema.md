@@ -22,8 +22,8 @@ These hold everywhere, so the tables below list only what is specific to them:
 - **Ids** are UUIDv7 strings — time-ordered, so they sort chronologically.
 - **Timestamps** are always UTC. Every table has `inserted_at`; append-only
   tables (`ledger_entries`, `inventory_ledger`, `users_tokens`,
-  `user_activity_days`, `tournament_brackets`, the lobby snapshot tables) have
-  no `updated_at`.
+  `user_activity_days`, `tournament_brackets`, `results`, `result_events`)
+  have no `updated_at`.
 - **`metadata`** is a free-form JSON map you own. Core never interprets it.
 - **Foreign keys** cascade on delete unless noted, so removing a user removes
   their rows.
@@ -319,7 +319,7 @@ ledger is the audit trail; the balance is a cache of it.
 | `matchmaking_tickets` | Queue state, one per user or party | Matchmaking |
 | `ready_checks`, `ready_check_participants` | "Everyone must answer" boards on a lobby or party, one row per participant | Matchmaking |
 | `tournaments`, `tournament_entries`, `tournament_matches`, `tournament_brackets` | Bracket state per occurrence | Tournaments |
-| `lobby_snapshots`, `lobby_events`, `lobby_snapshot_blobs` | Opt-in per-run recording for debugging | — |
+| `results`, `result_events` | One play per player and what happened in it, in order | [Results](/docs/results) |
 | `purchases`, `entitlements`, `store_products`, `provider_products`, `provider_events`, `reconciliation_cursors` | Store catalogue, receipts and provider webhooks | Payments |
 | `push_tokens` | Device tokens for push, pruned when stale | Push notifications |
 | `user_activity_days` | One row per user per UTC day seen; source of DAU and D1/D7/D30 | Player analytics |

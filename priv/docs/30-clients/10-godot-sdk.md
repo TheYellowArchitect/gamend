@@ -183,7 +183,7 @@ server lines carry it too. Client `error` and `warn` entries are logged at that
 
 Grep either your log store or `/admin/logs` for `session=<id>` and both sides
 come back interleaved. Entries carrying a `lobby_id` also link the run to the
-server's own record of it at `/admin/lobby_snapshots`, from both directions.
+server's own record of it, the plays in that lobby at `/admin/results`.
 
 ### What each session records about the device
 

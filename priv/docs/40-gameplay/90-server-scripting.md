@@ -273,6 +273,28 @@ curl -X POST https://your-gamend.com/api/v1/hooks/call \
 
 The answer is `{"data": <whatever the function returned>}`. An `{:error, reason}` from the function answers 400 with `reason` as the `error` code when it is a snake_case atom (so a game can switch on `not_enough_gold`), and `hook_error` with the detail in `message` otherwise. Arguments none of the function's clauses accept answer 400 `function_clause`. A function that raises answers 500 `exception` with no detail, since the message can carry whatever the plugin touched; the server log has it with the stack trace. The channel's `call_hook` reply carries the same codes. An unknown plugin or function is 404 (`plugin_not_found`, `not_implemented`), a hook that times out 504. `GET /api/v1/hooks` pages through what a client may call, each entry naming its `plugin` and `fn` exactly as the call takes them.
 
+### Exposing an RPC function from the host app
+
+A host app (the Mix project that runs Gamend) can answer client calls from its own code, beside its plugins. Name the module and the name clients call it under:
+
+```elixir
+# config/config.exs
+config :gamend_core, :host_rpc_modules, %{"word_games" => MyApp.WordGamesRpc}
+```
+
+```elixir
+defmodule MyApp.WordGamesRpc do
+  def start_round(game, lang) do
+    case Gamend.Hooks.caller_user() do
+      %Gamend.Accounts.User{} = user -> MyApp.Rounds.start(user, game, lang)
+      _ -> {:error, :not_authenticated}
+    end
+  end
+end
+```
+
+A client calls it as a plugin: `{"plugin":"word_games","fn":"start_round","args":["match","fr"]}`, over HTTP, the user channel or the DataChannel. Every public function of the module is callable, with the same caller, limits, reserved names, timeout and error codes as a plugin's; keep the module for calls only, never a lifecycle hook (`:host_hook_modules` is for those). A name a plugin also has is the plugin's, and the server logs a warning when the plugins load. `GET /api/v1/hooks` lists the module's functions under its name. Host calls take JSON arguments and reply JSON: there are no typed protobuf schemas for them.
+
 ### Server-only privileges
 
 A few domain functions accept options that the HTTP and channel surfaces never pass, so they are reachable only from server-side code. The main one is seating a player in a locked lobby:

@@ -39,6 +39,10 @@ defmodule GamendWeb.RealtimeEvents do
     {@user, "wallet_updated", true, "currency + balance + delta",
      "The user's wallet balance changed"},
     {@user, "inventory_updated", true, "item + quantity + delta", "The user's inventory changed"},
+    {@user, "result_started", false, "result", "A play of the user's began (Gamend.Results)"},
+    {@user, "result_event", false, "result id + event",
+     "Something happened in a play of the user's"},
+    {@user, "result_ended", false, "result", "A play of the user's ended"},
     {@user, "chat_message_created", true, "chat message", "DM or watched-conversation message"},
     {@user, "chat_message_updated", true, "chat message", "A visible chat message was edited"},
     {@user, "chat_message_deleted", true, "message id", "A visible chat message was deleted"},
@@ -101,6 +105,9 @@ defmodule GamendWeb.RealtimeEvents do
     {@lobby, "chat_message_created", true, "chat message", "Lobby chat message"},
     {@lobby, "chat_message_updated", true, "chat message", "Lobby chat message edited"},
     {@lobby, "chat_message_deleted", true, "message id", "Lobby chat message deleted"},
+    {@lobby, "result_started", false, "result", "A play its members may read began"},
+    {@lobby, "result_event", false, "result id + event", "Something happened in that play"},
+    {@lobby, "result_ended", false, "result", "That play ended"},
 
     # ── lobbies ─────────────────────────────────────────────────────────
     {@lobbies, "lobby_created", true, "full lobby", "A public lobby was created"},
