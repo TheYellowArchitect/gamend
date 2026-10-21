@@ -187,8 +187,17 @@ defmodule Gamend.Accounts.Registration do
     if User.anonymous?(user) do
       attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
 
+      # A device account is born confirmed (`User.device_changeset/2`), and
+      # the address typed now is not proved yet: unconfirmed, it gets its
+      # email (`ConfirmationMailer` sends to unconfirmed accounts only), and
+      # nothing trusts the address until its owner opens the link.
+      changeset =
+        user
+        |> User.email_changeset(attrs)
+        |> Ecto.Changeset.put_change(:confirmed_at, nil)
+
       Gamend.AfterCommit.transaction(fn ->
-        with {:ok, %User{} = updated} <- user |> User.email_changeset(attrs) |> Repo.update(),
+        with {:ok, %User{} = updated} <- Repo.update(changeset),
              :ok <- queue_confirmation(updated, false, confirmation_url_fun, notifier) do
           updated
         else
