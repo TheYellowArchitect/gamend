@@ -42,26 +42,29 @@ defmodule GamendWeb.HostLayoutNavigationTest do
     assert html =~ "hero-star"
   end
 
-  test "the navigation's label_class hides an icon link's label, and the label becomes its tooltip" do
+  test "an icon link's label goes when the bar is too narrow, and is its tooltip then" do
     links = [
       %{"label" => "Games", "href" => "/games", "icon" => "hero-puzzle-piece"},
       %{"label" => "News", "href" => "/news"}
     ]
 
-    html =
-      render_component(
-        &HostLayoutNavigation.desktop_nav/1,
-        put_in(base_assigns(links), [:navigation, "label_class"], "max-2xl:sr-only")
-      )
+    html = render_component(&HostLayoutNavigation.desktop_nav/1, base_assigns(links))
+    fit_label = ~s{<span class="[html:not([data-nav~=labels])_&amp;]:sr-only">}
 
     assert html =~ ~r/<a[^>]*href="\/games"[^>]*title="Games"/
-    assert html =~ ~s(<span class="max-2xl:sr-only">Games</span>)
+    assert html =~ fit_label <> "Games</span>"
     refute html =~ ~s(title="News")
-    refute html =~ ~s(<span class="max-2xl:sr-only">News</span>)
+    refute html =~ fit_label <> "News</span>"
+  end
 
-    plain = render_component(&HostLayoutNavigation.desktop_nav/1, base_assigns(links))
-    refute plain =~ "sr-only"
-    refute plain =~ ~s(title="Games")
+  test "the desktop bar shows only at a stage that holds it, the menu otherwise" do
+    assigns = base_assigns([%{"label" => "Games", "href" => "/games"}])
+
+    assert render_component(&HostLayoutNavigation.desktop_nav/1, assigns) =~
+             ~s(<ul class="hidden [[data-nav~=bar]_&]:flex)
+
+    assert render_component(&HostLayoutNavigation.mobile_nav/1, assigns) =~
+             ~s(<div class="contents [[data-nav~=bar]_&]:hidden">)
   end
 
   test "{Module.func} label tokens resolve via the named function" do

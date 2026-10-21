@@ -51,7 +51,7 @@ defmodule GamendWeb.HostLayoutShell do
         id="main-navbar"
         phx-hook="NavbarDropdowns"
         class={[
-          "navbar z-50",
+          "navbar z-50 [[data-nav~=bar]_&]:gap-4",
           if(@flush,
             do: "absolute top-0 start-0 end-0 ps-4 sm:ps-6 lg:ps-8 pe-14",
             else: "sticky top-0 shrink-0 px-4 sm:px-6 lg:px-8"
@@ -77,6 +77,7 @@ defmodule GamendWeb.HostLayoutShell do
         <div class="@container min-w-0 flex-1 flex items-center gap-2">
           <a
             href={GamendWeb.HostLayouts.localized_href(~p"/", @locale)}
+            data-nav-logo
             class="flex shrink-0 w-fit items-center gap-2"
           >
             <%!-- Same rule as `CoreComponents.flag/1`: this is on screen at
@@ -124,7 +125,7 @@ defmodule GamendWeb.HostLayoutShell do
             </span>
             <span
               :if={theme_tagline(@theme) && length(@breadcrumbs) < 2}
-              class="text-sm opacity-80 ms-1 hidden xl:inline"
+              class="text-sm opacity-80 ms-1 hidden [[data-nav~=labels]_&]:inline"
             >
               {theme_tagline(@theme)}
             </span>
@@ -134,7 +135,7 @@ defmodule GamendWeb.HostLayoutShell do
         <%!-- The language picker sits outside both navs: one button in the bar
               at every width, rather than a dropdown up here and a different
               control buried in the phone menu. --%>
-        <div class="flex-none flex items-center gap-1 xl:gap-2">
+        <div data-nav-bar class="flex-none flex items-center gap-1 [[data-nav~=bar]_&]:gap-2">
           <GamendWeb.HostLayoutNavigation.desktop_nav
             current_scope={@current_scope}
             current_path={@current_path}
@@ -147,8 +148,8 @@ defmodule GamendWeb.HostLayoutShell do
           />
 
           <%!-- One button at every width, like the language picker beside it:
-                below `xl` the whole nav is a hamburger, so an input in the bar
-                would be a desktop-only feature. The label is on `aria-label`
+                where the bar does not fit, the whole nav is a hamburger, so an
+                input in the bar would be a desktop-only feature. The label is on `aria-label`
                 and `title` rather than on screen — `title` and not a daisyUI
                 `tooltip`, which hosts exclude from their stylesheet. --%>
           <button
@@ -164,14 +165,14 @@ defmodule GamendWeb.HostLayoutShell do
             <.icon name="hero-magnifying-glass-solid" class="w-5 h-5" />
           </button>
 
-          <%!-- From `xl`, last in the bar, after the nav. Below it the phone
-                bar's items join this row (`mobile_nav/1` is `contents`
+          <%!-- Last in the bar, after the nav. Where the bar does not fit, the
+                phone bar's items join this row (`mobile_nav/1` is `contents`
                 there) and the picker sits between its icons and the menu
                 (2026-10-16, user: rightmost, but left of the menu). One
                 picker in the page: its list of locales is not drawn twice.
                 The order goes on the picker's button and dropdown, two
                 levels down: both wrappers are `contents`. --%>
-          <div :if={length(@known_locales) > 1} class="contents max-xl:[&>*>*]:order-1">
+          <div :if={length(@known_locales) > 1} class="contents [&>*>*]:order-1">
             <GamendWeb.HostLayoutNavigation.language_dropdown
               locale={@locale}
               current_path={@current_path}

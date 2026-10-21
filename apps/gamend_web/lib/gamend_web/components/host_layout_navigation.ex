@@ -6,6 +6,12 @@ defmodule GamendWeb.HostLayoutNavigation do
   alias Gamend.Accounts.Scope
   alias GamendWeb.Plugs.LocalePath
 
+  # What the bar has room for is measured, not guessed from a breakpoint
+  # (`navbar_fit.js`): `<html data-nav>` names what shows, "bar labels name"
+  # down to "bar", else the menu. Each word is a class's condition.
+  defp fit_label, do: "[html:not([data-nav~=labels])_&]:sr-only"
+  defp fit_name, do: "[html:not([data-nav~=name])_&]:[&>*+*]:sr-only"
+
   attr :current_scope, :map, default: nil
   attr :current_path, :string, default: nil
   attr :current_query, :string, default: ""
@@ -20,18 +26,14 @@ defmodule GamendWeb.HostLayoutNavigation do
       "what the page changes that an entry shows (`Layouts.app`'s): a change re-renders the bar, since no other attr of it moves"
 
   def desktop_nav(assigns) do
-    assigns =
-      assigns
-      |> prepare_navigation_assigns()
-      |> assign(:label_class, label_class(assigns.navigation))
+    assigns = prepare_navigation_assigns(assigns)
 
     ~H"""
-    <ul class="hidden xl:flex flex-row px-1 space-x-4 items-center">
+    <ul class="hidden [[data-nav~=bar]_&]:flex flex-row px-1 space-x-4 items-center">
       <.main_nav_links
         links={@primary_links}
         current_path={@current_path}
         inactive_class="btn-surface"
-        label_class={@label_class}
       />
 
       <%= if @current_scope do %>
@@ -41,7 +43,6 @@ defmodule GamendWeb.HostLayoutNavigation do
             links={@authenticated_links}
             current_path={@current_path}
             inactive_class="btn-surface"
-            label_class={@label_class}
           />
         <% end %>
       <% else %>
@@ -51,7 +52,6 @@ defmodule GamendWeb.HostLayoutNavigation do
             links={@guest_links}
             current_path={@current_path}
             inactive_class="btn-surface"
-            label_class={@label_class}
           />
         <% end %>
 
@@ -59,17 +59,20 @@ defmodule GamendWeb.HostLayoutNavigation do
 
         <li>
           <details class="dropdown dropdown-end" data-navbar-dropdown>
-            <summary class={[
-              "btn gap-1 list-none",
-              if(
-                here?(@current_path, "/users/log_in") or
-                  here?(@current_path, "/users/register"),
-                do: "btn-primary",
-                else: "btn-surface"
-              )
-            ]}>
+            <summary
+              title={GamendWeb.HostLayouts.translate("Account")}
+              class={[
+                "btn gap-1 list-none",
+                if(
+                  here?(@current_path, "/users/log_in") or
+                    here?(@current_path, "/users/register"),
+                  do: "btn-primary",
+                  else: "btn-surface"
+                )
+              ]}
+            >
               <.icon name="hero-user-circle-solid" class="w-4 h-4" />
-              {GamendWeb.HostLayouts.translate("Account")}
+              <span class={fit_label()}>{GamendWeb.HostLayouts.translate("Account")}</span>
               <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
             </summary>
             <ul class="menu menu-sm dropdown-content mt-2 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-56">
@@ -148,7 +151,10 @@ defmodule GamendWeb.HostLayoutNavigation do
 
     ~H"""
     <details class="dropdown dropdown-end" data-navbar-dropdown>
-      <summary class={["btn gap-1 list-none", if(@active?, do: "btn-primary", else: "btn-surface")]}>
+      <summary
+        title={display_name(Scope.user(@current_scope))}
+        class={["btn gap-1 list-none", if(@active?, do: "btn-primary", else: "btn-surface")]}
+      >
         <%!-- The player card (`player_card/1`), as every list draws the
               player: on a filled button its line takes the button's colour. --%>
         <.player_card
@@ -156,7 +162,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           name={display_name(Scope.user(@current_scope))}
           size="sm"
           subtitle_class={if(@active?, do: nil, else: "text-muted")}
-          class="max-w-[10rem]"
+          class={["max-w-[10rem]", fit_name()]}
         />
         <.count_pill count={@notif_unread_count} />
         <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
@@ -281,15 +287,15 @@ defmodule GamendWeb.HostLayoutNavigation do
     assigns = assign(assigns, :menu_count, menu_count)
 
     ~H"""
-    <%!-- `contents` below `xl`: its icons and its menu are items of the
-          bar's row, so the site language's picker (ordered `1`) sits
-          between them and the menu (ordered `2`). --%>
-    <div class="max-xl:contents xl:hidden">
+    <%!-- `contents` where the bar does not fit: its icons and its menu are
+          items of the bar's row, so the site language's picker (ordered `1`)
+          sits between them and the menu (ordered `2`). --%>
+    <div class="contents [[data-nav~=bar]_&]:hidden">
       <.mobile_pinned_links links={@pinned_links} current_path={@current_path} />
-      <details class="dropdown dropdown-end max-xl:order-2" data-navbar-dropdown>
+      <details class="dropdown dropdown-end order-2" data-navbar-dropdown>
         <summary
           aria-label={GamendWeb.HostLayouts.translate("Open navigation menu")}
-          class="btn btn-ghost btn-circle list-none relative"
+          class="btn btn-ghost px-1 list-none relative"
         >
           <.count_pill count={@menu_count} class="absolute -top-1 -end-1" />
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -434,8 +440,13 @@ defmodule GamendWeb.HostLayoutNavigation do
       <%!-- `priority`: this flag is in the header of every page, so a lazy one
             pops in after the label on each refresh, and a merely eager one
             queues behind whatever that page is full of. --%>
-      <%!-- A phone shows the flag alone, one icon, so `btn-ghost`. --%>
-      <label for="lang-modal" class="btn gap-1 list-none btn-ghost cursor-pointer sm:hidden">
+      <%!-- A phone shows the flag alone, one icon, so `btn-ghost`, and as
+            narrow as the bar's icons: the room is the logo's. Less after
+            the chevron, which the menu button follows. --%>
+      <label
+        for="lang-modal"
+        class="btn gap-1 ps-2 pe-1 list-none btn-ghost cursor-pointer sm:hidden"
+      >
         <.locale_mark flag_code={@flag_code} label={@label} />
         <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
       </label>
@@ -582,7 +593,6 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :links, :list, default: []
   attr :current_path, :string, default: nil
   attr :inactive_class, :string, required: true
-  attr :label_class, :string, default: nil
 
   defp main_nav_links(assigns) do
     assigns = assign(assigns, :best_href, best_href(assigns.links, assigns.current_path))
@@ -595,7 +605,6 @@ defmodule GamendWeb.HostLayoutNavigation do
           current_path={@current_path}
           best_href={@best_href}
           inactive_class={@inactive_class}
-          label_class={@label_class}
         />
       </li>
     <% end %>
@@ -680,14 +689,8 @@ defmodule GamendWeb.HostLayoutNavigation do
   end
 
   # A link that can be drawn as its icon (a phone's bar, or the desktop bar
-  # under its `"label_class"`): one with an icon that is not a readonly badge.
+  # without its labels): one with an icon that is not a readonly badge.
   defp icon_only?(entry), do: is_binary(entry["icon"]) and not readonly?(entry)
-
-  # The navigation's `"label_class"`: classes on each desktop label beside an
-  # icon, so a host whose labels outgrow the bar hides them below a width it
-  # names (`"max-[110rem]:sr-only"`). The host's Tailwind must scan its config.
-  defp label_class(%{"label_class" => class}) when is_binary(class) and class != "", do: class
-  defp label_class(_navigation), do: nil
 
   attr :current_scope, :map, required: true
   attr :current_path, :string, default: nil
@@ -807,19 +810,18 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :current_path, :string, default: nil
   attr :inactive_class, :string, required: true
   attr :best_href, :string, default: nil
-  attr :label_class, :string, default: nil
 
   defp main_nav_link_item(assigns) do
     active? = sibling_active?(assigns.link, assigns.current_path, assigns[:best_href])
-    # The navigation's `"label_class"` reaches only a label beside an icon;
-    # the label is then also the tooltip, for when the class hides it.
-    label_class = if(icon_only?(assigns.link), do: assigns.label_class)
+    icon_only? = icon_only?(assigns.link)
 
+    # A label beside an icon goes where the bar is too narrow for it, and is
+    # the tooltip then.
     assigns =
       assign(assigns,
         active?: active?,
-        label_class: label_class,
-        title: if(label_class, do: translate_label(assigns.link["label"]))
+        label_class: if(icon_only?, do: fit_label()),
+        title: if(icon_only?, do: translate_label(assigns.link["label"]))
       )
 
     ~H"""

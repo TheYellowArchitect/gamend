@@ -32,6 +32,7 @@ import {startAvatarFallback} from "./avatar_fallback"
 import {startVideoClickToPlay} from "./video_click_to_play"
 import {startConnectionState} from "./connection_state"
 import {startSearchPalette} from "./search_palette"
+import {startNavbarFit} from "./navbar_fit"
 import {startAnonymousSession} from "./anonymous_session"
 import {startLiveNav} from "./live_nav"
 import {startBackLink} from "./back_link"
@@ -261,11 +262,15 @@ const Hooks = {
       this.bindDropdowns()
       document.addEventListener("click", this.onDocumentClick)
       document.addEventListener("keydown", this.onEscape)
+      this.navbarFit = startNavbarFit(this.el)
     },
     updated() {
       this.bindDropdowns()
+      // A balance or a count that moved can change what fits.
+      this.navbarFit?.refit()
     },
     destroyed() {
+      this.navbarFit?.stop()
       this.boundDropdowns.forEach((dropdown) => {
         dropdown.removeEventListener("toggle", this.onToggle)
       })
@@ -488,6 +493,8 @@ startLocalTime()
 // element. Started here so it works on pages with no LiveView at all.
 startSearchPalette()
 startLastPage()
+// Here too for a page with no LiveView, whose navbar no hook mounts.
+startNavbarFit(document.getElementById("main-navbar"))
 
 // Smooth scrolling for in-page anchors — armed on the reader's first input,
 // not in the markup. `scroll-behavior: smooth` on <html> also governs scrolls

@@ -243,13 +243,14 @@ Register a `:pages` collection (`nesting: :tree`, `base_path: "/"`) and a markdo
 
 Use the navigation object to move nav structure into config. Each section accepts normal links, or dropdown groups with an items array. primary_links render in the main nav for everyone, guest_links render only for signed-out visitors, authenticated_links render only for signed-in users, and account_links render inside the account dropdown. Notifications, locale switching, theme toggling, and logout stay code-owned.
 
+The bar measures what it has room for. Where the links do not fit spelled out they show as icons, the label as the tooltip (give each link an `icon`); then the account button drops the reader's name; then the whole nav becomes the menu. No breakpoint to set: it follows your links, the reader's language and what the bar shows.
+
 | Section | Description |
 |---|---|
 | `primary_links` | Always-visible main nav links |
 | `guest_links` | Additional links shown only to signed-out visitors |
 | `authenticated_links` | Additional links shown only to signed-in users |
 | `account_links` | Custom links inserted into the account dropdown |
-| `label_class` | Classes on each desktop label beside an icon. `"max-[110rem]:sr-only"` draws the links as icons below 1760 px, each label kept for screen readers and as the tooltip. Your Tailwind must scan the config file. |
 
 | Property | Type | Description |
 |---|---|---|
