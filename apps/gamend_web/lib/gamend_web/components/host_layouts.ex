@@ -83,7 +83,6 @@ defmodule GamendWeb.HostLayouts do
     {["footer", "sections", "links"], "label"},
     {["footer", "sections", "links"], "badge"},
     {["navigation", "primary_links"], "label"},
-    {["navigation", "primary_links"], "short_label"},
     {["navigation", "primary_links"], "badge"},
     {["navigation", "primary_links", "items"], "label"},
     {["navigation", "primary_links", "items"], "badge"},

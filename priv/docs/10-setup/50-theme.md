@@ -268,7 +268,6 @@ Two settings on the navigation object itself change its shape:
 | `auth` | string | Visibility level: `"any"` — visible to everyone (default) `"unauthenticated"` — visible only to signed-out visitors `"authenticated"` — visible only to logged-in users `"admin"` — visible only to admin users |
 | `admin_only` | boolean | Shortcut for auth="admin" on links or dropdown groups. |
 | `count` | string | A `{Module.fun}` token: `fun/1` gets the reader's scope and returns how many things wait for them there (quests to claim). Drawn as a red number after the label, like unread notifications; nothing at 0. A dropdown group shows its items' total. |
-| `short_label` | string | A shorter name for the phone's tab bar (`"Rankings"` for `"Leaderboards"`). Translated like the label; a tab shows whichever of the two is shorter in the reader's language. |
 | `tone` | string | A name your stylesheet colours: give `[data-tone="<name>"]` a `--nav-tone` (one per theme). The link's icon takes it, and the page's own link a tint of it instead of the primary fill. Core sets no colours. |
 
 Example: grouped public links plus admin-only account entry:

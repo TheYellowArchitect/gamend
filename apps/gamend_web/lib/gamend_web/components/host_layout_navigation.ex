@@ -515,10 +515,8 @@ defmodule GamendWeb.HostLayoutNavigation do
   @doc """
   The sidebar's phone form (`"layout": "sidebar"`, 2026-10-22): the same
   links in a bar along the bottom of the screen below `md`, one tab each, the
-  icon over a short label. A link's `"short_label"` is drawn where it is
-  shorter, in the reader's language, than its label: `"Rankings"` for
-  `"Leaderboards"`, while German keeps "Ranglisten" over "Platzierungen".
-  The shell pads the page by its height, so nothing ends under it.
+  icon over its label. The shell pads the page by its height, so nothing ends
+  under it.
   """
   def tab_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
@@ -528,15 +526,19 @@ defmodule GamendWeb.HostLayoutNavigation do
     ~H"""
     <nav
       id="tab-nav"
-      class={[
-        "fixed inset-x-0 bottom-0 z-40 grid grid-flow-col auto-cols-fr md:hidden",
-        "border-t border-base-300 bg-base-100 px-0.5 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
-      ]}
+      class={
+        [
+          "fixed inset-x-0 bottom-0 z-40 grid grid-flow-col md:hidden",
+          # Each tab at least its longest word, so a word is never broken
+          # ("Leaderboards"); the room left is shared out evenly.
+          "auto-cols-[minmax(min-content,1fr)]",
+          "border-t border-base-300 bg-base-100 px-0.5 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+        ]
+      }
     >
       <.side_nav_item
         :for={link <- @links}
         link={link}
-        label={short_label(link)}
         compact
         active?={sibling_active?(link, @current_path, @best_href)}
       />
@@ -544,18 +546,8 @@ defmodule GamendWeb.HostLayoutNavigation do
     """
   end
 
-  # The tab's words: the shorter of the link's `"short_label"` and its label,
-  # each as the reader's language has it.
-  defp short_label(link) do
-    [link["short_label"], link["label"]]
-    |> Enum.filter(&(is_binary(&1) and &1 != ""))
-    |> Enum.map(&translate_label/1)
-    |> Enum.min_by(&String.length/1)
-  end
-
   attr :link, :map, required: true
   attr :active?, :boolean, default: false
-  attr :label, :string, default: nil, doc: "the words; the link's label when nil"
   attr :compact, :boolean, default: false, doc: "the tab bar's cell: smaller words, less room"
 
   # One sidebar link, and one tab of the tab bar: in the rail and the tab bar
@@ -564,8 +556,6 @@ defmodule GamendWeb.HostLayoutNavigation do
   # end beside it. The layout follows the sidebar's width (`@container/side`);
   # the tab bar is no such container, so its tabs are the rail's.
   defp side_nav_item(assigns) do
-    assigns = assign(assigns, :label, assigns.label || translate_label(assigns.link["label"]))
-
     ~H"""
     <a
       href={if(disabled?(@link), do: nil, else: @link["href"])}
@@ -592,8 +582,11 @@ defmodule GamendWeb.HostLayoutNavigation do
       ]}
     >
       <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link, "size-6 shrink-0")} />
-      <span class="line-clamp-2 min-w-0 max-w-full break-words hyphens-auto @min-[8rem]/side:flex-1 @min-[8rem]/side:truncate">
-        {@label}
+      <span class={[
+        "line-clamp-2 min-w-0 max-w-full @min-[8rem]/side:flex-1 @min-[8rem]/side:truncate",
+        !@compact && "break-words hyphens-auto"
+      ]}>
+        {translate_label(@link["label"])}
       </span>
       <span class="hidden @min-[8rem]/side:contents"><.nav_badge entry={@link} /></span>
       <.count_pill
