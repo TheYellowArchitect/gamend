@@ -333,6 +333,10 @@ defmodule GamendWeb.CoreComponents do
     default: nil,
     doc: "on the mark, layout only: `max-sm:hidden` where a switcher shares a phone's row"
 
+  attr :tone, :string,
+    default: nil,
+    doc: "the mark's colour, as its navbar link's `\"tone\"` (`GamendWeb.HostLayouts.nav_tone/1`)"
+
   attr :rest, :global
   slot :inner_block, required: true
 
@@ -345,21 +349,26 @@ defmodule GamendWeb.CoreComponents do
   `icon` is the page's mark beside its words (2026-10-16): the one its link
   in the navbar wears (`GamendWeb.HostLayouts.nav_icon/2`), so a reader
   sees where they are by the same picture.
+
+  In a heading row a host measures (`data-heading-fit`, a host's
+  `heading-title` and `fit-*` variants), the mark goes and the words get
+  smaller where the row has no room, so the row stays one line; with no
+  such row, or no host styles for it, those classes do nothing.
   """
   def page_title(assigns) do
     ~H"""
     <.dynamic_tag
       tag_name={@tag}
       class={[
-        "text-3xl font-black text-base-content sm:text-4xl",
+        "heading-title text-3xl font-black text-base-content sm:text-4xl",
         @icon && "flex min-w-0 items-center gap-3",
         @class
       ]}
       {@rest}
     >
       <%= if @icon do %>
-        <.title_icon name={@icon} class={@icon_class} />
-        <span class="min-w-0 break-words">{render_slot(@inner_block)}</span>
+        <.title_icon name={@icon} class={"fit-icon:hidden #{@icon_class}"} tone={@tone} />
+        <span class="min-w-0 break-words fit-cut:truncate">{render_slot(@inner_block)}</span>
       <% else %>
         {render_slot(@inner_block)}
       <% end %>
@@ -370,14 +379,23 @@ defmodule GamendWeb.CoreComponents do
   attr :name, :string, required: true, doc: "a `hero-*` icon"
   attr :class, :string, default: nil, doc: "layout only"
 
+  attr :tone, :string,
+    default: nil,
+    doc: "its navbar link's `\"tone\"`: the colour the host gives it, else the muted text"
+
   @doc """
-  The mark beside a page's title, at the title's size and in the muted
-  text colour: `page_title/1` draws it from its `icon`; a heading whose
-  words are a switcher's button draws it beside them.
+  The mark beside a page's title, at the title's size: `page_title/1` draws
+  it from its `icon`; a heading whose words are a switcher's button draws it
+  beside them. In the muted text colour, or in its section's colour where its
+  navbar link has a `"tone"` (2026-10-22), so the title wears what the
+  sidebar does.
   """
   def title_icon(assigns) do
     ~H"""
-    <.icon name={@name} class={"size-8 shrink-0 text-muted sm:size-9 #{@class}"} />
+    <span :if={@tone} data-tone={@tone} class="contents">
+      <.icon name={@name} class={"size-8 shrink-0 text-(--nav-tone) sm:size-9 #{@class}"} />
+    </span>
+    <.icon :if={!@tone} name={@name} class={"size-8 shrink-0 text-muted sm:size-9 #{@class}"} />
     """
   end
 

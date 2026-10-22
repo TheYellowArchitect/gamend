@@ -630,9 +630,12 @@ defmodule GamendWeb.QuestsLive do
       <div class="space-y-6">
         <%!-- Header --%>
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div class="flex items-center gap-3">
+          <div data-heading-fit class="flex items-center gap-3">
             <.back_link href={home_path()} />
-            <.page_title icon={GamendWeb.HostLayouts.nav_icon("/quests", "hero-trophy-solid")}>
+            <.page_title
+              icon={GamendWeb.HostLayouts.nav_icon("/quests", "hero-trophy-solid")}
+              tone={GamendWeb.HostLayouts.nav_tone("/quests")}
+            >
               {gettext("Quests")}
               <span class="text-muted font-normal">({@total_count})</span>
             </.page_title>

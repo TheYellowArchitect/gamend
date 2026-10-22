@@ -72,9 +72,12 @@ defmodule GamendWeb.StatsLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div class="space-y-6">
-        <div class="flex items-center gap-3">
+        <div data-heading-fit class="flex items-center gap-3">
           <.back_link href={home_path()} />
-          <.page_title icon={GamendWeb.HostLayouts.nav_icon("/stats", "hero-chart-pie-solid")}>
+          <.page_title
+            icon={GamendWeb.HostLayouts.nav_icon("/stats", "hero-chart-pie-solid")}
+            tone={GamendWeb.HostLayouts.nav_tone("/stats")}
+          >
             {gettext("Server stats")}
           </.page_title>
         </div>

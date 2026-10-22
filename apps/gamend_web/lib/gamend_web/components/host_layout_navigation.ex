@@ -454,7 +454,9 @@ defmodule GamendWeb.HostLayoutNavigation do
   label under the icon) below it, on a full-screen page, and where the reader
   collapsed it. The button at its foot sets `<html data-side="rail">`, which
   this browser keeps and sets again before the next page paints
-  (`side_nav.js`, from `theme-init.js`), as it does the theme. An item lays
+  (`side_nav.js`, from `theme-init.js`), as it does the theme. The button is
+  its chevron alone, turning with the state; the width moves over the host's
+  `--motion-fold`, as the page's margin does (`HostLayoutShell`). An item lays
   itself out by the sidebar's width (a container query), so both states are
   one markup. A link's `"tone"` colours its icon and the page's own tint
   (`tone/1`). Groups, drawn entries and readonly badges stay in the bar
@@ -470,7 +472,8 @@ defmodule GamendWeb.HostLayoutNavigation do
       id="side-nav"
       class={[
         "@container/side fixed inset-y-0 start-0 z-40 hidden md:flex flex-col gap-1 w-24",
-        "overflow-y-auto overscroll-contain border-e border-base-300 bg-base-100 px-1.5 py-3",
+        "overflow-y-auto overflow-x-hidden overscroll-contain border-e border-base-300 bg-base-100 px-1.5 py-3",
+        "transition-[width] duration-(--motion-fold) ease-(--motion-out) motion-reduce:transition-none",
         !@flush && "xl:w-56 xl:[[data-side=rail]_&]:w-24"
       ]}
     >
@@ -485,17 +488,18 @@ defmodule GamendWeb.HostLayoutNavigation do
         type="button"
         data-side-toggle
         class={[
-          "mt-auto hidden xl:flex flex-col items-center gap-1 rounded-field px-1 py-2",
-          "text-[11px] font-semibold text-muted hover:bg-base-200",
-          "@min-[8rem]/side:flex-row @min-[8rem]/side:gap-3 @min-[8rem]/side:px-3 @min-[8rem]/side:text-sm"
+          "mt-auto hidden xl:flex items-center justify-center rounded-field px-1 py-2",
+          "text-muted hover:bg-base-200 @min-[8rem]/side:justify-start @min-[8rem]/side:px-3"
         ]}
       >
-        <span class="contents [[data-side=rail]_&]:hidden">
-          <.icon name="hero-chevron-left-solid" class="size-5 shrink-0 rtl:-scale-x-100" />
+        <.icon
+          name="hero-chevron-left-solid"
+          class="size-5 shrink-0 rtl:-scale-x-100 motion-ease [[data-side=rail]_&]:rotate-180"
+        />
+        <span class="sr-only [[data-side=rail]_&]:hidden">
           {GamendWeb.HostLayouts.translate("Collapse")}
         </span>
-        <span class="hidden [[data-side=rail]_&]:contents">
-          <.icon name="hero-chevron-right-solid" class="size-5 shrink-0 rtl:-scale-x-100" />
+        <span class="hidden [[data-side=rail]_&]:inline sr-only">
           {GamendWeb.HostLayouts.translate("Expand")}
         </span>
       </button>
@@ -516,11 +520,13 @@ defmodule GamendWeb.HostLayoutNavigation do
   The sidebar's phone form (`"layout": "sidebar"`, 2026-10-22): the same
   links in a bar along the bottom of the screen below `md`, one tab each, the
   icon over its label. The shell pads the page by its height, so nothing ends
-  under it.
+  under it. A link marked `"mobile": "hidden"` is the sidebar's only: a
+  phone's bar has room for so many tabs, and its section's pages light the
+  link that also claims them (its `"active"` prefixes).
   """
   def tab_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
-    links = Enum.filter(assigns.primary_links, &side_link?/1)
+    links = Enum.filter(assigns.primary_links, &(side_link?(&1) and not phone_hidden?(&1)))
     assigns = assign(assigns, links: links, best_href: best_href(links, assigns.current_path))
 
     ~H"""
@@ -885,6 +891,9 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp pinned_link?(entry) do
     Map.get(entry, "mobile") == "pinned" and not dropdown_entry?(entry)
   end
+
+  # A link left out of the phone's tab bar (`tab_nav/1`).
+  defp phone_hidden?(entry), do: Map.get(entry, "mobile") == "hidden"
 
   # A link that can be drawn as its icon (a phone's bar, or the desktop bar
   # without its labels): one with an icon that is not a readonly badge.
@@ -1620,12 +1629,19 @@ defmodule GamendWeb.HostLayoutNavigation do
     end
   end
 
+  # The longest claim wins. On a tie the link with fewer `"active"` prefixes
+  # wins: one that owns a section alone (Flashcards, `["/flashcards"]`) is its
+  # own link, one that shares it among others (Dictionary, `["/vocabulary",
+  # "/flashcards"]`) only stands in for it where the other is not drawn.
   defp best_href(entries, current_path) do
     entries
     |> Enum.reject(&dropdown_entry?/1)
     |> Enum.map(&{&1, match_length(&1, current_path)})
     |> Enum.reject(fn {_entry, length} -> is_nil(length) end)
-    |> Enum.max_by(fn {_entry, length} -> length end, fn -> nil end)
+    |> Enum.max_by(
+      fn {entry, claim} -> {claim, -length(List.wrap(entry["active"]))} end,
+      fn -> nil end
+    )
     |> case do
       nil -> nil
       {entry, _length} -> entry["href"]

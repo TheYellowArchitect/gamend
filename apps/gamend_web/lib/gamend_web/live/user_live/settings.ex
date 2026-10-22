@@ -61,7 +61,7 @@ defmodule GamendWeb.UserLive.Settings do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
-      <div class="flex items-center gap-3">
+      <div data-heading-fit class="flex items-center gap-3">
         <.back_link href={home_path()} />
         <.page_title icon="hero-user-circle-solid">{gettext("Account")}</.page_title>
       </div>

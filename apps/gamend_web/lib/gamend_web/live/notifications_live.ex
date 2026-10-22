@@ -16,7 +16,7 @@ defmodule GamendWeb.NotificationsLive do
               screen by 10 px. --%>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div class="flex items-center gap-3">
+            <div data-heading-fit class="flex items-center gap-3">
               <.back_link href={home_path()} />
               <.page_title icon="hero-bell-solid">{gettext("Notifications")}</.page_title>
             </div>

@@ -12,7 +12,7 @@ defmodule GamendWeb.UserLive.Registration do
     <Layouts.app flash={@flash} current_scope={@current_scope} current_path={assigns[:current_path]}>
       <div class="mx-auto max-w-narrow space-y-4">
         <div class="text-center">
-          <div class="flex items-center justify-center gap-3">
+          <div data-heading-fit class="flex items-center justify-center gap-3">
             <.back_link href={home_path()} />
             <.page_title icon="hero-user-plus-solid">{gettext("Register")}</.page_title>
           </div>

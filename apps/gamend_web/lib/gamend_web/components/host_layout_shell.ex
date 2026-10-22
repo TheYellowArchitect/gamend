@@ -80,6 +80,8 @@ defmodule GamendWeb.HostLayoutShell do
       if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh"),
       @side? && "max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
       @side? && "md:ms-24 md:[--bleed-w:calc(100vw-6rem)]",
+      @side? &&
+        "md:transition-[margin-inline-start] md:duration-(--motion-fold) md:ease-(--motion-out) motion-reduce:transition-none",
       @side? && !@flush &&
         "xl:ms-56 xl:[--bleed-w:calc(100vw-14rem)] xl:[[data-side=rail]_&]:ms-24 xl:[[data-side=rail]_&]:[--bleed-w:calc(100vw-6rem)]"
     ]}>

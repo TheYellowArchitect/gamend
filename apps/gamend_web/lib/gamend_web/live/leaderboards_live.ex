@@ -125,7 +125,7 @@ defmodule GamendWeb.LeaderboardsLive do
       <div class="space-y-6">
         <%!-- One title: a board's own (its icon and name), else the list's.
               Back: from a board to the list, from the list home. --%>
-        <div class="flex items-center gap-3">
+        <div data-heading-fit class="flex items-center gap-3">
           <.back_link
             :if={@selected_leaderboard}
             navigate={
@@ -140,13 +140,14 @@ defmodule GamendWeb.LeaderboardsLive do
             <.entity_icon
               icon_url={@selected_leaderboard.icon_url}
               type={:leaderboard}
-              class="size-8 shrink-0 text-muted sm:size-9"
+              class="size-8 shrink-0 text-muted sm:size-9 fit-icon:hidden"
             />
-            <span class="min-w-0 break-words">{@selected_leaderboard.title}</span>
+            <span class="min-w-0 break-words fit-cut:truncate">{@selected_leaderboard.title}</span>
           </.page_title>
           <.page_title
             :if={!@selected_leaderboard}
             icon={GamendWeb.HostLayouts.nav_icon("/leaderboards", "hero-chart-bar-solid")}
+            tone={GamendWeb.HostLayouts.nav_tone("/leaderboards")}
           >
             {gettext("Leaderboards")}
             <span class="text-muted font-normal">({@count})</span>

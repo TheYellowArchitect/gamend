@@ -109,15 +109,23 @@ defmodule GamendWeb.ContentPages do
   defp content_page(assigns) do
     ~H"""
     <div class="space-y-6">
-      <div class="flex flex-row items-center justify-between gap-3">
+      <%!-- One line: in a host that measures it (`data-heading-fit`), the
+            other page's link is its mark alone where the row has no room
+            for its name. --%>
+      <div data-heading-fit class="flex flex-row items-center justify-between gap-3">
         <div class="flex min-w-0 items-center gap-3">
           <.back_link href={home_path()} />
           <.page_title icon={@icon}>{@title}</.page_title>
         </div>
 
-        <.link :if={@sibling_path} href={@sibling_path} class="btn btn-surface btn-sm">
+        <.link
+          :if={@sibling_path}
+          href={@sibling_path}
+          class="btn btn-surface btn-sm"
+          title={@sibling_label}
+        >
           <.icon name={@sibling_icon} class="size-4" />
-          {@sibling_label}
+          <span class="fit-menus:sr-only">{@sibling_label}</span>
         </.link>
       </div>
 
@@ -165,8 +173,13 @@ defmodule GamendWeb.ContentPages do
 
         <div :if={@blog_available?}>
           <%!-- Wraps rather than squeezes: on a phone, "Feuille de route"
-                and "Journal des modifications" do not fit beside the title. --%>
-          <div class="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                and "Journal des modifications" do not fit beside the title.
+                In a host that measures the row (`data-heading-fit`), one
+                line, the links their marks alone where it has no room. --%>
+          <div
+            data-heading-fit
+            class="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3"
+          >
             <div class="flex min-w-0 items-center gap-3">
               <.back_link href={home_path()} />
               <.page_title icon="hero-newspaper-solid">{gettext("Blog")}</.page_title>
@@ -176,16 +189,20 @@ defmodule GamendWeb.ContentPages do
               <.link
                 :if={@roadmap_available?}
                 href={~p"/roadmap"}
+                title={gettext("Roadmap")}
                 class="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-primary"
               >
-                <.icon name="hero-map" class="size-4" /> {gettext("Roadmap")}
+                <.icon name="hero-map" class="size-4" />
+                <span class="fit-menus:sr-only">{gettext("Roadmap")}</span>
               </.link>
               <.link
                 :if={@changelog_available?}
                 href={~p"/changelog"}
+                title={gettext("Changelog")}
                 class="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-primary"
               >
-                <.icon name="hero-document-text" class="size-4" /> {gettext("Changelog")}
+                <.icon name="hero-document-text" class="size-4" />
+                <span class="fit-menus:sr-only">{gettext("Changelog")}</span>
               </.link>
             </div>
           </div>

@@ -419,6 +419,7 @@ defmodule GamendWeb.GroupsLive do
           <.page_title
             :if={!@selected_group}
             icon={GamendWeb.HostLayouts.nav_icon("/groups", "hero-user-group-solid")}
+            tone={GamendWeb.HostLayouts.nav_tone("/groups")}
           >
             {gettext("Groups")}
           </.page_title>

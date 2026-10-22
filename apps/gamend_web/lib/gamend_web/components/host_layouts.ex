@@ -724,15 +724,42 @@ defmodule GamendWeb.HostLayouts do
   """
   @spec nav_icon(String.t(), String.t() | nil) :: String.t() | nil
   def nav_icon(href, fallback \\ nil) when is_binary(href) do
+    Enum.find_value(nav_links(), fallback, fn link ->
+      link["href"] == href and is_binary(link["icon"]) and link["icon"]
+    end)
+  end
+
+  @doc """
+  The `"tone"` of the navbar link lit on the page at `path` (no locale
+  prefix): its `href`, or one of its `"active"` prefixes, the longest match
+  winning as in the navbar. `/flashcards/spanish` wears the Dictionary's when
+  that link lists `/flashcards` among its prefixes. nil when no toned link
+  covers it. A page's title draws its mark in it (`page_title/1`'s `tone`).
+  """
+  @spec nav_tone(String.t()) :: String.t() | nil
+  def nav_tone(path) when is_binary(path) do
+    nav_links()
+    |> Enum.flat_map(fn link ->
+      tone = link["tone"]
+
+      for prefix <- [link["href"] | List.wrap(link["active"])],
+          is_binary(tone) and tone != "",
+          is_binary(prefix) and String.starts_with?(prefix, "/"),
+          path == prefix or String.starts_with?(path, String.trim_trailing(prefix, "/") <> "/"),
+          do: {String.length(prefix), tone}
+    end)
+    |> Enum.max_by(&elem(&1, 0), fn -> {0, nil} end)
+    |> elem(1)
+  end
+
+  # Every navbar link, a group's items too. The navigation's other values,
+  # `"layout"` and `"menu_button"`, are settings, not lists.
+  defp nav_links do
     navigation()
     |> Map.values()
-    # The link lists; `"layout"` and `"menu_button"` are settings.
     |> Enum.filter(&is_list/1)
     |> Enum.concat()
     |> Enum.flat_map(&[&1 | List.wrap(&1["items"])])
-    |> Enum.find_value(fallback, fn link ->
-      link["href"] == href and is_binary(link["icon"]) and link["icon"]
-    end)
   end
 
   defp navigation_config(provider_theme, en_theme) do
