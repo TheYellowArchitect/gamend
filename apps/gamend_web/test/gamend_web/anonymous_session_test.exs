@@ -196,6 +196,41 @@ defmodule GamendWeb.AnonymousSessionTest do
     Scope.user(socket.assigns.current_scope)
   end
 
+  describe "a guest's navbar" do
+    test "has Log in and Register as its buttons, and no avatar menu" do
+      scope = Scope.for_user(guest())
+
+      html =
+        render_component(&GamendWeb.HostLayoutNavigation.desktop_nav/1, %{
+          current_scope: scope,
+          current_path: "/",
+          navigation: %{},
+          locale: "en"
+        })
+
+      assert html =~ ~s(href="/users/log_in")
+      assert html =~ ~s(href="/users/register")
+      refute html =~ "<details"
+      refute html =~ "/users/log_out"
+    end
+
+    test "a registered account keeps its avatar menu, with no Log in" do
+      scope = Scope.for_user(Gamend.AccountsFixtures.user_fixture())
+
+      html =
+        render_component(&GamendWeb.HostLayoutNavigation.desktop_nav/1, %{
+          current_scope: scope,
+          current_path: "/",
+          navigation: %{},
+          locale: "en"
+        })
+
+      assert html =~ "<details"
+      assert html =~ "/users/log_out"
+      refute html =~ ~s(href="/users/log_in")
+    end
+  end
+
   describe "a guest who signs up" do
     test "gets the email on the account they already have, so it keeps everything" do
       guest = guest()

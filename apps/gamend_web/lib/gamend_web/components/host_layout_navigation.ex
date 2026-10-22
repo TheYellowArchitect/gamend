@@ -37,6 +37,8 @@ defmodule GamendWeb.HostLayoutNavigation do
         do: update(assigns, :primary_links, &Enum.reject(&1, fn entry -> side_link?(entry) end)),
         else: assigns
 
+    assigns = assign(assigns, :guest?, Scope.anonymous?(assigns.current_scope))
+
     ~H"""
     <ul class="hidden [[data-nav~=bar]_&]:flex flex-row px-1 space-x-4 items-center">
       <.main_nav_links
@@ -63,62 +65,20 @@ defmodule GamendWeb.HostLayoutNavigation do
             inactive_class="btn-surface"
           />
         <% end %>
-
-        <.nav_divider />
-
-        <li>
-          <details class="dropdown dropdown-end" data-navbar-dropdown>
-            <summary
-              title={GamendWeb.HostLayouts.translate("Account")}
-              class={[
-                "btn gap-1 list-none",
-                if(
-                  here?(@current_path, "/users/log_in") or
-                    here?(@current_path, "/users/register"),
-                  do: "btn-primary",
-                  else: "btn-surface"
-                )
-              ]}
-            >
-              <.icon name="hero-user-circle-solid" class="w-4 h-4" />
-              <span class={fit_label()}>{GamendWeb.HostLayouts.translate("Account")}</span>
-              <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
-            </summary>
-            <ul class="menu menu-sm dropdown-content mt-2 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-56">
-              <li>
-                <.link
-                  href={lp(~p"/users/log_in")}
-                  class={[
-                    if(here?(@current_path, "/users/log_in"),
-                      do: "menu-active",
-                      else: ""
-                    )
-                  ]}
-                >
-                  <.icon name="hero-arrow-right-on-rectangle-solid" class="w-4 h-4" />
-                  {GamendWeb.HostLayouts.translate("Log in")}
-                </.link>
-              </li>
-              <li>
-                <.link
-                  href={lp(~p"/users/register")}
-                  class={[
-                    if(here?(@current_path, "/users/register"),
-                      do: "menu-active",
-                      else: ""
-                    )
-                  ]}
-                >
-                  <.icon name="hero-user-plus-solid" class="w-4 h-4" />
-                  {GamendWeb.HostLayouts.translate("Register")}
-                </.link>
-              </li>
-            </ul>
-          </details>
-        </li>
       <% end %>
 
-      <%= if @current_scope do %>
+      <%!-- Log in and Register, each its own button wherever the bar shows
+            (2026-10-23, user): a dropdown hid the two things a visitor came
+            to press. Where the bar does not fit, a phone always, they are
+            the menu's (`mobile_nav/1`). A guest account gets the same two
+            and no avatar: an avatar beside Log in said both "you are in"
+            and "sign in", and Register keeps what is on the account. --%>
+      <%= if is_nil(@current_scope) or @guest? do %>
+        <.nav_divider />
+        <.auth_buttons current_path={@current_path} />
+      <% end %>
+
+      <%= if @current_scope && !@guest? do %>
         <.nav_divider />
         <li>
           <.user_menu
@@ -228,29 +188,15 @@ defmodule GamendWeb.HostLayoutNavigation do
           </.link>
         </li>
         <%!-- A guest account has no way back in once its session is gone, so
-              it is never offered Log out: Register keeps everything on it,
-              Log in moves it onto an account they already have. --%>
-        <%= if @anonymous? do %>
-          <li class="border-t border-base-300 mt-1 pt-1">
-            <.link href={lp(~p"/users/register")}>
-              <.icon name="hero-user-plus-solid" class="w-4 h-4" />
-              {GamendWeb.HostLayouts.translate("Register")}
-            </.link>
-          </li>
-          <li>
-            <.link href={lp(~p"/users/log_in")}>
-              <.icon name="hero-arrow-right-on-rectangle-solid" class="w-4 h-4" />
-              {GamendWeb.HostLayouts.translate("Log in")}
-            </.link>
-          </li>
-        <% else %>
-          <li class="border-t border-base-300 mt-1 pt-1">
-            <.link href={~p"/users/log_out"} method="delete">
-              <.icon name="hero-arrow-left-on-rectangle-solid" class="w-4 h-4" />
-              {GamendWeb.HostLayouts.translate("Log out")}
-            </.link>
-          </li>
-        <% end %>
+              it is never offered Log out. `desktop_nav/1` draws a guest no
+              menu at all: Log in and Register are its buttons
+              (`auth_buttons/1`). --%>
+        <li :if={!@anonymous?} class="border-t border-base-300 mt-1 pt-1">
+          <.link href={~p"/users/log_out"} method="delete">
+            <.icon name="hero-arrow-left-on-rectangle-solid" class="w-4 h-4" />
+            {GamendWeb.HostLayouts.translate("Log out")}
+          </.link>
+        </li>
       </ul>
     </details>
     """
@@ -1890,6 +1836,41 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp state_class(_entry, false, inactive), do: inactive
 
   defp tone_active, do: @tone_active
+
+  attr :current_path, :string, default: nil
+
+  # The bar's Log in and Register (`desktop_nav/1`). Their words stay at every
+  # stage `navbar_fit.js` steps through: an icon alone reads as neither, and
+  # the bar gives way to the menu before it would drop them. One is
+  # `btn-primary` (2026-10-23, user): the page the reader is on, else
+  # Register, the one a new reader should press.
+  defp auth_buttons(assigns) do
+    primary =
+      if here?(assigns.current_path, ~p"/users/log_in"),
+        do: ~p"/users/log_in",
+        else: ~p"/users/register"
+
+    assigns = assign(assigns, :primary, primary)
+
+    ~H"""
+    <li :for={{path, icon, label} <- auth_entries()}>
+      <.link
+        href={lp(path)}
+        class={["btn gap-1", if(path == @primary, do: "btn-primary", else: "btn-surface")]}
+      >
+        <.icon name={icon} class="w-4 h-4" />
+        <span>{GamendWeb.HostLayouts.translate(label)}</span>
+      </.link>
+    </li>
+    """
+  end
+
+  defp auth_entries do
+    [
+      {~p"/users/log_in", "hero-arrow-right-on-rectangle-solid", "Log in"},
+      {~p"/users/register", "hero-user-plus-solid", "Register"}
+    ]
+  end
 
   defp nav_divider(assigns) do
     ~H"""

@@ -269,6 +269,43 @@ defmodule GamendWeb.HostLayoutNavigationTest do
     assert length(Regex.scan(~r/<details(?![^>]*data-navbar-dropdown)[^>]*>/, html)) == 3
   end
 
+  test "a visitor's bar has Log in and Register as two buttons, not a dropdown" do
+    html =
+      render_component(
+        &HostLayoutNavigation.desktop_nav/1,
+        base_assigns([%{"label" => "Play", "href" => "/play"}])
+      )
+
+    assert html =~ ~s(href="/users/log_in")
+    assert html =~ ~s(href="/users/register")
+    refute html =~ "<details"
+  end
+
+  test "one of the two is primary: Register, or Log in on its own page" do
+    at = fn path ->
+      render_component(&HostLayoutNavigation.desktop_nav/1, %{
+        base_assigns([])
+        | current_path: path
+      })
+    end
+
+    for path <- ["/", "/users/register"] do
+      assert at.(path) =~ ~r{href="/users/register"\s+class="btn gap-1 btn-primary"}, path
+      assert at.(path) =~ ~r{href="/users/log_in"\s+class="btn gap-1 btn-surface"}, path
+    end
+
+    assert at.("/users/log_in") =~ ~r{href="/users/log_in"\s+class="btn gap-1 btn-primary"}
+    assert at.("/users/log_in") =~ ~r{href="/users/register"\s+class="btn gap-1 btn-surface"}
+  end
+
+  test "mobile: a visitor's menu still holds Log in and Register" do
+    html = render_component(&HostLayoutNavigation.mobile_nav/1, base_assigns([]))
+    [_before_menu, menu] = String.split(html, "dropdown-content", parts: 2)
+
+    assert menu =~ ~s(href="/users/log_in")
+    assert menu =~ ~s(href="/users/register")
+  end
+
   test "mobile: pinned items render inline (outside the dropdown menu)" do
     html =
       render_component(

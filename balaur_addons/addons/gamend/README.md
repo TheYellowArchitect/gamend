@@ -14,7 +14,7 @@ let reply = await task::wait(lobbies::quick_join(self.node, map().with("title", 
 if e.get("kind").as_str() == lobby::MEMBER_JOINED { }
 ```
 
-266 operations in 42 modules, and 98 realtime events.
+273 operations in 44 modules, and 98 realtime events.
 
 Beside the generated modules and `events.bs`, written by hand:
 
@@ -192,6 +192,17 @@ Admin – Ready checks.
 | `cancel_ready_check(node, id)` | `DELETE /api/v1/admin/ready_checks/{id}` | Force-cancel a pending ready check (admin) |
 | `list_ready_checks(node, options)` | `GET /api/v1/admin/ready_checks` | List ready checks (admin) |
 | `ready_check_stats(node)` | `GET /api/v1/admin/ready_checks/stats` | Ready check outcomes over the last 24 hours (admin) |
+
+## admin_results
+
+Admin – Results.
+
+| Function | Call | What it does |
+| --- | --- | --- |
+| `delete_result(node, id)` | `DELETE /api/v1/admin/results/{id}` | Delete a result and its events (admin) |
+| `get_result(node, id)` | `GET /api/v1/admin/results/{id}` | Get a result (admin) |
+| `list_result_events(node, id, options)` | `GET /api/v1/admin/results/{id}/events` | List a result's events (admin) |
+| `list_results(node, options)` | `GET /api/v1/admin/results` | List results (admin) |
 
 ## admin_retention
 
@@ -531,6 +542,16 @@ Reports.
 | --- | --- | --- |
 | `create_report(node, params)` | `POST /api/v1/reports` | File a report |
 | `list_report_kinds(node)` | `GET /api/v1/reports/kinds` | Report kinds |
+
+## results
+
+Results.
+
+| Function | Call | What it does |
+| --- | --- | --- |
+| `get_result(node, id)` | `GET /api/v1/results/{id}` | Get a result |
+| `list_result_events(node, id, options)` | `GET /api/v1/results/{id}/events` | List a result's events |
+| `list_results(node, options)` | `GET /api/v1/results` | List the caller's results |
 
 ## signaling
 
