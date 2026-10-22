@@ -33,6 +33,7 @@ import {startVideoClickToPlay} from "./video_click_to_play"
 import {startConnectionState} from "./connection_state"
 import {startSearchPalette} from "./search_palette"
 import {startNavbarFit} from "./navbar_fit"
+import {startSideNav} from "./side_nav"
 import {startAnonymousSession} from "./anonymous_session"
 import {startLiveNav} from "./live_nav"
 import {startBackLink} from "./back_link"
@@ -495,6 +496,8 @@ startSearchPalette()
 startLastPage()
 // Here too for a page with no LiveView, whose navbar no hook mounts.
 startNavbarFit(document.getElementById("main-navbar"))
+// The sidebar's Collapse / Expand, on every page.
+startSideNav()
 
 // Smooth scrolling for in-page anchors — armed on the reader's first input,
 // not in the markup. `scroll-behavior: smooth` on <html> also governs scrolls

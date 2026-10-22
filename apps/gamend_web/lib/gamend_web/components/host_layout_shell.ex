@@ -26,7 +26,10 @@ defmodule GamendWeb.HostLayoutShell do
   def app(assigns) do
     # `nav_key` is `Layouts.app`'s attr; a shell rendered on its own (a core
     # template, a test) has none. Put, not assigned: nothing changes.
-    assigns = Map.put_new(assigns, :nav_key, nil)
+    assigns =
+      assigns
+      |> Map.put_new(:nav_key, nil)
+      |> assign(:side?, GamendWeb.HostLayoutNavigation.side_layout?(assigns[:navigation]))
 
     ~H"""
     <%!-- First focusable element on every page: invisible until it receives
@@ -39,7 +42,47 @@ defmodule GamendWeb.HostLayoutShell do
       {GamendWeb.HostLayouts.translate("Skip to content")}
     </a>
     <.background_icons background_icons={@background_icons} />
-    <div class={["flex flex-col", if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh")]}>
+    <%!-- The sidebar (`"layout": "sidebar"`) from `md` up, the page's column
+          moved over by its width; the header keeps the rest. --%>
+    <GamendWeb.HostLayoutNavigation.side_nav
+      :if={@side?}
+      current_scope={@current_scope}
+      current_path={@current_path}
+      navigation={@navigation}
+      locale={@locale}
+      nav_key={@nav_key}
+      flush={@flush}
+    >
+      <:logo>
+        <a
+          href={GamendWeb.HostLayouts.localized_href(~p"/", @locale)}
+          class="mb-2 flex items-center justify-center gap-2 rounded-field py-1.5 @min-[8rem]/side:justify-start @min-[8rem]/side:px-2"
+        >
+          <.site_mark theme={@theme} />
+          <span class="text-lg font-bold leading-tight @max-[8rem]/side:sr-only">
+            {Map.get(@theme, "title")}
+          </span>
+        </a>
+      </:logo>
+    </GamendWeb.HostLayoutNavigation.side_nav>
+    <%!-- Below `md` the same links are a tab bar along the bottom; the column
+          ends its height above it. --%>
+    <GamendWeb.HostLayoutNavigation.tab_nav
+      :if={@side?}
+      current_scope={@current_scope}
+      current_path={@current_path}
+      navigation={@navigation}
+      locale={@locale}
+      nav_key={@nav_key}
+    />
+    <div class={[
+      "flex flex-col",
+      if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh"),
+      @side? && "max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
+      @side? && "md:ms-24 md:[--bleed-w:calc(100vw-6rem)]",
+      @side? && !@flush &&
+        "xl:ms-56 xl:[--bleed-w:calc(100vw-14rem)] xl:[[data-side=rail]_&]:ms-24 xl:[[data-side=rail]_&]:[--bleed-w:calc(100vw-6rem)]"
+    ]}>
       <div
         :if={@flush}
         id="navbar-autohide"
@@ -78,7 +121,7 @@ defmodule GamendWeb.HostLayoutShell do
           <a
             href={GamendWeb.HostLayouts.localized_href(~p"/", @locale)}
             data-nav-logo
-            class="flex shrink-0 w-fit items-center gap-2"
+            class={["flex shrink-0 w-fit items-center gap-2", @side? && "md:hidden"]}
           >
             <%!-- Same rule as `CoreComponents.flag/1`: this is on screen at
                   load on every page, so it is fetched with the HTML, decoded
@@ -90,30 +133,7 @@ defmodule GamendWeb.HostLayoutShell do
                   right beside it, so an alt repeating it makes a screen reader
                   say it twice — `image-redundant-alt`. The link is named by
                   that text. --%>
-            <img
-              src={theme_logo(@theme)}
-              width="36"
-              height="36"
-              alt=""
-              loading="eager"
-              decoding="sync"
-              fetchpriority="high"
-              class={theme_logo_dark(@theme) && "[[data-theme=dark]_&]:hidden"}
-            />
-            <%!-- A mark drawn for a light page can vanish on a dark one. The
-                  theme's `logo_dark` takes its place, swapped by the same
-                  attribute the presentation images follow, so no script picks
-                  one and the two never both show. --%>
-            <img
-              :if={theme_logo_dark(@theme)}
-              src={theme_logo_dark(@theme)}
-              width="36"
-              height="36"
-              alt=""
-              loading="eager"
-              decoding="sync"
-              class="hidden [[data-theme=dark]_&]:block"
-            />
+            <.site_mark theme={@theme} priority />
             <%!-- The title shows on a phone too (2026-10-09, user: the logo
                   alone left the bar empty). A two-word title fits a 375 px
                   phone's slot on two lines, and `leading-tight` keeps two
@@ -130,7 +150,7 @@ defmodule GamendWeb.HostLayoutShell do
               {theme_tagline(@theme)}
             </span>
           </a>
-          <.breadcrumbs trail={@breadcrumbs} />
+          <.breadcrumbs trail={@breadcrumbs} side={@side?} />
         </div>
         <%!-- The language picker sits outside both navs: one button in the bar
               at every width, rather than a dropdown up here and a different
@@ -403,6 +423,7 @@ defmodule GamendWeb.HostLayoutShell do
   end
 
   attr :trail, :list, default: []
+  attr :side, :boolean, default: false, doc: "the host's sidebar is on (`side_nav/1`)"
 
   @doc """
   The breadcrumb trail, as `{label, path}` pairs — the last one is the current
@@ -443,7 +464,12 @@ defmodule GamendWeb.HostLayoutShell do
           class="flex min-w-0 items-center gap-2"
           style={"order: #{@last - index}"}
         >
-          <span aria-hidden="true" class="shrink-0">/</span>
+          <%!-- The first follows the site's name; with the sidebar, from
+                `md` up the name is the sidebar's and the trail starts the
+                bar. --%>
+          <span aria-hidden="true" class={["shrink-0", (@side and index == 0) && "md:hidden"]}>
+            /
+          </span>
           <.link
             :if={path}
             href={path}
@@ -463,6 +489,43 @@ defmodule GamendWeb.HostLayoutShell do
         </li>
       </ol>
     </nav>
+    """
+  end
+
+  attr :theme, :map, required: true
+
+  attr :priority, :boolean,
+    default: false,
+    doc: "the header's: fetched first, decoded with the first frame"
+
+  # The site's mark: the theme's logo, and its `logo_dark` in its place on a
+  # dark page. The header's and the sidebar's.
+  defp site_mark(assigns) do
+    ~H"""
+    <img
+      src={theme_logo(@theme)}
+      width="36"
+      height="36"
+      alt=""
+      loading="eager"
+      decoding="sync"
+      fetchpriority={@priority && "high"}
+      class={theme_logo_dark(@theme) && "[[data-theme=dark]_&]:hidden"}
+    />
+    <%!-- A mark drawn for a light page can vanish on a dark one. The
+          theme's `logo_dark` takes its place, swapped by the same
+          attribute the presentation images follow, so no script picks
+          one and the two never both show. --%>
+    <img
+      :if={theme_logo_dark(@theme)}
+      src={theme_logo_dark(@theme)}
+      width="36"
+      height="36"
+      alt=""
+      loading="eager"
+      decoding="sync"
+      class="hidden [[data-theme=dark]_&]:block"
+    />
     """
   end
 

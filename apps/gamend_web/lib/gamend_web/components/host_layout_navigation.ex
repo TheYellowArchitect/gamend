@@ -28,6 +28,15 @@ defmodule GamendWeb.HostLayoutNavigation do
   def desktop_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
 
+    # With the sidebar (`side_nav/1`) the bar keeps only what the sidebar
+    # does not draw: an entry the host draws (a wallet), a readonly badge, a
+    # group. Below `md` there is no sidebar, and `navbar_fit.js` keeps the
+    # phone's menu there whatever fits.
+    assigns =
+      if assigns.side?,
+        do: update(assigns, :primary_links, &Enum.reject(&1, fn entry -> side_link?(entry) end)),
+        else: assigns
+
     ~H"""
     <ul class="hidden [[data-nav~=bar]_&]:flex flex-row px-1 space-x-4 items-center">
       <.main_nav_links
@@ -263,14 +272,21 @@ defmodule GamendWeb.HostLayoutNavigation do
   def mobile_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
 
+    # With the sidebar its links are the sidebar's, and on a phone the tab
+    # bar's (`tab_nav/1`): neither pinned nor in the menu.
+    primary_links =
+      if assigns.side?,
+        do: Enum.reject(assigns.primary_links, &side_link?/1),
+        else: assigns.primary_links
+
     # Items flagged "mobile": "pinned" render inline (left of the hamburger)
     # instead of inside the dropdown, so they stay visible on mobile.
-    pinned = Enum.filter(assigns.primary_links ++ assigns.authenticated_links, &pinned_link?/1)
+    pinned = Enum.filter(primary_links ++ assigns.authenticated_links, &pinned_link?/1)
 
     assigns =
       assign(assigns,
         pinned_links: pinned,
-        primary_links: Enum.reject(assigns.primary_links, &pinned_link?/1),
+        primary_links: Enum.reject(primary_links, &pinned_link?/1),
         authenticated_links: Enum.reject(assigns.authenticated_links, &pinned_link?/1)
       )
 
@@ -290,23 +306,41 @@ defmodule GamendWeb.HostLayoutNavigation do
     <%!-- `contents` where the bar does not fit: its icons and its menu are
           items of the bar's row, so the site language's picker (ordered `1`)
           sits between them and the menu (ordered `2`). --%>
+    <%!-- With the sidebar, the menu button stays where the bar does not fit
+          from `md` up, and is always the phone's (`navbar_fit.js`); what is
+          pinned there is the host's own entries (a wallet). --%>
     <div class="contents [[data-nav~=bar]_&]:hidden">
       <.mobile_pinned_links links={@pinned_links} current_path={@current_path} />
       <details class="dropdown dropdown-end order-2" data-navbar-dropdown>
         <summary
           aria-label={GamendWeb.HostLayouts.translate("Open navigation menu")}
-          class="btn btn-ghost px-1 list-none relative"
+          class={[
+            "btn btn-ghost list-none relative",
+            if(@menu_button == "account", do: "btn-circle", else: "px-1")
+          ]}
         >
           <.count_pill count={@menu_count} class="absolute -top-1 -end-1" />
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            >
-            </path>
-          </svg>
+          <%!-- `"menu_button": "account"`: the menu opens from the reader
+                (their avatar, a person for a visitor), the account being
+                the menu's first section. --%>
+          <%= if @menu_button == "account" do %>
+            <.user_avatar
+              :if={@current_scope}
+              user={Scope.user(@current_scope)}
+              class="size-8"
+            />
+            <.icon :if={!@current_scope} name="hero-user-circle" class="size-8" />
+          <% else %>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              >
+              </path>
+            </svg>
+          <% end %>
         </summary>
         <%!-- The menu is taller than a phone once the Learn/Social/News groups
               and the account section are expanded, and a dropdown does not
@@ -398,6 +432,175 @@ defmodule GamendWeb.HostLayoutNavigation do
         </ul>
       </details>
     </div>
+    """
+  end
+
+  attr :current_scope, :map, default: nil
+  attr :current_path, :string, default: nil
+  attr :navigation, :map, default: %{}
+  attr :locale, :string, required: true
+
+  attr :nav_key, :any,
+    default: nil,
+    doc: "as `desktop_nav/1`'s: what the page changes that an entry shows (a count)"
+
+  attr :flush, :boolean, default: false, doc: "a full-screen page: the rail, never open"
+  slot :logo, required: true, doc: "the site's mark and name, linking home (the shell's)"
+
+  @doc """
+  The sidebar (`"layout": "sidebar"`, 2026-10-22): the host's plain primary
+  links down the page's start edge from `md` up, each its icon and its label.
+  Open (14rem, the label beside the icon) from `xl`; the rail (6rem, the
+  label under the icon) below it, on a full-screen page, and where the reader
+  collapsed it. The button at its foot sets `<html data-side="rail">`, which
+  this browser keeps and sets again before the next page paints
+  (`side_nav.js`, from `theme-init.js`), as it does the theme. An item lays
+  itself out by the sidebar's width (a container query), so both states are
+  one markup. A link's `"tone"` colours its icon and the page's own tint
+  (`tone/1`). Groups, drawn entries and readonly badges stay in the bar
+  (`desktop_nav/1`).
+  """
+  def side_nav(assigns) do
+    assigns = prepare_navigation_assigns(assigns)
+    links = Enum.filter(assigns.primary_links, &side_link?/1)
+    assigns = assign(assigns, links: links, best_href: best_href(links, assigns.current_path))
+
+    ~H"""
+    <nav
+      id="side-nav"
+      class={[
+        "@container/side fixed inset-y-0 start-0 z-40 hidden md:flex flex-col gap-1 w-24",
+        "overflow-y-auto overscroll-contain border-e border-base-300 bg-base-100 px-1.5 py-3",
+        !@flush && "xl:w-56 xl:[[data-side=rail]_&]:w-24"
+      ]}
+    >
+      {render_slot(@logo)}
+      <.side_nav_item
+        :for={link <- @links}
+        link={link}
+        active?={sibling_active?(link, @current_path, @best_href)}
+      />
+      <button
+        :if={!@flush}
+        type="button"
+        data-side-toggle
+        class={[
+          "mt-auto hidden xl:flex flex-col items-center gap-1 rounded-field px-1 py-2",
+          "text-[11px] font-semibold text-muted hover:bg-base-200",
+          "@min-[8rem]/side:flex-row @min-[8rem]/side:gap-3 @min-[8rem]/side:px-3 @min-[8rem]/side:text-sm"
+        ]}
+      >
+        <span class="contents [[data-side=rail]_&]:hidden">
+          <.icon name="hero-chevron-left-solid" class="size-5 shrink-0 rtl:-scale-x-100" />
+          {GamendWeb.HostLayouts.translate("Collapse")}
+        </span>
+        <span class="hidden [[data-side=rail]_&]:contents">
+          <.icon name="hero-chevron-right-solid" class="size-5 shrink-0 rtl:-scale-x-100" />
+          {GamendWeb.HostLayouts.translate("Expand")}
+        </span>
+      </button>
+    </nav>
+    """
+  end
+
+  attr :current_scope, :map, default: nil
+  attr :current_path, :string, default: nil
+  attr :navigation, :map, default: %{}
+  attr :locale, :string, required: true
+
+  attr :nav_key, :any,
+    default: nil,
+    doc: "as `desktop_nav/1`'s: what the page changes that an entry shows (a count)"
+
+  @doc """
+  The sidebar's phone form (`"layout": "sidebar"`, 2026-10-22): the same
+  links in a bar along the bottom of the screen below `md`, one tab each, the
+  icon over a short label. A link's `"short_label"` is drawn where it is
+  shorter, in the reader's language, than its label: `"Rankings"` for
+  `"Leaderboards"`, while German keeps "Ranglisten" over "Platzierungen".
+  The shell pads the page by its height, so nothing ends under it.
+  """
+  def tab_nav(assigns) do
+    assigns = prepare_navigation_assigns(assigns)
+    links = Enum.filter(assigns.primary_links, &side_link?/1)
+    assigns = assign(assigns, links: links, best_href: best_href(links, assigns.current_path))
+
+    ~H"""
+    <nav
+      id="tab-nav"
+      class={[
+        "fixed inset-x-0 bottom-0 z-40 grid grid-flow-col auto-cols-fr md:hidden",
+        "border-t border-base-300 bg-base-100 px-0.5 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+      ]}
+    >
+      <.side_nav_item
+        :for={link <- @links}
+        link={link}
+        label={short_label(link)}
+        compact
+        active?={sibling_active?(link, @current_path, @best_href)}
+      />
+    </nav>
+    """
+  end
+
+  # The tab's words: the shorter of the link's `"short_label"` and its label,
+  # each as the reader's language has it.
+  defp short_label(link) do
+    [link["short_label"], link["label"]]
+    |> Enum.filter(&(is_binary(&1) and &1 != ""))
+    |> Enum.map(&translate_label/1)
+    |> Enum.min_by(&String.length/1)
+  end
+
+  attr :link, :map, required: true
+  attr :active?, :boolean, default: false
+  attr :label, :string, default: nil, doc: "the words; the link's label when nil"
+  attr :compact, :boolean, default: false, doc: "the tab bar's cell: smaller words, less room"
+
+  # One sidebar link, and one tab of the tab bar: in the rail and the tab bar
+  # the label under the icon, small, wrapping; open, beside it, cut where it
+  # does not fit. The count sits on the icon's corner under it, at the row's
+  # end beside it. The layout follows the sidebar's width (`@container/side`);
+  # the tab bar is no such container, so its tabs are the rail's.
+  defp side_nav_item(assigns) do
+    assigns = assign(assigns, :label, assigns.label || translate_label(assigns.link["label"]))
+
+    ~H"""
+    <a
+      href={if(disabled?(@link), do: nil, else: @link["href"])}
+      target={if(@link["external"], do: "_blank", else: nil)}
+      rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
+      aria-current={if(@active?, do: "page")}
+      aria-disabled={if(disabled?(@link), do: "true")}
+      data-tone={tone(@link)}
+      class={[
+        "relative flex flex-col items-center rounded-field border",
+        "text-center font-semibold leading-tight transition-colors",
+        if(@compact,
+          do: "gap-0.5 px-0 py-1.5 text-[10px] tracking-tight",
+          else: "gap-1 px-0.5 py-2 text-[11px]"
+        ),
+        "@min-[8rem]/side:flex-row @min-[8rem]/side:gap-3 @min-[8rem]/side:px-3",
+        "@min-[8rem]/side:text-start @min-[8rem]/side:text-sm",
+        cond do
+          disabled?(@link) -> "border-transparent pointer-events-none opacity-70"
+          @active? and tone(@link) != nil -> tone_active()
+          @active? -> "border-transparent bg-primary text-primary-content"
+          true -> "border-transparent hover:bg-base-200"
+        end
+      ]}
+    >
+      <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link, "size-6 shrink-0")} />
+      <span class="line-clamp-2 min-w-0 max-w-full break-words hyphens-auto @min-[8rem]/side:flex-1 @min-[8rem]/side:truncate">
+        {@label}
+      </span>
+      <span class="hidden @min-[8rem]/side:contents"><.nav_badge entry={@link} /></span>
+      <.count_pill
+        count={@link["count"]}
+        class="absolute top-0.5 end-1 @min-[8rem]/side:static"
+      />
+    </a>
     """
   end
 
@@ -654,6 +857,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           title={if(icon_only?(link), do: translate_label(link["label"]))}
           aria-disabled={if(inert?(link), do: "true")}
           data-motion-text={if(readonly?(link), do: "pop")}
+          data-tone={tone(link)}
           class={
             cond do
               readonly?(link) ->
@@ -662,16 +866,17 @@ defmodule GamendWeb.HostLayoutNavigation do
               disabled?(link) ->
                 "btn btn-ghost btn-sm gap-1 px-2 pointer-events-none cursor-default opacity-70"
 
-              # The page's own link is `btn-primary`, as on the desktop bar.
+              # The page's own link is `btn-primary` (or its tone's tint), as
+              # on the desktop bar.
               true ->
                 [
                   "btn btn-sm gap-1 px-2",
-                  if(entry_active?(link, @current_path), do: "btn-primary", else: "btn-ghost")
+                  state_class(link, entry_active?(link, @current_path), "btn-ghost")
                 ]
             end
           }
         >
-          <.icon :if={link["icon"]} name={link["icon"]} class={icon_class(link["color"])} />
+          <.icon :if={link["icon"]} name={link["icon"]} class={icon_class(link)} />
           <span class={["text-sm font-semibold", icon_only?(link) && "sr-only"]}>
             {translate_label(link["label"])}
           </span>
@@ -829,12 +1034,10 @@ defmodule GamendWeb.HostLayoutNavigation do
       <details class="dropdown" data-navbar-dropdown>
         <summary
           title={@title}
-          class={[
-            "btn list-none",
-            if(@active?, do: "btn-primary", else: @inactive_class)
-          ]}
+          data-tone={tone(@link)}
+          class={["btn list-none", state_class(@link, @active?, @inactive_class)]}
         >
-          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
+          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link)} />
           <span class={@label_class}>{translate_label(@link["label"])}</span>
           <.count_pill count={@link["count"]} />
           <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
@@ -853,6 +1056,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
           aria-disabled={if(inert?(@link), do: "true")}
           data-motion-text={if(readonly?(@link), do: "pop")}
+          data-tone={tone(@link)}
           title={@title}
           class={
             cond do
@@ -863,11 +1067,11 @@ defmodule GamendWeb.HostLayoutNavigation do
                 ["btn pointer-events-none cursor-default opacity-70", @inactive_class]
 
               true ->
-                ["btn", if(@active?, do: "btn-primary", else: @inactive_class)]
+                ["btn", state_class(@link, @active?, @inactive_class)]
             end
           }
         >
-          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
+          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link)} />
           <span class={@label_class}>{translate_label(@link["label"])}</span>
           <.nav_badge entry={@link} />
           <.count_pill count={@link["count"]} />
@@ -896,12 +1100,15 @@ defmodule GamendWeb.HostLayoutNavigation do
     ~H"""
     <%= if dropdown_entry?(@link) do %>
       <details open={@active?} name={@group} class="group w-full">
-        <summary class={[
-          "btn w-full justify-start pe-10 relative cursor-pointer list-none summary-no-marker",
-          if(@active?, do: "btn-primary", else: @inactive_class)
-        ]}>
+        <summary
+          data-tone={tone(@link)}
+          class={[
+            "btn w-full justify-start pe-10 relative cursor-pointer list-none summary-no-marker",
+            state_class(@link, @active?, @inactive_class)
+          ]}
+        >
           <span class="flex items-center gap-2">
-            <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
+            <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link)} />
             <span>{translate_label(@link["label"])}</span>
             <.count_pill count={@link["count"]} />
           </span>
@@ -928,6 +1135,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           rel={if(@link["external"], do: "noopener noreferrer", else: nil)}
           aria-disabled={if(inert?(@link), do: "true")}
           data-motion-text={if(readonly?(@link), do: "pop")}
+          data-tone={tone(@link)}
           class={
             cond do
               readonly?(@link) ->
@@ -940,11 +1148,11 @@ defmodule GamendWeb.HostLayoutNavigation do
                 ]
 
               true ->
-                ["btn w-full justify-start", if(@active?, do: "btn-primary", else: @inactive_class)]
+                ["btn w-full justify-start", state_class(@link, @active?, @inactive_class)]
             end
           }
         >
-          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link["color"])} />
+          <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link)} />
           {translate_label(@link["label"])}
           <.nav_badge entry={@link} />
           <.count_pill count={@link["count"]} />
@@ -980,8 +1188,8 @@ defmodule GamendWeb.HostLayoutNavigation do
     <%= if dropdown_entry?(@entry) do %>
       <li>
         <details open={@active?}>
-          <summary class={[if(@active?, do: "menu-active", else: "")]}>
-            <.icon :if={@entry["icon"]} name={@entry["icon"]} class={icon_class(@entry["color"])} />
+          <summary data-tone={tone(@entry)} class={[if(@active?, do: "menu-active", else: "")]}>
+            <.icon :if={@entry["icon"]} name={@entry["icon"]} class={icon_class(@entry)} />
             {translate_label(@entry["label"])}
             <.count_pill count={@entry["count"]} />
           </summary>
@@ -997,13 +1205,14 @@ defmodule GamendWeb.HostLayoutNavigation do
           target={if(@entry["external"], do: "_blank", else: nil)}
           rel={if(@entry["external"], do: "noopener noreferrer", else: nil)}
           aria-disabled={if(inert?(@entry), do: "true")}
+          data-tone={tone(@entry)}
           class={[
             if(@active?, do: "menu-active", else: ""),
             if(inert?(@entry), do: "pointer-events-none cursor-default"),
             if(disabled?(@entry), do: "opacity-70")
           ]}
         >
-          <.icon :if={@entry["icon"]} name={@entry["icon"]} class={icon_class(@entry["color"])} />
+          <.icon :if={@entry["icon"]} name={@entry["icon"]} class={icon_class(@entry)} />
           {translate_label(@entry["label"])}
           <.nav_badge entry={@entry} />
           <.count_pill count={@entry["count"]} />
@@ -1029,9 +1238,25 @@ defmodule GamendWeb.HostLayoutNavigation do
       primary_links: entries.("primary_links", "any"),
       guest_links: entries.("guest_links", "unauthenticated"),
       authenticated_links: entries.("authenticated_links", "authenticated"),
-      account_links: entries.("account_links", "authenticated")
+      account_links: entries.("account_links", "authenticated"),
+      side?: side_layout?(assigns.navigation),
+      menu_button: Map.get(assigns.navigation, "menu_button", "menu")
     )
   end
+
+  @doc """
+  Whether the host's navigation is the sidebar (`"layout": "sidebar"`):
+  `side_nav/1` from `md` up, the bar below it.
+  """
+  def side_layout?(navigation) when is_map(navigation),
+    do: Map.get(navigation, "layout") == "sidebar"
+
+  def side_layout?(_navigation), do: false
+
+  # What the sidebar draws: a plain link. A group, an entry the host draws
+  # and a readonly badge stay in the bar.
+  defp side_link?(entry),
+    do: not dropdown_entry?(entry) and not rendered?(entry) and not readonly?(entry)
 
   # An entry's `"count"`: a `{Module.fun}` token that resolves to a number of
   # things waiting for the viewer there (quests to claim), drawn as the same
@@ -1623,8 +1848,39 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp translate_label(label), do: label
 
   # Base icon size plus an optional per-item color class from config.
-  defp icon_class(color) when is_binary(color) and color != "", do: "w-4 h-4 " <> color
-  defp icon_class(_color), do: "w-4 h-4"
+  # An entry's `"color"` is a class on its icon; its `"tone"` colours the
+  # icon from the host's `--nav-tone` (`tone/1`).
+  defp icon_class(entry, size \\ "w-4 h-4") do
+    [size, entry["color"], tone(entry) && "text-(--nav-tone)"]
+    |> Enum.filter(&(is_binary(&1) and &1 != ""))
+    |> Enum.join(" ")
+  end
+
+  # An entry's `"tone"`: a name the host colours. Every nav link carries it as
+  # `data-tone`, and the host's stylesheet gives `[data-tone=<name>]` its
+  # `--nav-tone` (one per theme); core knows no colours. The icon takes the
+  # tone, and the page's own link a tint of it (`state_class/3`) where an
+  # untoned one is filled with the primary.
+  defp tone(entry) do
+    case entry["tone"] do
+      tone when is_binary(tone) and tone != "" -> tone
+      _ -> nil
+    end
+  end
+
+  # `oklab`, not `oklch`: the light theme's base is a grey at hue 0, and an
+  # `oklch` mix turns the tone's hue towards it (a blue tint came out pink).
+  @tone_active "bg-[color-mix(in_oklab,var(--nav-tone)_16%,var(--color-base-100))] border-[color-mix(in_oklab,var(--nav-tone)_45%,transparent)]"
+
+  # A link button's colour: the page's own (`active?`) filled with the
+  # primary, or tinted with its tone; any other `inactive`.
+  defp state_class(entry, true, _inactive) do
+    if tone(entry), do: ["btn-ghost", @tone_active], else: "btn-primary"
+  end
+
+  defp state_class(_entry, false, inactive), do: inactive
+
+  defp tone_active, do: @tone_active
 
   defp nav_divider(assigns) do
     ~H"""

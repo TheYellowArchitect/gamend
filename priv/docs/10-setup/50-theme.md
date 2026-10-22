@@ -245,6 +245,13 @@ Use the navigation object to move nav structure into config. Each section accept
 
 The bar measures what it has room for. Where the links do not fit spelled out they show as icons, the label as the tooltip (give each link an `icon`); then the account button drops the reader's name; then the whole nav becomes the menu. No breakpoint to set: it follows your links, the reader's language and what the bar shows.
 
+Two settings on the navigation object itself change its shape:
+
+| Setting | Value | Effect |
+|---|---|---|
+| `layout` | `"sidebar"` | The plain `primary_links` go down the page's start edge from `md` up, each its icon and its label: open (14rem) from `xl`, a rail (6rem, the label under the icon) below it and on a full-screen page. Collapse at its foot folds it to the rail, and the browser remembers it, as it does the theme. Below `md` the same links are a tab bar along the bottom of the screen, and the top bar keeps the logo, what is pinned that is not one of them, the language and the menu. Groups, `render` entries and `readonly` badges stay in the bar. |
+| `menu_button` | `"account"` | The menu opens from the reader's avatar (a person for a visitor) instead of the three lines. |
+
 | Section | Description |
 |---|---|
 | `primary_links` | Always-visible main nav links |
@@ -261,6 +268,8 @@ The bar measures what it has room for. Where the links do not fit spelled out th
 | `auth` | string | Visibility level: `"any"` — visible to everyone (default) `"unauthenticated"` — visible only to signed-out visitors `"authenticated"` — visible only to logged-in users `"admin"` — visible only to admin users |
 | `admin_only` | boolean | Shortcut for auth="admin" on links or dropdown groups. |
 | `count` | string | A `{Module.fun}` token: `fun/1` gets the reader's scope and returns how many things wait for them there (quests to claim). Drawn as a red number after the label, like unread notifications; nothing at 0. A dropdown group shows its items' total. |
+| `short_label` | string | A shorter name for the phone's tab bar (`"Rankings"` for `"Leaderboards"`). Translated like the label; a tab shows whichever of the two is shorter in the reader's language. |
+| `tone` | string | A name your stylesheet colours: give `[data-tone="<name>"]` a `--nav-tone` (one per theme). The link's icon takes it, and the page's own link a tint of it instead of the primary fill. Core sets no colours. |
 
 Example: grouped public links plus admin-only account entry:
 

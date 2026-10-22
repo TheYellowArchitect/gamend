@@ -51,8 +51,21 @@ function save(lang, needs) {
   }
 }
 
+// With the sidebar (`<html data-side-nav>`) there is none on a phone, so a
+// phone's width is the menu whatever else would fit: the sidebar's links are
+// the menu's there.
+function sidePhone() {
+  const root = document.documentElement
+  return (
+    root.hasAttribute?.("data-side-nav") === true &&
+    typeof matchMedia === "function" &&
+    !matchMedia("(min-width: 48rem)").matches
+  )
+}
+
 function apply(words) {
   const root = document.documentElement
+  if (sidePhone()) words = MENU
   if (root.dataset.nav !== words) root.dataset.nav = words
 }
 

@@ -83,6 +83,7 @@ defmodule GamendWeb.HostLayouts do
     {["footer", "sections", "links"], "label"},
     {["footer", "sections", "links"], "badge"},
     {["navigation", "primary_links"], "label"},
+    {["navigation", "primary_links"], "short_label"},
     {["navigation", "primary_links"], "badge"},
     {["navigation", "primary_links", "items"], "label"},
     {["navigation", "primary_links", "items"], "badge"},
@@ -152,6 +153,13 @@ defmodule GamendWeb.HostLayouts do
   def app(assigns) do
     assigns = prepare_app_assigns(assigns)
     HostLayoutShell.app(assigns)
+  end
+
+  @doc false
+  # `<html data-side-nav>`: the host's navigation is the sidebar. The
+  # scripts that run before the page has a header read it (`navbar_fit.js`).
+  def side_nav? do
+    GamendWeb.HostLayoutNavigation.side_layout?(resolve_theme("en")["navigation"])
   end
 
   @doc false
@@ -719,6 +727,8 @@ defmodule GamendWeb.HostLayouts do
   def nav_icon(href, fallback \\ nil) when is_binary(href) do
     navigation()
     |> Map.values()
+    # The link lists; `"layout"` and `"menu_button"` are settings.
+    |> Enum.filter(&is_list/1)
     |> Enum.concat()
     |> Enum.flat_map(&[&1 | List.wrap(&1["items"])])
     |> Enum.find_value(fallback, fn link ->
@@ -747,6 +757,10 @@ defmodule GamendWeb.HostLayouts do
           default_account_nav_links()
         )
     }
+    # Settings, not words: from the English theme, where no translation
+    # has touched them. `"layout": "sidebar"` (`side_nav/1`) and
+    # `"menu_button": "account"` (`mobile_nav/1`).
+    |> Map.merge(Map.take(en_navigation, ["layout", "menu_button"]))
   end
 
   defp navigation_links(provider_navigation, en_navigation, key, default \\ []) do

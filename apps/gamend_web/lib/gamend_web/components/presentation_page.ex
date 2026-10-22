@@ -204,8 +204,15 @@ defmodule GamendWeb.PresentationPage do
           so under `dir="rtl"` the two stopped cancelling and the hero sat 128px
           off the viewport — the Arabic home page had its title clipped at one
           edge and a blank strip at the other. `margin-inline` is symmetrical
-          and needs no positioning at all. --%>
-    <div class={if(@full_bleed_hero, do: "relative w-screen mx-[calc(50%-50vw)] -mt-20", else: "")}>
+          and needs no positioning at all. The page's width is `--bleed-w`
+          where the shell sets one (the window less a sidebar), else the
+          window's. --%>
+    <div class={
+      if(@full_bleed_hero,
+        do: "relative w-[var(--bleed-w,100vw)] mx-[calc(50%-var(--bleed-w,100vw)/2)] -mt-20",
+        else: ""
+      )
+    }>
       <div class="relative overflow-hidden">
         <.background_icons icons={@background_icons} bands={@background_icon_bands} />
         <%!-- `hero.media_layout: "cover"` turns the hero into a banner: the
@@ -1009,9 +1016,9 @@ defmodule GamendWeb.PresentationPage do
   #
   # `self-start` is load-bearing: the parent section centers its items, and
   # centring an over-wide item fights the negative margin, landing the block
-  # half off screen. `50%` resolves against the content box and `50vw`
-  # against the viewport, so the margin cancels whatever padding and
-  # centring the container applies.
+  # half off screen. `50%` resolves against the content box and the bleed
+  # width (`--bleed-w`, the window's less a sidebar) against the page, so the
+  # margin cancels whatever padding and centring the container applies.
   def section(%{section: %{"media_layout" => "bleed"}} = assigns) do
     ~H"""
     <%!-- Cancels the sections grid's `gap-y-4` so consecutive banners butt
@@ -1019,7 +1026,7 @@ defmodule GamendWeb.PresentationPage do
           as one continuous strip, not as cards with alleys between them.
           Only from the SECOND banner on: a symmetric `-my-2` would also pull
           the first one up into whatever precedes it (the hero). --%>
-    <div class="w-screen self-start [&:not(:first-child)]:-mt-4 ml-[calc(50%-50vw)]">
+    <div class="w-[var(--bleed-w,100vw)] self-start [&:not(:first-child)]:-mt-4 ml-[calc(50%-var(--bleed-w,100vw)/2)]">
       <.cover_banner
         item={@section}
         heading="h2"
