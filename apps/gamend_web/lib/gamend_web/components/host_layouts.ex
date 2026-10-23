@@ -155,10 +155,18 @@ defmodule GamendWeb.HostLayouts do
   end
 
   @doc false
-  # `<html data-side-nav>`: the host's navigation is the sidebar. The
-  # scripts that run before the page has a header read it (`navbar_fit.js`).
-  def side_nav? do
-    GamendWeb.HostLayoutNavigation.side_layout?(resolve_theme("en")["navigation"])
+  # `<html data-side-nav>`: the host's navigation is the sidebar
+  # (`"sidebar"`), or the sidebar where the bar does not fit (`"auto"`).
+  # The scripts that run before the page has a header read it
+  # (`navbar_fit.js`).
+  def side_nav_layout do
+    navigation = resolve_theme("en")["navigation"]
+
+    cond do
+      GamendWeb.HostLayoutNavigation.side_layout?(navigation) -> "sidebar"
+      GamendWeb.HostLayoutNavigation.auto_layout?(navigation) -> "auto"
+      true -> nil
+    end
   end
 
   @doc false

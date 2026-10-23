@@ -35,3 +35,8 @@ Quests.create_quest(%{
 Game code would then do: `Quests.report_event(user_id, "login")`
 
 - [Github](https://github.com/appsinacup/gamend)
+
+## Examples
+
+- [Polyglot Pirates](https://polyglotpirates.com)
+- [Forge](https://balaurengine.org)

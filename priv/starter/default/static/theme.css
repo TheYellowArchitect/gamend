@@ -1,0 +1,39 @@
+/* Host-owned theme overrides.
+   Keep this file small and focused on tokens/brand tweaks.
+   Edit the variables below to recolor the app without forking the full app.css. */
+
+:root {
+  /* Example overrides:
+  --color-primary: oklch(72% 0.17 200);
+  --color-secondary: oklch(62% 0.12 245);
+  --color-accent: oklch(78% 0.15 85);
+  */
+}
+
+[data-theme="dark"] {
+  /* Example dark-mode overrides:
+  --color-primary: oklch(78% 0.16 200);
+  --color-base-100: oklch(24% 0.01 250);
+  */
+}
+
+/* The sections' colours in the navbar, the sidebar and the phone's tab bar.
+   A link in `theme/config.json` names its `"tone"`; core colours its icon,
+   and the page's own tint, from `--nav-tone`. Low chroma, so they stay
+   quiet: one hue per section. Light at L 0.52, dark at L 0.80: an icon
+   needs 3:1 on its page. Rename, recolour or drop them freely. */
+[data-tone="play"] { --nav-tone: oklch(0.52 0.09 150); }
+[data-tone="leaderboards"] { --nav-tone: oklch(0.55 0.09 85); }
+[data-tone="quests"] { --nav-tone: oklch(0.52 0.09 40); }
+[data-tone="tournaments"] { --nav-tone: oklch(0.52 0.09 350); }
+[data-tone="groups"] { --nav-tone: oklch(0.52 0.09 245); }
+[data-tone="blog"] { --nav-tone: oklch(0.52 0.09 305); }
+[data-tone="guides"] { --nav-tone: oklch(0.52 0.09 195); }
+
+[data-theme="dark"] [data-tone="play"] { --nav-tone: oklch(0.8 0.075 150); }
+[data-theme="dark"] [data-tone="leaderboards"] { --nav-tone: oklch(0.82 0.075 85); }
+[data-theme="dark"] [data-tone="quests"] { --nav-tone: oklch(0.8 0.075 40); }
+[data-theme="dark"] [data-tone="tournaments"] { --nav-tone: oklch(0.8 0.075 350); }
+[data-theme="dark"] [data-tone="groups"] { --nav-tone: oklch(0.8 0.075 245); }
+[data-theme="dark"] [data-tone="blog"] { --nav-tone: oklch(0.8 0.075 305); }
+[data-theme="dark"] [data-tone="guides"] { --nav-tone: oklch(0.8 0.075 195); }

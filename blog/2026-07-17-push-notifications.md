@@ -17,3 +17,8 @@ Notifications.admin_create_notification(user.id, user.id, %{
 ```
 
 - [Github](https://github.com/appsinacup/gamend)
+
+## Examples
+
+- [Polyglot Pirates](https://polyglotpirates.com)
+- [Forge](https://balaurengine.org)

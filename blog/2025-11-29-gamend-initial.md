@@ -75,3 +75,8 @@ I intend to add to it also:
 - Groups
 - Tournaments
 - etc.
+
+## Examples
+
+- [Polyglot Pirates](https://polyglotpirates.com)
+- [Forge](https://balaurengine.org)

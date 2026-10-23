@@ -9,6 +9,12 @@
 // `name` the reader's name. Each stage's width is measured once the page is
 // drawn and kept per language, so the next page's `theme-init.js` sets the
 // stage before its first paint, and a resize only compares numbers.
+//
+// `"layout": "auto"` (`<html data-side-nav="auto">`, 2026-10-23): the bar
+// with every link while one of its stages fits the window; where none does,
+// `side` joins the words, and the sidebar shows (the tab bar on a phone)
+// with the bar's other entries at the first of the same stages that fits
+// beside it (`SIDE_STAGES`), else its menu.
 
 export const STAGES = [
   ["full", "bar labels name"],
@@ -18,19 +24,59 @@ export const STAGES = [
 
 export const MENU = "menu"
 
+export const SIDE_STAGES = STAGES.map(([name, words]) => [`side-${name}`, `side ${words}`])
+
+export const SIDE_MENU = `side ${MENU}`
+
 // The bar from this width while nothing is measured: the `xl` breakpoint it
 // had before it was measured.
 export const UNMEASURED_BAR = 1280
 
 const KEY = "gamend:nav"
 
-// The first stage whose width fits, else the menu.
-export function stageFor(needs, width) {
-  if (!needs) return width >= UNMEASURED_BAR ? STAGES[0][1] : MENU
+// The first stage whose width fits, else the menu. `side` is the auto
+// layout's sidebar (`sideRoom/0`): how wide it is where it shows, and
+// whether this is a phone, where it is the tab bar and the bar is the menu.
+export function stageFor(needs, width, side = null) {
+  if (!needs) {
+    if (width >= UNMEASURED_BAR) return STAGES[0][1]
+    return side ? SIDE_MENU : MENU
+  }
   for (const [name, words] of STAGES) {
     if (needs[name] <= width) return words
   }
-  return MENU
+  if (!side) return MENU
+  if (side.phone) return SIDE_MENU
+  for (const [name, words] of SIDE_STAGES) {
+    if (needs[name] <= width - side.width) return words
+  }
+  return SIDE_MENU
+}
+
+function auto() {
+  return document.documentElement.dataset.sideNav === "auto"
+}
+
+// The auto layout's sidebar, or null for another layout: open (14rem,
+// `xl:w-56`) from `xl` unless collapsed or on a full-screen page, else the
+// rail (6rem, `w-24`), as `side_nav/1` draws it; below `md` the tab bar.
+// From the breakpoints rather than its box, which is not drawn while the
+// bar fits, and is mid-fold while it opens.
+function sideRoom() {
+  if (!auto() || typeof matchMedia !== "function") return null
+  const root = document.documentElement
+  const rem = parseFloat(getComputedStyle(root).fontSize) || 16
+  const open =
+    matchMedia("(min-width: 80rem)").matches &&
+    root.dataset.side !== "rail" &&
+    !document.getElementById("navbar-autohide")
+  return {width: rem * (open ? 14 : 6), phone: !matchMedia("(min-width: 48rem)").matches}
+}
+
+// What the stages are compared with: the header's width, or in the auto
+// layout the window's, since the header narrows while the sidebar shows.
+function roomOf(header) {
+  return auto() ? document.documentElement.clientWidth : header.clientWidth
 }
 
 function readSaved(lang) {
@@ -57,7 +103,7 @@ function save(lang, needs) {
 function sidePhone() {
   const root = document.documentElement
   return (
-    root.hasAttribute?.("data-side-nav") === true &&
+    root.dataset?.sideNav === "sidebar" &&
     typeof matchMedia === "function" &&
     !matchMedia("(min-width: 48rem)").matches
   )
@@ -73,7 +119,7 @@ function apply(words) {
 // the root's width is the window's.
 export function applySaved() {
   const root = document.documentElement
-  apply(stageFor(readSaved(root.lang), root.clientWidth))
+  apply(stageFor(readSaved(root.lang), root.clientWidth, sideRoom()))
 }
 
 // Each stage's width: the header's padding and gap, the logo with its name on
@@ -90,8 +136,10 @@ export function measure(header) {
   room.style.flex = "none"
   room.style.width = "100vw"
 
+  // The auto layout's bar also beside the sidebar, its links there.
+  const stages = auto() ? STAGES.concat(SIDE_STAGES) : STAGES
   const needs = {}
-  for (const [name, words] of STAGES) {
+  for (const [name, words] of stages) {
     root.dataset.nav = words
     const style = getComputedStyle(header)
     const gap = parseFloat(style.columnGap) || 0
@@ -122,20 +170,29 @@ export function startNavbarFit(header) {
   const refit = () => {
     needs = measure(header) || needs
     if (needs) save(lang, needs)
-    width = header.clientWidth
-    apply(stageFor(needs, width))
+    width = roomOf(header)
+    apply(stageFor(needs, width, sideRoom()))
   }
 
   // Only a change of width: a stage that changes the header's height must
-  // not measure it again.
+  // not measure it again. In the auto layout the window's: the sidebar
+  // showing narrows the header and decides nothing.
   const observer = new ResizeObserver(() => {
-    if (header.clientWidth !== width) refit()
+    if (roomOf(header) !== width) refit()
   })
   observer.observe(header)
   document.fonts?.ready.then(refit)
 
+  // The sidebar collapsed or opened (`side_nav.js`): the room beside it
+  // changed, the widths did not.
+  const resided = () => {
+    if (width !== null) apply(stageFor(needs, width, sideRoom()))
+  }
+  document.addEventListener("gamend:side", resided)
+
   const stop = () => {
     observer.disconnect()
+    document.removeEventListener("gamend:side", resided)
     fitted.delete(header)
   }
 

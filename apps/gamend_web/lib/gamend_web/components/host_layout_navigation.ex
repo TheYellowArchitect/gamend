@@ -31,7 +31,9 @@ defmodule GamendWeb.HostLayoutNavigation do
     # With the sidebar (`side_nav/1`) the bar keeps only what the sidebar
     # does not draw: an entry the host draws (a wallet), a readonly badge, a
     # group. Below `md` there is no sidebar, and `navbar_fit.js` keeps the
-    # phone's menu there whatever fits.
+    # phone's menu there whatever fits. With `"layout": "auto"` the bar has
+    # every link, and the sidebar's go where the sidebar shows
+    # (`[data-nav~=side]`).
     assigns =
       if assigns.side?,
         do: update(assigns, :primary_links, &Enum.reject(&1, fn entry -> side_link?(entry) end)),
@@ -45,6 +47,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         links={@primary_links}
         current_path={@current_path}
         inactive_class="btn-surface"
+        side={@auto?}
       />
 
       <%= if @current_scope do %>
@@ -219,9 +222,11 @@ defmodule GamendWeb.HostLayoutNavigation do
     assigns = prepare_navigation_assigns(assigns)
 
     # With the sidebar its links are the sidebar's, and on a phone the tab
-    # bar's (`tab_nav/1`): neither pinned nor in the menu.
+    # bar's (`tab_nav/1`): neither pinned nor in the menu. With `"layout":
+    # "auto"` the menu shows only with the sidebar (`navbar_fit.js`), so the
+    # same.
     primary_links =
-      if assigns.side?,
+      if assigns.side? or assigns.auto?,
         do: Enum.reject(assigns.primary_links, &side_link?/1),
         else: assigns.primary_links
 
@@ -391,6 +396,11 @@ defmodule GamendWeb.HostLayoutNavigation do
     doc: "as `desktop_nav/1`'s: what the page changes that an entry shows (a count)"
 
   attr :flush, :boolean, default: false, doc: "a full-screen page: the rail, never open"
+
+  attr :auto, :boolean,
+    default: false,
+    doc: "`\"layout\": \"auto\"`: shown only where the bar does not fit (`[data-nav~=side]`)"
+
   slot :logo, required: true, doc: "the site's mark and name, linking home (the shell's)"
 
   @doc """
@@ -406,7 +416,8 @@ defmodule GamendWeb.HostLayoutNavigation do
   itself out by the sidebar's width (a container query), so both states are
   one markup. A link's `"tone"` colours its icon and the page's own tint
   (`tone/1`). Groups, drawn entries and readonly badges stay in the bar
-  (`desktop_nav/1`).
+  (`desktop_nav/1`). With `"layout": "auto"` (`auto`) it shows only where
+  the bar holds no stage (`auto_layout?/1`).
   """
   def side_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
@@ -417,7 +428,8 @@ defmodule GamendWeb.HostLayoutNavigation do
     <nav
       id="side-nav"
       class={[
-        "@container/side fixed inset-y-0 start-0 z-40 hidden md:flex flex-col gap-1 w-24",
+        "@container/side fixed inset-y-0 start-0 z-40 hidden flex-col gap-1 w-24",
+        if(@auto, do: "md:[[data-nav~=side]_&]:flex", else: "md:flex"),
         "overflow-y-auto overflow-x-hidden overscroll-contain border-e border-base-300 bg-base-100 px-1.5 py-3",
         "transition-[width] duration-(--motion-fold) ease-(--motion-out) motion-reduce:transition-none",
         !@flush && "xl:w-56 xl:[[data-side=rail]_&]:w-24"
@@ -462,13 +474,16 @@ defmodule GamendWeb.HostLayoutNavigation do
     default: nil,
     doc: "as `desktop_nav/1`'s: what the page changes that an entry shows (a count)"
 
+  attr :auto, :boolean, default: false, doc: "as `side_nav/1`'s"
+
   @doc """
   The sidebar's phone form (`"layout": "sidebar"`, 2026-10-22): the same
   links in a bar along the bottom of the screen below `md`, one tab each, the
   icon over its label. The shell pads the page by its height, so nothing ends
   under it. A link marked `"mobile": "hidden"` is the sidebar's only: a
   phone's bar has room for so many tabs, and its section's pages light the
-  link that also claims them (its `"active"` prefixes).
+  link that also claims them (its `"active"` prefixes). With `"layout":
+  "auto"` (`auto`), only where the bar does not fit the phone.
   """
   def tab_nav(assigns) do
     assigns = prepare_navigation_assigns(assigns)
@@ -480,7 +495,8 @@ defmodule GamendWeb.HostLayoutNavigation do
       id="tab-nav"
       class={
         [
-          "fixed inset-x-0 bottom-0 z-40 grid grid-flow-col md:hidden",
+          "fixed inset-x-0 bottom-0 z-40 grid-flow-col",
+          if(@auto, do: "hidden max-md:[[data-nav~=side]_&]:grid", else: "grid md:hidden"),
           # Each tab at least its longest word, so a word is never broken
           # ("Leaderboards"); the room left is shared out evenly.
           "auto-cols-[minmax(min-content,1fr)]",
@@ -742,12 +758,16 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :current_path, :string, default: nil
   attr :inactive_class, :string, required: true
 
+  attr :side, :boolean,
+    default: false,
+    doc: "`\"layout\": \"auto\"`: a sidebar link leaves the bar while the sidebar shows"
+
   defp main_nav_links(assigns) do
     assigns = assign(assigns, :best_href, best_href(assigns.links, assigns.current_path))
 
     ~H"""
     <%= for entry <- @links do %>
-      <li>
+      <li class={@side && side_link?(entry) && "[[data-nav~=side]_&]:hidden"}>
         <.main_nav_link_item
           link={entry}
           current_path={@current_path}
@@ -1188,6 +1208,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       authenticated_links: entries.("authenticated_links", "authenticated"),
       account_links: entries.("account_links", "authenticated"),
       side?: side_layout?(assigns.navigation),
+      auto?: auto_layout?(assigns.navigation),
       menu_button: Map.get(assigns.navigation, "menu_button", "menu")
     )
   end
@@ -1200,6 +1221,19 @@ defmodule GamendWeb.HostLayoutNavigation do
     do: Map.get(navigation, "layout") == "sidebar"
 
   def side_layout?(_navigation), do: false
+
+  @doc """
+  Whether the host's navigation is the bar while it fits, else the sidebar
+  (`"layout": "auto"`, 2026-10-23): every link in the bar where one of its
+  stages fits the window, and where none does, the sidebar from `md` up and
+  the tab bar below it, the bar keeping the rest. `navbar_fit.js` decides,
+  and says so with `side` in `<html data-nav>`; every part that shows with
+  the sidebar shows under `[data-nav~=side]`, not a breakpoint alone.
+  """
+  def auto_layout?(navigation) when is_map(navigation),
+    do: Map.get(navigation, "layout") == "auto"
+
+  def auto_layout?(_navigation), do: false
 
   # What the sidebar draws: a plain link. A group, an entry the host draws
   # and a readonly badge stay in the bar.

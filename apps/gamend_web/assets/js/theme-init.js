@@ -3,10 +3,11 @@
 import {applySaved} from "./navbar_fit.js"
 import {applySavedSide} from "./side_nav.js"
 
+// The sidebar as the reader left it, open or collapsed: first, since the
+// auto layout's stage depends on its width.
+applySavedSide();
 // The navbar's stage, from the widths measured on an earlier page.
 applySaved();
-// The sidebar as the reader left it, open or collapsed.
-applySavedSide();
 
 (function () {
   // A signed-in reader's saved theme (`GamendWeb.Plugs.ColorMode`) is the

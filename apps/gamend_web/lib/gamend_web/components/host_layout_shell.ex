@@ -30,6 +30,7 @@ defmodule GamendWeb.HostLayoutShell do
       assigns
       |> Map.put_new(:nav_key, nil)
       |> assign(:side?, GamendWeb.HostLayoutNavigation.side_layout?(assigns[:navigation]))
+      |> assign(:auto?, GamendWeb.HostLayoutNavigation.auto_layout?(assigns[:navigation]))
 
     ~H"""
     <%!-- First focusable element on every page: invisible until it receives
@@ -43,9 +44,12 @@ defmodule GamendWeb.HostLayoutShell do
     </a>
     <.background_icons background_icons={@background_icons} />
     <%!-- The sidebar (`"layout": "sidebar"`) from `md` up, the page's column
-          moved over by its width; the header keeps the rest. --%>
+          moved over by its width; the header keeps the rest. With `"layout":
+          "auto"`, only where the bar does not fit (`[data-nav~=side]`,
+          `navbar_fit.js`). --%>
     <GamendWeb.HostLayoutNavigation.side_nav
-      :if={@side?}
+      :if={@side? or @auto?}
+      auto={@auto?}
       current_scope={@current_scope}
       current_path={@current_path}
       navigation={@navigation}
@@ -68,23 +72,31 @@ defmodule GamendWeb.HostLayoutShell do
     <%!-- Below `md` the same links are a tab bar along the bottom; the column
           ends its height above it. --%>
     <GamendWeb.HostLayoutNavigation.tab_nav
-      :if={@side?}
+      :if={@side? or @auto?}
+      auto={@auto?}
       current_scope={@current_scope}
       current_path={@current_path}
       navigation={@navigation}
       locale={@locale}
       nav_key={@nav_key}
     />
-    <div class={[
-      "flex flex-col",
-      if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh"),
-      @side? && "max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
-      @side? && "md:ms-24 md:[--bleed-w:calc(100vw-6rem)]",
-      @side? &&
-        "md:transition-[margin-inline-start] md:duration-(--motion-fold) md:ease-(--motion-out) motion-reduce:transition-none",
-      @side? && !@flush &&
-        "xl:ms-56 xl:[--bleed-w:calc(100vw-14rem)] xl:[[data-side=rail]_&]:ms-24 xl:[[data-side=rail]_&]:[--bleed-w:calc(100vw-6rem)]"
-    ]}>
+    <div class={
+      [
+        "flex flex-col",
+        if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh"),
+        @side? && "max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
+        @side? && "md:ms-24 md:[--bleed-w:calc(100vw-6rem)]",
+        (@side? or @auto?) &&
+          "md:transition-[margin-inline-start] md:duration-(--motion-fold) md:ease-(--motion-out) motion-reduce:transition-none",
+        @side? && !@flush &&
+          "xl:ms-56 xl:[--bleed-w:calc(100vw-14rem)] xl:[[data-side=rail]_&]:ms-24 xl:[[data-side=rail]_&]:[--bleed-w:calc(100vw-6rem)]",
+        # The same room, only while the sidebar shows (`"layout": "auto"`).
+        @auto? &&
+          "max-md:[[data-nav~=side]_&]:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:[[data-nav~=side]_&]:ms-24 md:[[data-nav~=side]_&]:[--bleed-w:calc(100vw-6rem)]",
+        @auto? && !@flush &&
+          "xl:[[data-nav~=side]_&]:ms-56 xl:[[data-nav~=side]_&]:[--bleed-w:calc(100vw-14rem)] xl:[[data-nav~=side][data-side=rail]_&]:ms-24 xl:[[data-nav~=side][data-side=rail]_&]:[--bleed-w:calc(100vw-6rem)]"
+      ]
+    }>
       <div
         :if={@flush}
         id="navbar-autohide"
@@ -123,7 +135,11 @@ defmodule GamendWeb.HostLayoutShell do
           <a
             href={GamendWeb.HostLayouts.localized_href(~p"/", @locale)}
             data-nav-logo
-            class={["flex shrink-0 w-fit items-center gap-2", @side? && "md:hidden"]}
+            class={[
+              "flex shrink-0 w-fit items-center gap-2",
+              @side? && "md:hidden",
+              @auto? && "md:[[data-nav~=side]_&]:hidden"
+            ]}
           >
             <%!-- Same rule as `CoreComponents.flag/1`: this is on screen at
                   load on every page, so it is fetched with the HTML, decoded
@@ -152,7 +168,7 @@ defmodule GamendWeb.HostLayoutShell do
               {theme_tagline(@theme)}
             </span>
           </a>
-          <.breadcrumbs trail={@breadcrumbs} side={@side?} />
+          <.breadcrumbs trail={@breadcrumbs} side={@side?} auto={@auto?} />
         </div>
         <%!-- The language picker sits outside both navs: one button in the bar
               at every width, rather than a dropdown up here and a different
@@ -426,6 +442,7 @@ defmodule GamendWeb.HostLayoutShell do
 
   attr :trail, :list, default: []
   attr :side, :boolean, default: false, doc: "the host's sidebar is on (`side_nav/1`)"
+  attr :auto, :boolean, default: false, doc: "the sidebar is on where the bar does not fit"
 
   @doc """
   The breadcrumb trail, as `{label, path}` pairs — the last one is the current
@@ -469,7 +486,14 @@ defmodule GamendWeb.HostLayoutShell do
           <%!-- The first follows the site's name; with the sidebar, from
                 `md` up the name is the sidebar's and the trail starts the
                 bar. --%>
-          <span aria-hidden="true" class={["shrink-0", (@side and index == 0) && "md:hidden"]}>
+          <span
+            aria-hidden="true"
+            class={[
+              "shrink-0",
+              (@side and index == 0) && "md:hidden",
+              (@auto and index == 0) && "md:[[data-nav~=side]_&]:hidden"
+            ]}
+          >
             /
           </span>
           <.link

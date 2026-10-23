@@ -23,6 +23,8 @@ export function toggleSide(root = document.documentElement) {
   } catch (_) {
     // Kept for this page only.
   }
+  // The auto layout's bar fits again beside it (`navbar_fit.js`).
+  document.dispatchEvent?.(new CustomEvent("gamend:side"))
   return rail
 }
 

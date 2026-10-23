@@ -250,6 +250,7 @@ Two settings on the navigation object itself change its shape:
 | Setting | Value | Effect |
 |---|---|---|
 | `layout` | `"sidebar"` | The plain `primary_links` go down the page's start edge from `md` up, each its icon and its label: open (14rem) from `xl`, a rail (6rem, the label under the icon) below it and on a full-screen page. Collapse at its foot folds it to the rail, and the browser remembers it, as it does the theme. Below `md` the same links are a tab bar along the bottom of the screen, and the top bar keeps the logo, what is pinned that is not one of them, the language and the menu. Groups, `render` entries and `readonly` badges stay in the bar. |
+| `layout` | `"auto"` | The bar with every link wherever one of its stages fits the window, and the sidebar (the tab bar on a phone) only where none does: the bar then keeps the rest, as with `"sidebar"`. `<html data-nav>` holds `side` while the sidebar shows. |
 | `menu_button` | `"account"` | The menu opens from the reader's avatar (a person for a visitor) instead of the three lines. |
 
 | Section | Description |
@@ -269,6 +270,7 @@ Two settings on the navigation object itself change its shape:
 | `admin_only` | boolean | Shortcut for auth="admin" on links or dropdown groups. |
 | `count` | string | A `{Module.fun}` token: `fun/1` gets the reader's scope and returns how many things wait for them there (quests to claim). Drawn as a red number after the label, like unread notifications; nothing at 0. A dropdown group shows its items' total. |
 | `tone` | string | A name your stylesheet colours: give `[data-tone="<name>"]` a `--nav-tone` (one per theme). The link's icon takes it, and the page's own link a tint of it instead of the primary fill. Core sets no colours. |
+| `mobile` | string | `"pinned"`: in a phone's bar beside the menu, not inside it. `"hidden"`: left out of the phone's tab bar (`"layout": "sidebar"`); a link that also claims its pages (`"active"`) lights there instead, and on a tie the link with fewer `"active"` prefixes wins. |
 
 Example: grouped public links plus admin-only account entry:
 

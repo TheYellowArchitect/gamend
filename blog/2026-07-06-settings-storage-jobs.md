@@ -30,3 +30,8 @@ Background work (push fan-out, mailers, webhooks, pruning) runs on Oban, with th
 
 - [Settings reference](https://gamend.org/docs/settings)
 - [Github](https://github.com/appsinacup/gamend)
+
+## Examples
+
+- [Polyglot Pirates](https://polyglotpirates.com)
+- [Forge](https://balaurengine.org)
