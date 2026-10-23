@@ -37,10 +37,15 @@ defmodule GamendWeb.UserAuth do
   def remember_me_cookie(token) when is_binary(token) do
     secret = Application.fetch_env!(:gamend_web, GamendWeb.Endpoint)[:secret_key_base]
 
-    conn =
-      put_resp_cookie(%Plug.Conn{secret_key_base: secret}, @remember_me_cookie, token, sign: true)
+    # What `put_resp_cookie(conn, name, token, sign: true, max_age: ...)` in
+    # `write_remember_me_cookie/2` sends, without a conn to send it on.
+    value =
+      Plug.Crypto.sign(secret, @remember_me_cookie <> "_cookie", token,
+        keys: Plug.Keys,
+        max_age: session_seconds()
+      )
 
-    {@remember_me_cookie, conn.resp_cookies[@remember_me_cookie].value}
+    {@remember_me_cookie, value}
   end
 
   @doc """

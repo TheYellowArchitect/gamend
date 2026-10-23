@@ -361,7 +361,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_FEATURES_LIST_LOBBIES` | boolean | `true` | GET /api/v1/lobbies and the "lobbies" channel. |
 | `GAMEND_FEATURES_LIST_MATCHMAKING` | boolean | `true` | GET /api/v1/matchmaking/stats. Own-ticket endpoints stay. |
 | `GAMEND_FEATURES_LIST_PAYMENTS_CATALOG` | boolean | `true` | Public GET /api/v1/payments/catalog: every active product with its provider row, id and price. Off for a host that sells through its own page, where the price shown depends on who asks (a country band) — the listing names every row, cheaper ones included. |
-| `GAMEND_FEATURES_LIST_QUESTS` | boolean | `true` | Public GET /api/v1/quests* and the /quests page. |
+| `GAMEND_FEATURES_LIST_QUESTS` | boolean | `true` | Public GET /api/v1/quests*, the /quests page and the "Quests and rewards" row on the Notifications tab. Achievements are quests of kind `achievement`, so this is them too. |
 | `GAMEND_FEATURES_LIST_TOURNAMENTS` | boolean | `true` | Public GET /api/v1/tournaments* and the /tournaments pages. |
 | `GAMEND_FEATURES_LIST_USERS` | boolean | `true` | GET /api/v1/users and /users/:id. |
 | `GAMEND_FEATURES_LOCALE_FLAGS` | boolean | `true` | National flags in the site-language switcher (the navbar button and each language in its menu). Off, the button shows a language icon and the menu lists the languages by name only — for a host that must not show a flag, a sensitive one or any. Only the switcher: a host's own pages that draw `<.flag>` are untouched. |

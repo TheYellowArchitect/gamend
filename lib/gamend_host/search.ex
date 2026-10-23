@@ -30,6 +30,7 @@ defmodule GamendHost.Search do
   use Gettext, backend: GamendHost.Gettext
 
   alias Gamend.Content
+  alias GamendWeb.HostLayouts
   alias GamendWeb.SearchIndex
 
   @impl true
@@ -44,8 +45,19 @@ defmodule GamendHost.Search do
     locale = Gettext.get_locale(GamendHost.Gettext)
 
     Content.memoize({__MODULE__, :entries, locale}, fn ->
-      doc_entries() ++ blog_entries() ++ section_entries()
+      page_entries() ++ doc_entries() ++ blog_entries() ++ section_entries()
     end)
+  end
+
+  # The changelog and the roadmap are pages of their own that the theme links
+  # only from the footer, which the palette does not read. Ungrouped, like the
+  # navigation's own top-level links, and titled from the theme's catalogue,
+  # where the footer's labels for them are translated.
+  defp page_entries do
+    [
+      %{title: HostLayouts.translate("Changelog"), href: "/changelog"},
+      %{title: HostLayouts.translate("Roadmap"), href: "/roadmap"}
+    ]
   end
 
   # One heading for every guide rather than one per category. A category title

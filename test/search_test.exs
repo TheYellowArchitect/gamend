@@ -78,8 +78,8 @@ defmodule GamendHost.SearchTest do
       hrefs = Enum.map(entries, & &1.href)
 
       assert "/play" in hrefs
+      assert "/leaderboards" in hrefs
       assert "/blog" in hrefs
-      assert "/changelog" in hrefs
     end
 
     test "every guide, under one heading", %{entries: entries} do
@@ -151,9 +151,18 @@ defmodule GamendHost.SearchTest do
     end
 
     # The navigation is prepended, and `SearchIndex` keeps the first row it saw
-    # for an href. `/blog` the nav link must not be displaced by anything.
+    # for an href. `/blog` the nav link must not be displaced by anything: it
+    # is a top-level link, so it has no group, where a content row would.
     test "the nav's own links win a tie with content", %{entries: entries} do
-      assert Enum.find(entries, &(&1.href == "/blog"))[:group] == "News"
+      assert %{title: "Blog", group: nil} = Enum.find(entries, &(&1.href == "/blog"))
+    end
+
+    # Linked only from the footer, which the palette does not read.
+    test "the changelog and the roadmap", %{entries: entries} do
+      hrefs = Enum.map(entries, & &1.href)
+
+      assert "/changelog" in hrefs
+      assert "/roadmap" in hrefs
     end
   end
 

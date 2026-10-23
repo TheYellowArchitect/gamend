@@ -85,9 +85,6 @@ msgstr ""
 msgid "Groups"
 msgstr ""
 
-msgid "News"
-msgstr ""
-
 msgid "Getting Started"
 msgstr ""
 

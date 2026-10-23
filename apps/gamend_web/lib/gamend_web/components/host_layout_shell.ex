@@ -107,17 +107,21 @@ defmodule GamendWeb.HostLayoutShell do
       <header
         id="main-navbar"
         phx-hook="NavbarDropdowns"
-        class={[
-          "navbar z-50 [[data-nav~=bar]_&]:gap-4",
-          if(@flush,
-            do: "absolute top-0 start-0 end-0 ps-4 sm:ps-6 lg:ps-8 pe-14",
-            else: "sticky top-0 shrink-0 px-4 sm:px-6 lg:px-8"
-          ),
-          if(@flush,
-            do: "bg-base-100/90 backdrop-blur-md",
-            else: "bg-transparent backdrop-blur-md border-base-200/20"
-          )
-        ]}
+        class={
+          [
+            "navbar z-50 [[data-nav~=bar]_&]:gap-4",
+            if(@flush,
+              do: "absolute top-0 start-0 end-0 ps-4 sm:ps-6 lg:ps-8 pe-14",
+              else: "sticky top-0 shrink-0 px-4 sm:px-6 lg:px-8"
+            ),
+            # The navigation's own surface (2026-10-23, user): a step off the
+            # page, as the sidebar and the tab bar are, with a hairline under it.
+            if(@flush,
+              do: "bg-base-100/90 backdrop-blur-md",
+              else: "bg-base-200/95 backdrop-blur-md border-b border-base-300"
+            )
+          ]
+        }
       >
         <%!-- Read straight off `@theme` rather than through `<% var = ... %>`
               bindings: a variable defined in a template is opaque to change
@@ -218,6 +222,17 @@ defmodule GamendWeb.HostLayoutShell do
               known_locales={@known_locales}
             />
           </div>
+
+          <%!-- The account, rightmost where the bar is, as the menu is where
+                it is not. --%>
+          <GamendWeb.HostLayoutNavigation.desktop_account
+            current_scope={@current_scope}
+            current_path={@current_path}
+            navigation={@navigation}
+            notif_unread_count={@notif_unread_count}
+            nav_key={@nav_key}
+            locale={@locale}
+          />
 
           <GamendWeb.HostLayoutNavigation.mobile_nav
             current_scope={@current_scope}
@@ -466,14 +481,22 @@ defmodule GamendWeb.HostLayoutShell do
   `xl` the whole nav is in the bar, and the trail comes back from about
   1440 px. Below that the page's own heading (its Back, its menus) is the way
   up.
+
+  `config :gamend_web, :breadcrumb_depth, n` draws only a trail of `n` crumbs
+  or more past home (default 1): where the navigation lights the section and
+  the heading names the rest, a two-crumb trail only repeats them. The trail
+  itself is unchanged, so its `BreadcrumbList` markup is too.
   """
   def breadcrumbs(assigns) do
     assigns = assign(assigns, :crumbs, assigns.trail |> Enum.drop(1) |> Enum.with_index())
     assigns = assign(assigns, :last, length(assigns.crumbs) - 1)
 
+    assigns =
+      assign(assigns, :depth, max(Application.get_env(:gamend_web, :breadcrumb_depth, 1), 1))
+
     ~H"""
     <nav
-      :if={length(@trail) > 1}
+      :if={length(@crumbs) >= @depth}
       aria-label={GamendWeb.HostLayouts.translate("Breadcrumb")}
       class="hidden min-w-0 text-sm text-muted sm:flex @max-[22rem]:hidden"
     >
@@ -611,7 +634,10 @@ defmodule GamendWeb.HostLayoutShell do
   The shell's decorative icon layer.
 
   Which pages get one is decided in `GamendWeb.HostLayouts`: it hands over an
-  empty list for pages that paint their own.
+  empty list for pages that paint their own. Faint, 4% light and 5% dark
+  (2026-10-23, Polyglot Pirates: at 8% and 10% they showed through every
+  card and row and read as clutter); the home's layer
+  (`GamendWeb.PresentationPage`) is the same.
   """
   def background_icons(assigns) do
     ~H"""
@@ -620,7 +646,7 @@ defmodule GamendWeb.HostLayoutShell do
         <%= for placement <- GamendWeb.HostLayouts.icon_placements(@background_icons) do %>
           <div
             class={[
-              "absolute text-base-content [[data-theme=dark]_&]:text-white opacity-[0.08] [[data-theme=dark]_&]:opacity-[0.10]",
+              "absolute text-base-content [[data-theme=dark]_&]:text-white opacity-[0.04] [[data-theme=dark]_&]:opacity-[0.05]",
               placement.size
             ]}
             style={"top: #{placement.top}%; #{if Map.has_key?(placement, :left), do: "left: #{placement.left}%", else: "right: #{placement.right}%"}; animation: float #{placement.dur}s ease-in-out infinite #{placement.delay}s;"}

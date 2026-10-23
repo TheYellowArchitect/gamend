@@ -296,8 +296,9 @@ defmodule GamendWeb.CoreComponents do
 
   @doc """
   A panel: something set on the page, the page's colour behind a `base-300`
-  border. The one box every card, form and summary sits in, so a page does
-  not grow its own border, radius, padding and shadow.
+  border, and no shadow: one edge is enough. The one box every card, form
+  and summary sits in, so a page does not grow its own border, radius,
+  padding and shadow.
 
       <.panel title="Capital">Bucharest</.panel>
       <.panel tag="section" compact class="space-y-3">…</.panel>
@@ -310,7 +311,7 @@ defmodule GamendWeb.CoreComponents do
     <.dynamic_tag
       tag_name={@tag}
       class={[
-        "rounded-box border border-base-300 bg-base-100 shadow-sm",
+        "rounded-box border border-base-300 bg-base-100",
         if(@compact, do: "p-3", else: "p-4"),
         @class
       ]}
@@ -899,10 +900,17 @@ defmodule GamendWeb.CoreComponents do
 
   Pass `navigate` for a live route and `href` for a plain page; a LiveView
   that sends `navigate` at a dead route breaks on the way out.
+
+  A host whose navigation is always on screen (a sidebar, a tab bar) turns
+  every Back off with `config :gamend_web, :back_link, false`: the button
+  then draws nothing, on core's pages and the host's alike.
   """
   def back_link(assigns) do
+    assigns = assign(assigns, :shown?, Application.get_env(:gamend_web, :back_link, true))
+
     ~H"""
     <.link
+      :if={@shown?}
       navigate={@navigate}
       href={@href}
       class={@class}

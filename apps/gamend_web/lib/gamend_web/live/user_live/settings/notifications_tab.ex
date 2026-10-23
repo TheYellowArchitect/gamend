@@ -27,6 +27,7 @@ defmodule GamendWeb.UserLive.Settings.NotificationsTab do
     do: GamendWeb.Features.enabled?(:web_friends) or GamendWeb.Features.enabled?(:web_groups)
 
   defp shown?(%{key: "chat"}), do: GamendWeb.Features.enabled?(:web_chat)
+  defp shown?(%{key: "quests"}), do: GamendWeb.Features.enabled?(:list_quests)
   defp shown?(_group), do: true
 
   attr :settings_tab, :string, required: true

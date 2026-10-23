@@ -39,7 +39,18 @@ defmodule GamendWeb.HostLayoutNavigation do
         do: update(assigns, :primary_links, &Enum.reject(&1, fn entry -> side_link?(entry) end)),
         else: assigns
 
-    assigns = assign(assigns, :guest?, Scope.anonymous?(assigns.current_scope))
+    # The theme toggle is set apart from the links before it, when any are
+    # drawn: the bar's settings and account end (`desktop_account/1`) follow.
+    # With `"layout": "auto"` a sidebar link leaves the bar while the sidebar
+    # shows, so a divider after nothing else goes with them.
+    others = if(assigns.current_scope, do: assigns.authenticated_links, else: assigns.guest_links)
+    stays? = others != [] or Enum.any?(assigns.primary_links, &(not side_link?(&1)))
+
+    assigns =
+      assign(assigns,
+        links?: assigns.primary_links != [] or others != [],
+        divider_class: assigns.auto? and not stays? and "[[data-nav~=side]_&]:hidden"
+      )
 
     ~H"""
     <ul class="hidden [[data-nav~=bar]_&]:flex flex-row px-1 space-x-4 items-center">
@@ -70,36 +81,55 @@ defmodule GamendWeb.HostLayoutNavigation do
         <% end %>
       <% end %>
 
-      <%!-- Log in and Register, each its own button wherever the bar shows
-            (2026-10-23, user): a dropdown hid the two things a visitor came
-            to press. Where the bar does not fit, a phone always, they are
-            the menu's (`mobile_nav/1`). A guest account gets the same two
-            and no avatar: an avatar beside Log in said both "you are in"
-            and "sign in", and Register keeps what is on the account. --%>
-      <%= if is_nil(@current_scope) or @guest? do %>
-        <.nav_divider />
-        <.auth_buttons current_path={@current_path} />
-      <% end %>
-
-      <%= if @current_scope && !@guest? do %>
-        <.nav_divider />
-        <li>
-          <.user_menu
-            current_scope={@current_scope}
-            current_path={@current_path}
-            notif_unread_count={@notif_unread_count}
-            account_links={@account_links}
-          />
-        </li>
-      <% end %>
-
       <%!-- The language picker is NOT here: the shell renders it once, outside
             both layouts. A copy per layout puts the ~30 locale entries into the
             page twice — 26 KB of a 77 KB document — and a test asserts each
             locale link appears exactly once. It therefore sits to the right of
             this toggle rather than left of it, as it used to. --%>
+      <.nav_divider :if={@links?} class={@divider_class} />
       <li>
         <GamendWeb.HostLayouts.theme_toggle />
+      </li>
+    </ul>
+    """
+  end
+
+  attr :current_scope, :map, default: nil
+  attr :current_path, :string, default: nil
+  attr :navigation, :map, default: %{}
+  attr :notif_unread_count, :integer, default: 0
+  attr :locale, :string, required: true
+
+  attr :nav_key, :any,
+    default: nil,
+    doc: "as `desktop_nav/1`'s: what the page changes that an entry shows (a count)"
+
+  @doc """
+  The bar's account end, drawn by the shell after the language picker
+  (2026-10-23, user: the account rightmost, as the phone's menu is): the
+  reader's menu, or Log in and Register. Shown where the bar is
+  (`[data-nav~=bar]`); elsewhere they are the menu's (`mobile_nav/1`).
+  """
+  def desktop_account(assigns) do
+    assigns = prepare_navigation_assigns(assigns)
+    assigns = assign(assigns, :guest?, Scope.anonymous?(assigns.current_scope))
+
+    ~H"""
+    <%!-- `order-2`: the language picker before it is ordered `1` (the shell). --%>
+    <ul class="hidden [[data-nav~=bar]_&]:flex order-2 flex-row space-x-4 items-center">
+      <%!-- Log in and Register, each its own button wherever the bar shows
+            (2026-10-23, user): a dropdown hid the two things a visitor came
+            to press. A guest account gets the same two and no avatar: an
+            avatar beside Log in said both "you are in" and "sign in", and
+            Register keeps what is on the account. --%>
+      <.auth_buttons :if={is_nil(@current_scope) or @guest?} current_path={@current_path} />
+      <li :if={@current_scope && !@guest?}>
+        <.user_menu
+          current_scope={@current_scope}
+          current_path={@current_path}
+          notif_unread_count={@notif_unread_count}
+          account_links={@account_links}
+        />
       </li>
     </ul>
     """
@@ -430,7 +460,7 @@ defmodule GamendWeb.HostLayoutNavigation do
       class={[
         "@container/side fixed inset-y-0 start-0 z-40 hidden flex-col gap-1 w-24",
         if(@auto, do: "md:[[data-nav~=side]_&]:flex", else: "md:flex"),
-        "overflow-y-auto overflow-x-hidden overscroll-contain border-e border-base-300 bg-base-100 px-1.5 py-3",
+        "overflow-y-auto overflow-x-hidden overscroll-contain border-e border-base-300 bg-base-200 px-1.5 py-3",
         "transition-[width] duration-(--motion-fold) ease-(--motion-out) motion-reduce:transition-none",
         !@flush && "xl:w-56 xl:[[data-side=rail]_&]:w-24"
       ]}
@@ -447,7 +477,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         data-side-toggle
         class={[
           "mt-auto hidden xl:flex items-center justify-center rounded-field px-1 py-2",
-          "text-muted hover:bg-base-200 @min-[8rem]/side:justify-start @min-[8rem]/side:px-3"
+          "text-muted hover:bg-base-100 @min-[8rem]/side:justify-start @min-[8rem]/side:px-3"
         ]}
       >
         <.icon
@@ -500,7 +530,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           # Each tab at least its longest word, so a word is never broken
           # ("Leaderboards"); the room left is shared out evenly.
           "auto-cols-[minmax(min-content,1fr)]",
-          "border-t border-base-300 bg-base-100 px-0.5 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+          "border-t border-base-300 bg-base-200 px-0.5 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
         ]
       }
     >
@@ -545,7 +575,7 @@ defmodule GamendWeb.HostLayoutNavigation do
           disabled?(@link) -> "border-transparent pointer-events-none opacity-70"
           @active? and tone(@link) != nil -> tone_active()
           @active? -> "border-transparent bg-primary text-primary-content"
-          true -> "border-transparent hover:bg-base-200"
+          true -> "border-transparent hover:bg-base-100"
         end
       ]}
     >
@@ -1906,9 +1936,11 @@ defmodule GamendWeb.HostLayoutNavigation do
     ]
   end
 
+  attr :class, :any, default: nil
+
   defp nav_divider(assigns) do
     ~H"""
-    <li class="flex items-center px-0">
+    <li class={["flex items-center px-0", @class]}>
       <div class="w-px h-6 bg-base-content/20"></div>
     </li>
     """

@@ -488,7 +488,7 @@ defmodule GamendWeb.PresentationPage do
           <%= for placement <- @placements do %>
             <div
               class={[
-                "absolute text-base-content [[data-theme=dark]_&]:text-white opacity-[0.08] [[data-theme=dark]_&]:opacity-[0.10]",
+                "absolute text-base-content [[data-theme=dark]_&]:text-white opacity-[0.04] [[data-theme=dark]_&]:opacity-[0.05]",
                 placement.size
               ]}
               style={"top: #{placement.top}%; #{placement_side_style(placement)}; animation: float #{placement.dur}s ease-in-out infinite #{background_icon_delay(placement, band)}s;"}

@@ -272,7 +272,7 @@ defmodule GamendWeb.HostLayoutNavigationTest do
   test "a visitor's bar has Log in and Register as two buttons, not a dropdown" do
     html =
       render_component(
-        &HostLayoutNavigation.desktop_nav/1,
+        &HostLayoutNavigation.desktop_account/1,
         base_assigns([%{"label" => "Play", "href" => "/play"}])
       )
 
@@ -283,7 +283,7 @@ defmodule GamendWeb.HostLayoutNavigationTest do
 
   test "one of the two is primary: Register, or Log in on its own page" do
     at = fn path ->
-      render_component(&HostLayoutNavigation.desktop_nav/1, %{
+      render_component(&HostLayoutNavigation.desktop_account/1, %{
         base_assigns([])
         | current_path: path
       })

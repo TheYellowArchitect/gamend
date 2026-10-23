@@ -206,6 +206,21 @@ defmodule GamendWeb.UserAuthTest do
                "users_sessions:#{Base.url_encode64(user_token)}"
     end
 
+    # `mix demo.bench` signs its page client in with this and nothing else.
+    test "authenticates user from remember_me_cookie/1", %{conn: conn, user: user} do
+      user_token = Accounts.generate_user_session_token(user)
+      {name, value} = UserAuth.remember_me_cookie(user_token)
+
+      conn =
+        conn
+        |> put_req_cookie(name, value)
+        |> UserAuth.fetch_current_scope_for_user([])
+
+      assert name == @remember_me_cookie
+      assert conn.assigns.current_scope.user_id == user.id
+      assert get_session(conn, :user_token) == user_token
+    end
+
     test "does not authenticate if data is missing", %{conn: conn, user: user} do
       _ = Accounts.generate_user_session_token(user)
       conn = UserAuth.fetch_current_scope_for_user(conn, [])

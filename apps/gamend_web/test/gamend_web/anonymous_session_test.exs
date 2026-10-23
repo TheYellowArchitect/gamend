@@ -201,7 +201,7 @@ defmodule GamendWeb.AnonymousSessionTest do
       scope = Scope.for_user(guest())
 
       html =
-        render_component(&GamendWeb.HostLayoutNavigation.desktop_nav/1, %{
+        render_component(&GamendWeb.HostLayoutNavigation.desktop_account/1, %{
           current_scope: scope,
           current_path: "/",
           navigation: %{},
@@ -218,7 +218,7 @@ defmodule GamendWeb.AnonymousSessionTest do
       scope = Scope.for_user(Gamend.AccountsFixtures.user_fixture())
 
       html =
-        render_component(&GamendWeb.HostLayoutNavigation.desktop_nav/1, %{
+        render_component(&GamendWeb.HostLayoutNavigation.desktop_account/1, %{
           current_scope: scope,
           current_path: "/",
           navigation: %{},
