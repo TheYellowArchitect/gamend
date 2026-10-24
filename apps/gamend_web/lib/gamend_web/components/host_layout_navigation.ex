@@ -436,9 +436,9 @@ defmodule GamendWeb.HostLayoutNavigation do
   @doc """
   The sidebar (`"layout": "sidebar"`, 2026-10-22): the host's plain primary
   links down the page's start edge from `md` up, each its icon and its label.
-  Open (14rem, the label beside the icon) from `xl`; the rail (6rem, the
-  label under the icon) below it, on a full-screen page, and where the reader
-  collapsed it. The button at its foot sets `<html data-side="rail">`, which
+  Open (14rem, the label beside the icon) at every width it shows (user,
+  2026-10-23: spelled out, never icons alone); the rail (6rem, the label
+  under the icon) on a full-screen page and where the reader collapsed it. The button at its foot sets `<html data-side="rail">`, which
   this browser keeps and sets again before the next page paints
   (`side_nav.js`, from `theme-init.js`), as it does the theme. The button is
   its chevron alone, turning with the state; the width moves over the host's
@@ -462,7 +462,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         if(@auto, do: "md:[[data-nav~=side]_&]:flex", else: "md:flex"),
         "overflow-y-auto overflow-x-hidden overscroll-contain border-e border-base-300 bg-base-200 px-1.5 py-3",
         "transition-[width] duration-(--motion-fold) ease-(--motion-out) motion-reduce:transition-none",
-        !@flush && "xl:w-56 xl:[[data-side=rail]_&]:w-24"
+        !@flush && "md:w-56 md:[[data-side=rail]_&]:w-24"
       ]}
     >
       {render_slot(@logo)}
@@ -476,7 +476,7 @@ defmodule GamendWeb.HostLayoutNavigation do
         type="button"
         data-side-toggle
         class={[
-          "mt-auto hidden xl:flex items-center justify-center rounded-field px-1 py-2",
+          "mt-auto flex items-center justify-center rounded-field px-1 py-2",
           "text-muted hover:bg-base-100 @min-[8rem]/side:justify-start @min-[8rem]/side:px-3"
         ]}
       >
@@ -634,11 +634,14 @@ defmodule GamendWeb.HostLayoutNavigation do
       <%!-- `priority`: this flag is in the header of every page, so a lazy one
             pops in after the label on each refresh, and a merely eager one
             queues behind whatever that page is full of. --%>
-      <%!-- A phone shows the flag alone, one icon, so `btn-ghost`, and as
-            narrow as the bar's icons: the room is the logo's. Less after
-            the chevron, which the menu button follows. --%>
+      <%!-- The flag alone at every width (user, 2026-10-23: the language's
+            name cost the bar its links' words), one icon, so `btn-ghost`,
+            and as narrow as the bar's icons. Less after the chevron, which
+            the menu button follows. The name is screen-reader text and the
+            hover's `title`. --%>
       <label
         for="lang-modal"
+        title={@label}
         class="btn gap-1 ps-2 pe-1 list-none btn-ghost cursor-pointer sm:hidden"
       >
         <.locale_mark flag_code={@flag_code} label={@label} />
@@ -646,9 +649,8 @@ defmodule GamendWeb.HostLayoutNavigation do
       </label>
 
       <details class="dropdown dropdown-end hidden sm:block" data-navbar-dropdown>
-        <summary class="btn btn-surface gap-1 list-none">
-          <.locale_mark flag_code={@flag_code} />
-          {@label}
+        <summary title={@label} class="btn btn-ghost gap-1 ps-2 pe-1 list-none">
+          <.locale_mark flag_code={@flag_code} label={@label} />
           <.icon name="hero-chevron-down-solid" class="w-3 h-3" />
         </summary>
 
@@ -1812,6 +1814,7 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp locale_mark(assigns) do
     ~H"""
     <.flag code={@flag_code} priority class="rounded-[2px] ring-1 ring-base-content/10" />
+    <span :if={@label} class="sr-only">{@label}</span>
     """
   end
 

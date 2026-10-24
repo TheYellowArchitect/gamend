@@ -11,16 +11,20 @@
 // stage before its first paint, and a resize only compares numbers.
 //
 // `"layout": "auto"` (`<html data-side-nav="auto">`, 2026-10-23): the bar
-// with every link while one of its stages fits the window; where none does,
-// `side` joins the words, and the sidebar shows (the tab bar on a phone)
-// with the bar's other entries at the first of the same stages that fits
-// beside it (`SIDE_STAGES`), else its menu.
+// with every link while one of its stages that spells them out fits the
+// window (`AUTO_STAGES`: never a bar of icons, user 2026-10-23); where none
+// does, `side` joins the words, and the sidebar shows (the tab bar on a
+// phone) with the bar's other entries at the first of the same stages that
+// fits beside it (`SIDE_STAGES`), else its menu.
 
 export const STAGES = [
   ["full", "bar labels name"],
   ["icons", "bar name"],
   ["avatar", "bar"],
 ]
+
+// The auto layout's bar: only the stages with the links' words.
+export const AUTO_STAGES = STAGES.filter(([, words]) => words.split(" ").includes("labels"))
 
 export const MENU = "menu"
 
@@ -42,7 +46,7 @@ export function stageFor(needs, width, side = null) {
     if (width >= UNMEASURED_BAR) return STAGES[0][1]
     return side ? SIDE_MENU : MENU
   }
-  for (const [name, words] of STAGES) {
+  for (const [name, words] of side ? AUTO_STAGES : STAGES) {
     if (needs[name] <= width) return words
   }
   if (!side) return MENU
@@ -58,18 +62,15 @@ function auto() {
 }
 
 // The auto layout's sidebar, or null for another layout: open (14rem,
-// `xl:w-56`) from `xl` unless collapsed or on a full-screen page, else the
-// rail (6rem, `w-24`), as `side_nav/1` draws it; below `md` the tab bar.
+// `md:w-56`) unless collapsed or on a full-screen page, else the rail (6rem,
+// `w-24`), as `side_nav/1` draws it; below `md` the tab bar.
 // From the breakpoints rather than its box, which is not drawn while the
 // bar fits, and is mid-fold while it opens.
 function sideRoom() {
   if (!auto() || typeof matchMedia !== "function") return null
   const root = document.documentElement
   const rem = parseFloat(getComputedStyle(root).fontSize) || 16
-  const open =
-    matchMedia("(min-width: 80rem)").matches &&
-    root.dataset.side !== "rail" &&
-    !document.getElementById("navbar-autohide")
+  const open = root.dataset.side !== "rail" && !document.getElementById("navbar-autohide")
   return {width: rem * (open ? 14 : 6), phone: !matchMedia("(min-width: 48rem)").matches}
 }
 
