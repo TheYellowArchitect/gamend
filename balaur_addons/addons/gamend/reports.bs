@@ -2,7 +2,6 @@
 // Do not edit; edit the generator or the spec and run
 // clients/generate_balaur.sh.
 
-
 // Reports: one function per operation, `reports::<name>` once a
 // script says `use addons::gamend::reports;`.
 //

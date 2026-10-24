@@ -2,7 +2,6 @@
 // Do not edit; edit the generator or the spec and run
 // clients/generate_balaur.sh.
 
-
 // Admin – KV: one function per operation, `admin_kv::<name>` once a
 // script says `use addons::gamend::admin_kv;`.
 //

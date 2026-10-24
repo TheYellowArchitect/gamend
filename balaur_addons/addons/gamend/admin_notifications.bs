@@ -2,7 +2,6 @@
 // Do not edit; edit the generator or the spec and run
 // clients/generate_balaur.sh.
 
-
 // Admin – Notifications: one function per operation, `admin_notifications::<name>` once a
 // script says `use addons::gamend::admin_notifications;`.
 //

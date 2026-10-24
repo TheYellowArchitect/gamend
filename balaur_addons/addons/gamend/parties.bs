@@ -2,7 +2,6 @@
 // Do not edit; edit the generator or the spec and run
 // clients/generate_balaur.sh.
 
-
 // Parties: one function per operation, `parties::<name>` once a
 // script says `use addons::gamend::parties;`.
 //

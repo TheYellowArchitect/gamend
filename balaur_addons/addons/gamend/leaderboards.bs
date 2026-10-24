@@ -2,7 +2,6 @@
 // Do not edit; edit the generator or the spec and run
 // clients/generate_balaur.sh.
 
-
 // Leaderboards: one function per operation, `leaderboards::<name>` once a
 // script says `use addons::gamend::leaderboards;`.
 //

@@ -128,7 +128,8 @@ def write_tags(model: Model) -> dict[str, str]:
     for file, ops in by_file(model).items():
         tag = ops[0][1]["tag"]
         chunks = [
-            BANNER,
+            # The chunks are joined by one blank line; the banner's own end is not a second.
+            BANNER.rstrip("\n"),
             f"// {tag}: one function per operation, `{file}::<name>` once a\n"
             f"// script says `use addons::gamend::{file};`.\n"
             "//\n"

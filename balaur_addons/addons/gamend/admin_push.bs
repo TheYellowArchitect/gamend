@@ -2,7 +2,6 @@
 // Do not edit; edit the generator or the spec and run
 // clients/generate_balaur.sh.
 
-
 // Admin – Push: one function per operation, `admin_push::<name>` once a
 // script says `use addons::gamend::admin_push;`.
 //
