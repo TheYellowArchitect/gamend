@@ -53,7 +53,7 @@ defmodule Gamend.Repo.Migrations.LeaderboardRecordsGuest do
     # The column and the triggers first: from here on every new record and
     # every registration keeps the flag, and the backfill reads the column.
     flush()
-    backfill(nil)
+    backfill(repo())
 
     create_if_not_exists index(
                            :leaderboard_records,
@@ -87,9 +87,12 @@ defmodule Gamend.Repo.Migrations.LeaderboardRecordsGuest do
 
   defp postgres?, do: repo().__adapter__() == Ecto.Adapters.Postgres
 
+  @doc false
   # Every record already written, from its user as they are now: the next
   # `@batch` ids (UUIDv7, so in the order they were written) per statement.
-  defp backfill(after_id) do
+  # Public so its test can run it inside the SQL sandbox, which the migrator
+  # cannot (see `Gamend.Repo.Migrations.StableStorageUrls.rewrite/1`).
+  def backfill(repo, after_id \\ nil) do
     bound =
       from(r in "leaderboard_records",
         select: r.id,
@@ -98,16 +101,20 @@ defmodule Gamend.Repo.Migrations.LeaderboardRecordsGuest do
         limit: 1
       )
       |> after_id(after_id)
-      |> repo().one(timeout: :infinity)
+      |> repo.one(timeout: :infinity)
 
+    # `true` in the query, not an `update_all/3` `set:` value: on this
+    # schemaless table that is bound untyped, and SQLite stores it as the text
+    # 'true', which neither its filters nor Ecto's loader read as true.
     from(r in "leaderboard_records",
-      where: r.guest == false and r.user_id in subquery(anonymous_users())
+      where: r.guest == false and r.user_id in subquery(anonymous_users()),
+      update: [set: [guest: true]]
     )
     |> after_id(after_id)
     |> up_to(bound)
-    |> repo().update_all([set: [guest: true]], timeout: :infinity)
+    |> repo.update_all([], timeout: :infinity)
 
-    if bound, do: backfill(bound)
+    if bound, do: backfill(repo, bound)
   end
 
   defp after_id(query, nil), do: query

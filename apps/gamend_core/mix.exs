@@ -36,25 +36,32 @@ defmodule GamendCore.MixProject do
     ]
   end
 
-  # Raises :httpc's header limit in rustler_precompiled so its NIF downloads
-  # survive GitHub's redirect. Why, and when to remove it: deps_get/1 in the
-  # repository's root mix.exs. This app keeps its own deps/, so it needs its own.
+  # Raises :httpc's header limit in the deps that download GitHub release
+  # assets with it. Why, and when to remove it: deps_get/1 in the repository's
+  # root mix.exs. This app keeps its own deps/, so it needs its own.
+  @httpc_downloads [
+    rustler_precompiled: "lib/rustler_precompiled.ex",
+    elixir_make: "lib/elixir_make/downloader/httpc.ex"
+  ]
+
   defp deps_get(args) do
     Mix.Tasks.Deps.Get.run(args)
 
-    file = Path.join(Mix.Project.deps_path(), "rustler_precompiled/lib/rustler_precompiled.ex")
     unpatched = "options = [body_format: :binary]"
     patched = "options = [body_format: :binary, max_header_size: 65_536]"
 
-    with {:ok, source} <- File.read(file), false <- source =~ patched do
-      unless source =~ unpatched,
-        do: Mix.raise("rustler_precompiled changed: revisit deps_get/1 in mix.exs")
+    for {dep, path} <- @httpc_downloads,
+        file = Path.join([Mix.Project.deps_path(), Atom.to_string(dep), path]),
+        {:ok, source} <- [File.read(file)],
+        not String.contains?(source, patched) do
+      unless String.contains?(source, unpatched),
+        do: Mix.raise("#{dep} changed: revisit deps_get/1 in mix.exs")
 
       File.write!(file, String.replace(source, unpatched, patched))
 
       Mix.Project.build_path()
       |> Path.dirname()
-      |> Path.join("*/lib/rustler_precompiled")
+      |> Path.join("*/lib/#{dep}")
       |> Path.wildcard()
       |> Enum.each(&File.rm_rf!/1)
     end
