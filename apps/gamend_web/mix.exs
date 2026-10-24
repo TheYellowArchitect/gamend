@@ -38,6 +38,7 @@ defmodule GamendWeb.MixProject do
   # the core suite and is shared from there, not copied.
   defp elixirc_paths(:test),
     do: ["lib", "test/support", Path.expand("../gamend_core/test/support", __DIR__)]
+
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
@@ -103,6 +104,7 @@ defmodule GamendWeb.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
+      "deps.get": &deps_get/1,
       "ecto.setup": [
         "ecto.create",
         "ecto.migrate",
@@ -138,6 +140,30 @@ defmodule GamendWeb.MixProject do
         "credo --strict"
       ]
     ]
+  end
+
+  # Raises :httpc's header limit in rustler_precompiled so its NIF downloads
+  # survive GitHub's redirect. Why, and when to remove it: deps_get/1 in the
+  # repository's root mix.exs. This app keeps its own deps/, so it needs its own.
+  defp deps_get(args) do
+    Mix.Tasks.Deps.Get.run(args)
+
+    file = Path.join(Mix.Project.deps_path(), "rustler_precompiled/lib/rustler_precompiled.ex")
+    unpatched = "options = [body_format: :binary]"
+    patched = "options = [body_format: :binary, max_header_size: 65_536]"
+
+    with {:ok, source} <- File.read(file), false <- source =~ patched do
+      unless source =~ unpatched,
+        do: Mix.raise("rustler_precompiled changed: revisit deps_get/1 in mix.exs")
+
+      File.write!(file, String.replace(source, unpatched, patched))
+
+      Mix.Project.build_path()
+      |> Path.dirname()
+      |> Path.join("*/lib/rustler_precompiled")
+      |> Path.wildcard()
+      |> Enum.each(&File.rm_rf!/1)
+    end
   end
 
   defp description do

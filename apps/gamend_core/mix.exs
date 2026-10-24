@@ -31,8 +31,33 @@ defmodule GamendCore.MixProject do
 
   defp aliases do
     [
+      "deps.get": &deps_get/1,
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
+  end
+
+  # Raises :httpc's header limit in rustler_precompiled so its NIF downloads
+  # survive GitHub's redirect. Why, and when to remove it: deps_get/1 in the
+  # repository's root mix.exs. This app keeps its own deps/, so it needs its own.
+  defp deps_get(args) do
+    Mix.Tasks.Deps.Get.run(args)
+
+    file = Path.join(Mix.Project.deps_path(), "rustler_precompiled/lib/rustler_precompiled.ex")
+    unpatched = "options = [body_format: :binary]"
+    patched = "options = [body_format: :binary, max_header_size: 65_536]"
+
+    with {:ok, source} <- File.read(file), false <- source =~ patched do
+      unless source =~ unpatched,
+        do: Mix.raise("rustler_precompiled changed: revisit deps_get/1 in mix.exs")
+
+      File.write!(file, String.replace(source, unpatched, patched))
+
+      Mix.Project.build_path()
+      |> Path.dirname()
+      |> Path.join("*/lib/rustler_precompiled")
+      |> Path.wildcard()
+      |> Enum.each(&File.rm_rf!/1)
+    end
   end
 
   defp deps do
