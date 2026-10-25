@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Build and bundle every plugin under $GAMEND_CONTENT_PLUGINS_DIR: each
+# directory there with a mix.exs gets `mix deps.get`, `mix compile` and
+# `mix plugin.bundle`.
+#
+#   RUN gamend-build-plugins --verbose     at build time; flags go to plugin.bundle
+#   gamend-build-plugins --no-deps         at start (gamend-start), no fetching
+#
+# A missing directory is not an error: an image with no plugins builds none.
+set -e
+
+deps=1
+if [ "${1:-}" = "--no-deps" ]; then
+  deps=0
+  shift
+fi
+
+dir=${GAMEND_CONTENT_PLUGINS_DIR:-modules/plugins}
+if [ ! -d "$dir" ]; then
+  echo "Plugin sources dir ${dir} missing, skipping plugin builds"
+  exit 0
+fi
+
+for plugin in "$dir"/*/; do
+  [ -f "${plugin}mix.exs" ] || continue
+  echo "Building plugin ${plugin}"
+  (
+    cd "$plugin"
+    if [ "$deps" = "1" ]; then mix deps.get; fi
+    mix compile
+    mix plugin.bundle "$@"
+  )
+done

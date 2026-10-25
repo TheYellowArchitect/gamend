@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# Start an OTP release of Gamend or of a host app: raise the open-files limit,
+# create the database when it can and migrate (Gamend.Release.prepare/0), then
+# serve.
+#
+#   CMD ["gamend-release-start", "my_app"]     the release's name, bin/<name>
+set -e
+
+app=${1:?usage: gamend-release-start <release name>}
+
+# Raise, never lower: a container given more (compose `ulimits`) keeps it.
+if [ "$(ulimit -n)" != "unlimited" ] && [ "$(ulimit -n)" -lt 262144 ]; then
+  ulimit -n 262144 2>/dev/null || true
+fi
+
+"bin/${app}" eval 'Gamend.Release.prepare()'
+exec "bin/${app}" start

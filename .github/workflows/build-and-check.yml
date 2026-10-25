@@ -23,8 +23,18 @@ env:
   LIBSRTP_VERSION: "2.8.1"
 
 jobs:
+  # The base images the Dockerfile starts FROM (docker/README.md), built and
+  # pushed before the jobs below build on them.
+  base-images:
+    name: Base images
+    uses: ./.github/workflows/base-images.yml
+    permissions:
+      contents: read
+      packages: write
+
   build:
     name: Build and publish (${{ matrix.adapter }}${{ matrix.name_suffix }})
+    needs: [base-images]
     runs-on: ubuntu-latest
 
     strategy:
@@ -113,6 +123,7 @@ jobs:
 
   smoke:
     name: Boot the image (${{ matrix.adapter }}, ${{ matrix.target }})
+    needs: [base-images]
     runs-on: ubuntu-latest
 
     # Deliberately independent of `build`: this proves the image starts and

@@ -315,6 +315,8 @@ sdk/, sdk_tools/          # Elixir plugin SDK stubs; plugin.bundle and GDScript 
 clients/                  # SDK generators and templates: JS, Godot, Balaur, C++ (sdkgen/)
 proto/                    # realtime protobuf schema
 stress/                   # load tests
+docker/                   # base images every Gamend image starts FROM: builder, runtime, backup (README.md)
+deploy/                   # gamend-deploy + rebuild.sh: one deploy script for every host app (README.md)
 docs/specs/               # design specs
 test/                     # host tests
 ```

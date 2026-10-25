@@ -1,0 +1,361 @@
+#!/usr/bin/env bash
+#
+# Deploy a docker compose app on the host it runs on: check the host, build,
+# start, wait until it is healthy, prune. One script for every Gamend app; an
+# app says what is its own in deploy.conf, at its checkout's root
+# (deploy/README.md). Run it through the app's rebuild.sh, which pulls the
+# checkout first and fetches this script at the version deploy.conf names:
+#
+#   ./rebuild.sh            pull, check, build, start, prune
+#   ./rebuild.sh --check    pull, then the checks alone
+#   ./rebuild.sh --no-pull  deploy what is checked out now
+#
+# Most of it is the preflight, because what goes wrong on a deploy is mostly
+# quiet: a container that says "running" while its site is down, a stack that
+# takes another site's ports, a build that ran for ten minutes before compose
+# refused a missing value. Each check runs only when deploy.conf asks for it.
+set -euo pipefail
+
+CHECK_ONLY=0
+for arg in "$@"; do
+  case "$arg" in
+    --check) CHECK_ONLY=1 ;;
+    --no-pull) ;; # rebuild.sh's; the pull is done before this runs
+    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
+# ── Helpers, also for deploy.conf's hooks ───────────────────────────────────
+
+ok()   { printf '  \033[32mok\033[0m    %s\n' "$*"; }
+warn() { printf '  \033[33mwarn\033[0m  %s\n' "$*"; }
+bad()  { printf '  \033[31mfail\033[0m  %s\n' "$*"; FAILED=1; }
+note() { printf '  ...   %s\n' "$*"; }
+step() { printf '\n==> %s\n' "$*"; }
+
+FAILED=0
+
+# Read .env as compose reads it, KEY=value per line, never through the shell:
+# `. ./.env` stops at a value with an unmatched quote, and runs a `$(...)` or
+# a backtick in one. Quoted values lose their quotes and may run over several
+# lines; an unquoted one ends at ` #`. A line that is not KEY=value, or a
+# quote never closed, is reported, since compose refuses both.
+load_env() {
+  local line key value quote start more n=0
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    line=${line%$'\r'}
+    line="${line#"${line%%[![:space:]]*}"}"
+    case "$line" in ''|'#'*) continue ;; esac
+    line=${line#export }
+    key=${line%%=*}
+    if [ "$key" = "$line" ] || ! [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+      bad ".env line $n is not KEY=value (key: ${key%% *})"
+      continue
+    fi
+    value=${line#*=}
+    case "$value" in
+      \"*|\'*)
+        quote=${value:0:1}
+        start=$n
+        value=${value:1}
+        while [[ "$value" != *"$quote" ]]; do
+          if IFS= read -r more; then
+            n=$((n + 1))
+            value="$value"$'\n'"${more%$'\r'}"
+          else
+            bad ".env line $start ($key) opens a quote it never closes"
+            break
+          fi
+        done
+        value=${value%"$quote"}
+        ;;
+      *)
+        value=${value%% #*}
+        value="${value%"${value##*[![:space:]]}"}"
+        ;;
+    esac
+    export "$key=$value"
+  done < .env
+}
+
+# need_env NAME…: each must be set, and not to a placeholder left from a
+# template (PASTE…, changeme).
+need_env() {
+  local name
+  for name in "$@"; do
+    case "${!name:-}" in
+      "") bad "${name} is not set in .env" ;;
+      *PASTE*|changeme|CHANGEME) bad "${name} still holds a placeholder (${!name})" ;;
+      *) ok "${name} is set" ;;
+    esac
+  done
+}
+
+# want_env NAME…: a warning when unset.
+want_env() {
+  local name
+  for name in "$@"; do
+    if [ -z "${!name:-}" ]; then warn "${name} is not set in .env"; else ok "${name}=${!name}"; fi
+  done
+}
+
+on_machine() { ip -4 -o addr show 2>/dev/null | grep -qF " $1/"; }
+
+# ── Settings: .env, then the app's deploy.conf ──────────────────────────────
+
+# What deploy.conf may set; each check runs only when its setting does.
+COMPOSE_FILES="docker-compose.yml"   # the stack's compose files, in order
+APP_SERVICE="app"                    # the service the hints and logs name
+REQUIRED_ENV=""                      # .env values without which nothing deploys
+RECOMMENDED_ENV=""                   # .env values worth a warning when unset
+REQUIRED_FILES=""                    # files compose reads (docker secrets…)
+CHECK_SECRETS_KEYS=0                 # 1: GAMEND_SECRETS_KEYS set and <id>:<32 bytes>
+CHECK_PODMAN=""                      # rootless: PODMAN_SOCKET is the user's socket
+BIND_ADDRESS=""                      # the one address this stack binds 80/443 on
+REQUIRE_BIND_ADDRESS=0               # 1: an empty BIND_ADDRESS is an error
+BIND_ADDRESS_HINT=""                 # what to set, shown when it is missing
+TLS_HOST=""                          # read its certificate on BIND_ADDRESS:443
+TLS_WARN_DAYS=14
+PUBLIC_IP=""                         # with DNS_NAMES: where those names should point
+DNS_NAMES=""
+PODMAN_IMAGES=""                     # pulled into the host's podman when missing
+MAKE_DIRS="backups logs"             # created when missing (bind mounts)
+DISK_PATH="."
+MIN_FREE_GB=50
+UP_TIMEOUT=600
+BUILD_ARGS=()
+KEEP_HOURS=336                       # build cache kept by the prune: 14 days
+KEEP_CACHE=""                        # or a size ceiling instead (20GB)
+# Hooks, defined in deploy.conf when the app needs them:
+#   app_preflight   more checks, with ok/warn/bad
+#   app_after_up    a step once the stack is up
+#   app_hints       lines printed at the end
+
+step "Checking this host"
+
+if [ ! -f deploy.conf ]; then
+  bad "deploy.conf is missing: run this from the app's checkout (deploy/README.md)"
+fi
+
+if [ ! -f .env ]; then
+  bad ".env is missing"
+else
+  ok ".env is present"
+  load_env
+fi
+
+if [ -f deploy.conf ]; then
+  # The app's own code, from its repository: sourced, so it can read .env's
+  # values and define the hooks.
+  # shellcheck disable=SC1091
+  . ./deploy.conf
+fi
+
+COMPOSE="docker compose"
+for file in $COMPOSE_FILES; do
+  if [ -f "$file" ]; then COMPOSE="$COMPOSE -f $file"; else bad "compose file $file is missing"; fi
+done
+
+[ -z "$REQUIRED_ENV" ] || need_env $REQUIRED_ENV
+[ -z "$RECOMMENDED_ENV" ] || want_env $RECOMMENDED_ENV
+
+for file in $REQUIRED_FILES; do
+  if [ -s "$file" ]; then ok "$file is present"; else bad "$file is missing or empty"; fi
+done
+
+# Not merely "is it set": a key of the wrong length fails at the first save.
+if [ "$CHECK_SECRETS_KEYS" = "1" ]; then
+  if [ -z "${GAMEND_SECRETS_KEYS:-}" ]; then
+    bad "GAMEND_SECRETS_KEYS is not set: every secret save will fail.
+        Generate one with:  echo \"v1:\$(openssl rand -base64 32)\"
+        Keep a copy off this host: the database backup is ciphertext without it."
+  elif ! printf '%s' "$GAMEND_SECRETS_KEYS" | grep -qE '^[A-Za-z0-9_]+:[A-Za-z0-9+/]{43}='; then
+    bad "GAMEND_SECRETS_KEYS is set but is not <id>:<32 bytes base64>"
+  else
+    ok "GAMEND_SECRETS_KEYS looks well-formed"
+  fi
+fi
+
+# Gamend.Containers talks to the host's podman. Root's socket would run every
+# container it starts as root; no socket gives containers that never start.
+if [ "$CHECK_PODMAN" = "rootless" ]; then
+  rootless="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+  if [ -z "${PODMAN_SOCKET:-}" ]; then
+    bad "PODMAN_SOCKET is not set in .env. This host's rootless socket is:
+          PODMAN_SOCKET=${rootless}
+        If it does not exist yet:  systemctl --user enable --now podman.socket"
+  elif [ "$PODMAN_SOCKET" = "/run/podman/podman.sock" ]; then
+    bad "PODMAN_SOCKET is root's socket: its containers would run as root. Use:
+          systemctl --user enable --now podman.socket
+          PODMAN_SOCKET=${rootless}"
+  elif [ ! -S "$PODMAN_SOCKET" ]; then
+    bad "no socket at ${PODMAN_SOCKET}. Try: systemctl --user enable --now podman.socket"
+  else
+    ok "rootless podman socket at ${PODMAN_SOCKET}"
+  fi
+  if [ "$(loginctl show-user "$(id -un)" -p Linger --value 2>/dev/null || true)" != "yes" ]; then
+    warn "linger is off for $(id -un): the podman socket and its containers stop
+        when you log out. Turn it on:  loginctl enable-linger $(id -un)"
+  fi
+fi
+
+if [ "$(id -u)" = "0" ]; then
+  warn "running as root; the stack should run as the user that owns its files"
+fi
+
+step "Checking the network"
+
+# Several sites on one machine each bind their own address. Unset, compose
+# publishes on every address and takes 80 and 443 from the others.
+if [ -n "$BIND_ADDRESS" ]; then
+  if on_machine "$BIND_ADDRESS"; then
+    ok "${BIND_ADDRESS} is on this machine"
+  else
+    bad "${BIND_ADDRESS} is not on this machine (ip -4 -br addr)"
+  fi
+  wildcard=$(ss -ltnH 2>/dev/null | awk '{print $4}' | grep -E '^(0\.0\.0\.0|\*|\[::\]):(80|443)$' || true)
+  if [ -n "$wildcard" ]; then
+    bad "something listens on every address: $(echo $wildcard). ${BIND_ADDRESS}:80/443
+        cannot be bound beside it; each site here binds its own address."
+  else
+    ok "no other site holds 80 or 443 on every address"
+  fi
+elif [ "$REQUIRE_BIND_ADDRESS" = "1" ]; then
+  bad "this stack's address is not set: it would take 80 and 443 on every
+        address from the other sites here. ${BIND_ADDRESS_HINT}"
+fi
+
+# Renewal is automatic; this is for the day it stopped and nobody saw. Read
+# from the site as it serves now, so it is skipped while the site is down.
+if [ -n "$TLS_HOST" ] && [ -n "$BIND_ADDRESS" ] && command -v openssl >/dev/null 2>&1; then
+  end=$(echo | timeout 5 openssl s_client -connect "${BIND_ADDRESS}:443" -servername "$TLS_HOST" 2>/dev/null \
+    | openssl x509 -noout -enddate 2>/dev/null | sed 's/^notAfter=//' || true)
+  if [ -z "$end" ]; then
+    warn "could not read the certificate on ${BIND_ADDRESS}:443 (is the site down?)"
+  else
+    days=$(( ( $(date -d "$end" +%s) - $(date +%s) ) / 86400 ))
+    if [ "$days" -lt "$TLS_WARN_DAYS" ]; then
+      warn "the certificate for ${TLS_HOST} expires in ${days} days (${end})"
+    else
+      ok "certificate for ${TLS_HOST}: ${days} days left"
+    fi
+  fi
+fi
+
+# Where a name points decides where its visitors go. Moving a name after the
+# deploy is a normal order, so a name pointing elsewhere is a warning.
+if [ -n "$DNS_NAMES" ]; then
+  if [ -z "$PUBLIC_IP" ]; then
+    warn "no public address to check ${DNS_NAMES} against"
+  else
+    for name in $DNS_NAMES; do
+      got=$(getent ahostsv4 "$name" 2>/dev/null | awk 'NR==1{print $1}' || true)
+      if [ -z "$got" ]; then
+        warn "${name} does not resolve: nobody reaches it yet."
+      elif [ "$got" != "$PUBLIC_IP" ]; then
+        warn "${name} points at ${got}, not ${PUBLIC_IP}: its visitors still go there."
+      else
+        ok "${name} points here (${PUBLIC_IP})"
+      fi
+    done
+  fi
+fi
+
+avail=$(df -Pk "$DISK_PATH" 2>/dev/null | tail -1 | awk '{print int($4/1048576)}' || true)
+if [ -z "$avail" ]; then
+  warn "could not read free space on ${DISK_PATH}"
+elif [ "$avail" -lt "$MIN_FREE_GB" ]; then
+  warn "${avail} GB free on ${DISK_PATH}: a build writes several GB of image and cache."
+else
+  ok "${avail} GB free"
+fi
+
+for dir in $MAKE_DIRS; do mkdir -p "$dir"; done
+
+if declare -F app_preflight >/dev/null; then
+  app_preflight
+fi
+
+# Pulled into the host's podman, which starts the containers. Only when
+# missing: an app that pins what it runs on the tag it found moves on its own
+# schedule, and a pull here would move it behind its back.
+if [ -n "$PODMAN_IMAGES" ]; then
+  step "Checking the podman images"
+  for image in $PODMAN_IMAGES; do
+    if podman image exists "$image" 2>/dev/null; then
+      ok "$image is present"
+    elif [ "$CHECK_ONLY" = "1" ]; then
+      warn "$image is not pulled yet; a deploy pulls it"
+    elif note "pulling $image (quiet until it is done)" && out=$(podman pull -q "$image" 2>&1); then
+      ok "pulled $image"
+    else
+      warn "could not pull $image: $(printf '%s' "$out" | tail -1)"
+    fi
+  done
+fi
+
+if [ "$FAILED" = "1" ]; then
+  printf '\n\033[31mPreflight failed.\033[0m Nothing was deployed.\n'
+  exit 1
+fi
+
+printf '\n\033[32mPreflight passed.\033[0m\n'
+
+# `[ ... ] && exit 0` would end the script under `set -e` when the test is
+# false, so an if.
+if [ "$CHECK_ONLY" = "1" ]; then
+  exit 0
+fi
+
+# ── Deploy ────────────────────────────────────────────────────────────────
+
+# No --no-cache: Dockerfiles keep dependency compilation in layers keyed on
+# mix.exs and mix.lock, so a cached build is the point. A layer that must not
+# be cached takes a fresh build argument from deploy.conf (BUILD_ARGS).
+step "Building"
+$COMPOSE build --pull ${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"}
+
+# `--wait` returns once every service with a healthcheck passes it, so the
+# time printed is how long the site did not answer: the container swap, the
+# migrations, the boot. The build before it costs no downtime.
+step "Starting"
+started=$(date +%s)
+if $COMPOSE up -d --remove-orphans --wait --wait-timeout "$UP_TIMEOUT"; then
+  ok "up $(( $(date +%s) - started )) s after 'up -d'"
+else
+  warn "not healthy after $(( $(date +%s) - started )) s. See: $COMPOSE logs ${APP_SERVICE}"
+fi
+
+if declare -F app_after_up >/dev/null; then
+  app_after_up
+fi
+
+# After the build, never before. BuildKit never evicts its cache, and every
+# build orphans the previous image, so without this the disk fills. The layers
+# this build wrote are minutes old, so the age filter keeps them; pruning
+# before the build would throw away the cache it reuses. Never `docker system
+# prune`: it takes networks, and with --volumes the databases.
+step "Reclaiming disk"
+used_kb() { df --output=used / | tail -1 | tr -d ' '; }
+before=$(used_kb)
+if [ -n "$KEEP_CACHE" ]; then
+  # --keep-storage was renamed --reserved-space in Docker 28; the new name first.
+  docker builder prune -f --reserved-space "$KEEP_CACHE" 2>/dev/null \
+    || docker builder prune -f --keep-storage "$KEEP_CACHE" || warn "build cache prune failed"
+else
+  docker builder prune -f --filter "until=${KEEP_HOURS}h" || warn "build cache prune failed"
+fi
+# Dangling images only: never `-a`, which deletes tagged images no container
+# runs right now.
+docker image prune -f || warn "image prune failed"
+ok "reclaimed $(( (before - $(used_kb)) / 1024 )) MiB"
+
+step "Running"
+$COMPOSE ps
+
+printf '\nLogs:      %s logs -f %s\n' "$COMPOSE" "$APP_SERVICE"
+if declare -F app_hints >/dev/null; then
+  app_hints
+fi

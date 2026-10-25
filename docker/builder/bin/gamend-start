@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# The command of an image built FROM gamend-builder (the `full` kind, which
+# runs from source with mix): raise the open-files limit, rebuild plugins when
+# asked, create the database when it can, then migrate and serve in one VM.
+#
+#   CMD ["gamend-start"]
+#
+#   GAMEND_START_PLUGINS=1       rebuild the plugins first (gamend-build-plugins
+#                                --no-deps), for a bind-mounted plugins directory
+#   GAMEND_ERLANG_NODE=n@host    start as a named node with RELEASE_COOKIE, for
+#                                Erlang distribution between machines
+#
+# `mix do db.migrate + phx.server` is one VM boot instead of two: the migration
+# and the server share it, and the boot is most of the time a deploy is down.
+# No `exec`: with the shell as PID 1, `docker stop` ends the container at once,
+# while an exec'd VM drains its connections for up to 15 s (ThousandIsland's
+# default) before Docker's 10 s SIGKILL — longer, for a restart nobody waits
+# through gracefully anyway.
+set -e
+
+# Every WebSocket is a file descriptor, and the default on most container
+# hosts is 1024-10240. Measured on Fly: a server held 10,175 idle sockets and
+# then stopped accepting, its BEAM at 16% of the machine's memory. The wall
+# was the descriptor limit, and it arrives as a cliff, not a slowdown. 262144
+# is well under the kernel's 1,048,576. Raise, never lower: a container given
+# more (compose `ulimits`) keeps it; a host that pins less still starts.
+if [ "$(ulimit -n)" != "unlimited" ] && [ "$(ulimit -n)" -lt 262144 ]; then
+  ulimit -n 262144 2>/dev/null || true
+fi
+
+if [ "${GAMEND_START_PLUGINS:-0}" = "1" ]; then
+  gamend-build-plugins --no-deps
+fi
+
+# A provisioned database already exists, and its role may not create one.
+mix ecto.create --quiet -r Gamend.Repo 2>/dev/null || true
+
+if [ -n "${GAMEND_ERLANG_NODE:-}" ]; then
+  elixir --name "$GAMEND_ERLANG_NODE" \
+    --cookie "${RELEASE_COOKIE:?GAMEND_ERLANG_NODE needs RELEASE_COOKIE}" \
+    -S mix do db.migrate + phx.server
+else
+  mix do db.migrate + phx.server
+fi

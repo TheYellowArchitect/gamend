@@ -1,12 +1,17 @@
+# syntax=docker/dockerfile:1
 # Two images from one build.
 #
 #   docker build .                      → the full image (default)
 #   docker build --target release .     → an OTP release, ~11x smaller
 #
-# Both share the `builder` stage, so the expensive half — apt, the Rust
-# toolchain, ~140 dependencies and their NIFs — is compiled once and cached
-# once no matter which target you ask for. `full` is declared last so a bare
-# `docker build .` keeps producing the image it always has.
+# Both share the `builder` stage, so the expensive half — ~140 dependencies
+# and their NIFs — is compiled once and cached once no matter which target you
+# ask for. `full` is declared last so a bare `docker build .` keeps producing
+# the image it always has.
+#
+# The system packages, the Rust toolchain and the start commands are not here:
+# they are the base images in docker/ (docker/README.md), which every app built
+# on Gamend starts FROM too, published by .github/workflows/base-images.yml.
 #
 #   full     ships everything used to build it and runs `mix phx.server`. Large
 #            (~6 GB), and the only variant whose admin UI can build plugin
@@ -20,10 +25,10 @@
 #
 #   docker build --target release --build-arg GAMEND_DB_ADAPTER=postgres .
 
-ARG BUILDER_IMAGE=elixir:1.20-slim
-# Must track the builder's Debian release: the release carries ERTS and NIFs
-# linked against that libc. elixir:1.20-slim is Debian 13 (trixie).
-ARG RUNNER_IMAGE=debian:trixie-slim
+ARG BUILDER_IMAGE=ghcr.io/appsinacup/gamend-builder:elixir-1.20
+# Tracks the builder's Debian release: the release carries ERTS and NIFs linked
+# against that libc. gamend-builder is Debian 13 (trixie).
+ARG RUNNER_IMAGE=ghcr.io/appsinacup/gamend-runtime:trixie
 
 # Declared globally so every stage can redeclare them. A stage does not inherit
 # another stage's ENV, and these drive runtime behaviour — adapter selection,
@@ -35,30 +40,10 @@ ARG GAMEND_CONTENT_PLUGINS_DIR=modules/plugins_examples
 ARG GAMEND_CONTENT_APP_VERSION=1.0.0
 
 # ── Builder ───────────────────────────────────────────────────────────────
+# gamend-builder: Elixir, the system packages (ImageMagick for the srcset
+# variants host.responsive_images cuts, brotli for bin/compress-static, …),
+# Rust for ex_sctp, Hex and Rebar, WORKDIR /app (docker/builder/Dockerfile).
 FROM ${BUILDER_IMAGE} AS builder
-
-# Install git and other build dependencies
-RUN apt-get update && \
-    # Install build tools + sqlite dev headers so Exqlite NIF builds in-image
-    # libssl-dev is required by ex_dtls (WebRTC DTLS encryption)
-    # optipng/pngquant/imagemagick are for assets.deploy: host.optimize_images
-    # degrades gracefully without them, but host.responsive_images raises the
-    # moment a theme/config.json image declares "widths" — which it now does,
-    # so the build needs ImageMagick to cut those srcset variants.
-    # brotli is for bin/compress-static, the last step of assets.deploy.
-    apt-get install -y git build-essential libsqlite3-dev sqlite3 pkg-config ca-certificates curl libssl-dev optipng pngquant imagemagick brotli && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Rust toolchain (required by ex_sctp for WebRTC DataChannels)
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-# Install hex and rebar
-RUN mix local.hex --force && \
-    mix local.rebar --force
-
-# Set working directory
-WORKDIR /app
 
 # Set environment to production
 ENV MIX_ENV=prod
@@ -97,17 +82,9 @@ RUN mix deps.compile --skip-local-deps
 
 COPY . .
 
-# Build any plugins that ship with the repository. Copy paste this to your own Dockerfile
-RUN if [ -d "${GAMEND_CONTENT_PLUGINS_DIR}" ]; then \
-        for plugin_path in ${GAMEND_CONTENT_PLUGINS_DIR}/*; do \
-            if [ -d "${plugin_path}" ] && [ -f "${plugin_path}/mix.exs" ]; then \
-                echo "Building plugin ${plugin_path}"; \
-                (cd "${plugin_path}" && mix deps.get && mix compile && mix plugin.bundle --verbose); \
-            fi; \
-        done; \
-    else \
-        echo "Plugin sources dir ${GAMEND_CONTENT_PLUGINS_DIR} missing, skipping plugin builds"; \
-    fi
+# Build any plugins that ship with the repository (gamend-builder's helper; an
+# app's Dockerfile runs the same line).
+RUN gamend-build-plugins --verbose
 
 # Compile the application FIRST (generates phoenix-colocated hooks)
 RUN mix compile
@@ -120,12 +97,7 @@ RUN mix assets.deploy
 # resolved through the code server, not the project tree. Mix usually symlinks
 # priv into _build, in which case this is a no-op; where it copied instead, the
 # digested assets would be missing from the release without this.
-RUN test -f priv/static/cache_manifest.json && \
-    runtime_static="_build/prod/lib/gamend_host/priv/static" && \
-    mkdir -p "${runtime_static}" && \
-    if [ "$(cd priv/static && pwd -P)" != "$(cd "${runtime_static}" && pwd -P)" ]; then \
-      cp -a priv/static/. "${runtime_static}/"; \
-    fi
+RUN gamend-copy-static gamend_host --require
 
 # Version last, deliberately. It is `1.0.<commit_count>`, so it changes on
 # every commit — and an ARG/ENV invalidates every layer below it, which would
@@ -152,22 +124,12 @@ RUN mix release --overwrite
 RUN mkdir -p "${GAMEND_CONTENT_PLUGINS_DIR}"
 
 # ── Release runtime ───────────────────────────────────────────────────────
+# gamend-runtime: openssl for ex_dtls, libsqlite3-0 for the Exqlite NIF,
+# libstdc++6 and libncurses6 for ERTS itself, and GAMEND_HTTP_SERVER=true (a
+# release starts no endpoint unless told to, see GamendWeb.HostRuntime's
+# `── Releases ──` section). No compilers, no Rust, no source
+# (docker/runtime/Dockerfile).
 FROM ${RUNNER_IMAGE} AS release
-
-# openssl for ex_dtls, libsqlite3-0 for the Exqlite NIF, libstdc++6 and
-# libncurses6 for ERTS itself. No compilers, no Rust, no source.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      ca-certificates libstdc++6 libncurses6 openssl libsqlite3-0 locales && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV LANG=C.UTF-8 LANGUAGE=C:en LC_ALL=C.UTF-8
-
-WORKDIR /app
-
-# A release starts no endpoint unless told to — see GamendWeb.HostRuntime's
-# `── Releases ──` section. This is the release equivalent of PHX_SERVER.
-ENV GAMEND_HTTP_SERVER=true
 
 # The adapter is chosen twice: baked in at compile time, and read again at
 # runtime by GamendWeb.HostRuntime. They have to agree. Dropping this ARG on
@@ -196,15 +158,13 @@ COPY --from=release-build /app/${GAMEND_CONTENT_PLUGINS_DIR} ./${GAMEND_CONTENT_
 
 EXPOSE 4000 443
 
-# Mirrors the full target's CMD, with the release's `eval` standing in for the
-# mix tasks. `ulimit -n` first, because every WebSocket is a file descriptor
-# and the default on most container hosts is 1024-10240; failure is tolerated
-# on purpose so a host that pins the hard limit lower still starts.
-#
-# Gamend.Release.prepare/0 creates the database when it can (a provisioned
-# Postgres already has it, and its role may not be permitted to create one)
-# and then migrates, which is not allowed to fail.
-CMD ["sh", "-c", "ulimit -n 262144 2>/dev/null || true; bin/gamend_host eval 'Gamend.Release.prepare()' && bin/gamend_host start"]
+# gamend-runtime's start: the full target's, with the release's `eval`
+# standing in for the mix tasks. It raises the open-files limit first (every
+# WebSocket is a file descriptor), then Gamend.Release.prepare/0 creates the
+# database when it can (a provisioned Postgres already has it, and its role
+# may not be permitted to create one) and migrates, which is not allowed to
+# fail.
+CMD ["gamend-release-start", "gamend_host"]
 
 # ── Full (default target) ─────────────────────────────────────────────────
 # Last on purpose: `docker build .` with no --target builds the final stage,
@@ -213,18 +173,6 @@ FROM builder AS full
 
 EXPOSE 4000 443
 
-# Default command - raise the file-descriptor limit, create DB (if needed), run
-# migrations, and start server.
-#
-# `ulimit -n` first, because every WebSocket is a file descriptor and the
-# default on most container hosts is 1024-10240. Measured on Fly: the server
-# held 10,175 concurrent idle sockets and then stopped accepting, with the BEAM
-# using 480 MB of a 3 GB machine — 16%, climbing linearly, nowhere near
-# trouble. The wall was the descriptor limit, not memory or the app, and it
-# arrives as a cliff rather than a slowdown.
-#
-# 262144 is well under the 1,048,576 `fs.nr_open` allows and far above what any
-# single node should need. Failure is tolerated on purpose: a host that pins
-# the hard limit lower should still start the server, just with fewer sockets
-# available.
-CMD ["sh", "-c", "ulimit -n 262144 2>/dev/null || true; mix ecto.create --quiet -r Gamend.Repo 2>/dev/null; mix db.migrate && mix phx.server"]
+# gamend-builder's start: raise the file-descriptor limit, create the database
+# if needed, then migrate and serve (docker/builder/bin/gamend-start).
+CMD ["gamend-start"]

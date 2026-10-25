@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Copy the digested priv/static into the app's compiled priv, which is where
+# Plug.Static and a release read it from. Run after `mix assets.deploy`.
+#
+#   RUN gamend-copy-static my_app             skipped when nothing was digested
+#   RUN gamend-copy-static my_app --require   a missing digest fails the build
+#
+# A dev build runs `mix assets.build`, which digests nothing, so the plain form
+# passes over it; a production image passes --require.
+set -e
+
+app=${1:?usage: gamend-copy-static <otp_app> [--require]}
+
+if [ ! -f priv/static/cache_manifest.json ]; then
+  if [ "${2:-}" = "--require" ]; then
+    echo "priv/static/cache_manifest.json is missing: run mix assets.deploy first" >&2
+    exit 1
+  fi
+  echo "No digested assets (priv/static/cache_manifest.json); nothing to copy"
+  exit 0
+fi
+
+runtime_static="_build/${MIX_ENV:-prod}/lib/${app}/priv/static"
+mkdir -p "$runtime_static"
+# Under a path dependency the two can be one directory; copying onto itself
+# would fail.
+if [ "$(cd priv/static && pwd -P)" != "$(cd "$runtime_static" && pwd -P)" ]; then
+  cp -a priv/static/. "${runtime_static}/"
+fi
