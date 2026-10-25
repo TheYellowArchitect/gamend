@@ -582,9 +582,19 @@ defmodule GamendWeb.HostRuntime do
     allowed_origins =
       Enum.map(setting.(GamendWeb.Http, :allowed_origins) || [], &normalize_origin/1)
 
-    # nil lets Phoenix apply its own check_origin default; "*" is Corsica's
-    # allow-any. Both mean "the operator did not restrict this".
-    check_origin = if allowed_origins == [], do: nil, else: allowed_origins
+    # The server's own names: its host and the others it answers on (a custom
+    # domain behind a proxy that routes by Host). Phoenix's default accepts
+    # only `host`, so a page served under another name could not open its
+    # socket.
+    own_origins =
+      Enum.map([host | setting.(GamendWeb.Http, :other_hosts) || []], &("//" <> &1))
+
+    # The server's pages (LiveView, signed in by the session cookie) take
+    # sockets from its own names and the allowlist. The game socket signs in
+    # by token, not cookie, so an empty allowlist lets a web build served from
+    # anywhere (itch.io, a CDN) connect, as it may call the API ("*" below).
+    check_origin = check_origin(own_origins ++ allowed_origins)
+    game_check_origin = if allowed_origins == [], do: false, else: check_origin
 
     # Corsica needs a different shape from Phoenix for the same allowlist.
     # `check_origin` understands the protocol-agnostic `//host` form, but
@@ -611,21 +621,29 @@ defmodule GamendWeb.HostRuntime do
             transport_options: socket_buffer_options(setting)
           ]
         ],
-        secret_key_base: secret_key_base
+        secret_key_base: secret_key_base,
+        check_origin: check_origin
       ]
-      |> then(fn cfg ->
-        if check_origin == nil, do: cfg, else: Keyword.put(cfg, :check_origin, check_origin)
-      end)
       |> put_https(setting)
 
     [
       # Expose these choices via application config so endpoint/plug can pick
       # them up.
       {:gamend_web, :cors_allowed_origins, cors_allowed_origins},
+      {:gamend_web, :game_socket_check_origin, game_check_origin},
       # `acme_entries/1` sets `:acme_webroot`, a different key, so trailing it
       # here does not shadow the endpoint config.
       {:gamend_web, GamendWeb.Endpoint, endpoint_config}
     ] ++ acme_entries(setting)
+  end
+
+  # Phoenix takes `check_origin` origins as strings only, and a `regex:` entry
+  # raised on the first socket; a list holding one is checked by a call
+  # instead (`GamendWeb.Http.origin_allowed?/2`).
+  defp check_origin(origins) do
+    if Enum.any?(origins, &is_struct(&1, Regex)),
+      do: {GamendWeb.Http, :origin_allowed?, [origins]},
+      else: origins
   end
 
   # A regex passes through; `//host` becomes a scheme-agnostic pattern; a fully

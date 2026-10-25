@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-331 settings across 29 groups.
+332 settings across 29 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -491,11 +491,12 @@ Live values, and where each one came from, are on the
 
 | Variable | Type | Default | Notes |
 |---|---|---|---|
-| `GAMEND_HTTP_ALLOWED_ORIGINS` | list | - | Browser CORS/WebSocket origin allowlist. Empty allows any origin. Prefix an entry with `regex:` for a pattern. |
+| `GAMEND_HTTP_ALLOWED_ORIGINS` | list | - | Browser CORS/WebSocket origin allowlist. Empty allows any origin; the server's own pages always accept its own names. Prefix an entry with `regex:` for a pattern. |
 | `GAMEND_HTTP_CLIENT_RETRIES` | integer | `1` | Retries of a failed GET to a provider. POSTs are never retried. 0 disables. |
 | `GAMEND_HTTP_CLIENT_TIMEOUT_MS` | integer | `10000` | Per-try timeout for calls to payment, OAuth and avatar providers, in milliseconds: connecting, and waiting for the response. |
 | `GAMEND_HTTP_HOST` | string | `"localhost"` | Public hostname, used to build URLs and OAuth redirect URIs. |
 | `GAMEND_HTTP_MAX_BODY_BYTES` | integer | `1048576` | Largest request body the server reads (JSON, form or multipart), in bytes. Raise it with any GAMEND_LIMITS_* size above 1 MB, or requests that size are refused first. Local-backend uploads are capped by GAMEND_LIMITS_MAX_UPLOAD_BYTES instead. |
+| `GAMEND_HTTP_OTHER_HOSTS` | list | - | Other names this server answers on, such as a custom domain: its WebSockets accept them as origins. Links keep GAMEND_HTTP_HOST. |
 | `GAMEND_HTTP_PORT` | integer | `4000` | TCP port the HTTP listener binds. |
 | `GAMEND_HTTP_SCHEME` | string | - | http or https. Defaults to http for localhost, https otherwise. |
 | `GAMEND_HTTP_SERVER` | boolean | `false` | Start the HTTP listener. Only needed when running as a release. |

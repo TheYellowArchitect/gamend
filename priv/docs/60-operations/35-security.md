@@ -100,7 +100,9 @@ Browser pages run under a strict Content-Security-Policy (no inline or third-par
 
 ## CORS
 
-`GAMEND_HTTP_ALLOWED_ORIGINS` is the browser origin allowlist (prefix an entry with `regex:` for a pattern). Empty allows any origin *without credentials*: a token in an `Authorization` header still works from anywhere (which is how game clients authenticate) while cookies stay unusable cross-origin. Naming origins is what opts into credentialed requests. The same list gates WebSocket origins.
+`GAMEND_HTTP_ALLOWED_ORIGINS` is the browser origin allowlist (prefix an entry with `regex:` for a pattern). Empty allows any origin *without credentials*: a token in an `Authorization` header still works from anywhere (which is how game clients authenticate) while cookies stay unusable cross-origin. Naming origins is what opts into credentialed requests.
+
+The same list gates WebSocket origins. The game socket (`/socket`) signs in by token, so with the list empty it takes any origin, like the API. The pages' socket (`/live`) signs in by the session cookie, so it always keeps to the server's own names (`GAMEND_HTTP_HOST`, `GAMEND_HTTP_OTHER_HOSTS`) plus the list.
 
 ## Token and session revocation
 

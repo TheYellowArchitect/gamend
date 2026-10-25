@@ -167,7 +167,9 @@ defmodule Gamend.RuntimeConfigTest do
     end
 
     test "a regex: origin compiles, and a bare host is made protocol-agnostic", %{config: config} do
-      origins = config[:gamend_web][GamendWeb.Endpoint][:check_origin]
+      # Phoenix takes origins as strings, so a list with a pattern is a call.
+      assert {GamendWeb.Http, :origin_allowed?, [origins]} =
+               config[:gamend_web][GamendWeb.Endpoint][:check_origin]
 
       assert "//game.example.com" in origins
       assert Enum.any?(origins, &match?(%Regex{}, &1))

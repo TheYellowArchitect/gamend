@@ -34,7 +34,13 @@ defmodule GamendWeb.Http do
   setting(:allowed_origins, :list,
     default: [],
     doc:
-      "Browser CORS/WebSocket origin allowlist. Empty allows any origin. Prefix an entry with `regex:` for a pattern."
+      "Browser CORS/WebSocket origin allowlist. Empty allows any origin; the server's own pages always accept its own names. Prefix an entry with `regex:` for a pattern."
+  )
+
+  setting(:other_hosts, :list,
+    default: [],
+    doc:
+      "Other names this server answers on, such as a custom domain: its WebSockets accept them as origins. Links keep GAMEND_HTTP_HOST."
   )
 
   setting(:max_body_bytes, :integer,
@@ -48,4 +54,34 @@ defmodule GamendWeb.Http do
   @doc "Largest request body the endpoint parses, in bytes (`max_body_bytes`)."
   @spec max_body_bytes() :: pos_integer()
   def max_body_bytes, do: max(Gamend.Settings.get(__MODULE__, :max_body_bytes), 1)
+
+  @doc """
+  Whether a browser `origin` may open a socket, for an allowlist holding a
+  `regex:` pattern: Phoenix's `check_origin` takes origins as strings only,
+  so `GamendWeb.HostRuntime` hands it this as `{GamendWeb.Http,
+  :origin_allowed?, [allowed]}`. A string entry matches as Phoenix matches
+  one (`//host`, `https://host`, `//*.host`); a pattern, the whole origin.
+  """
+  @spec origin_allowed?(URI.t(), [String.t() | Regex.t()]) :: boolean()
+  def origin_allowed?(%URI{host: nil}, _allowed), do: false
+
+  def origin_allowed?(%URI{} = origin, allowed) do
+    Enum.any?(allowed, fn
+      %Regex{} = regex -> Regex.match?(regex, URI.to_string(origin))
+      entry -> same_origin?(origin, URI.parse(entry))
+    end)
+  end
+
+  defp same_origin?(_origin, %URI{host: nil}), do: false
+
+  defp same_origin?(origin, allowed) do
+    (is_nil(allowed.scheme) or allowed.scheme == origin.scheme) and
+      (is_nil(allowed.port) or allowed.port == origin.port) and
+      host_matches?(origin.host, allowed.host)
+  end
+
+  defp host_matches?(host, "*." <> parent),
+    do: host == parent or String.ends_with?(host, "." <> parent)
+
+  defp host_matches?(host, allowed), do: host == allowed
 end

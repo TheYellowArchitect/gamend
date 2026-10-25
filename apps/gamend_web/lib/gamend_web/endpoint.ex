@@ -128,8 +128,13 @@ defmodule GamendWeb.Endpoint do
   plug Plug.Head
 
   # What Phoenix generates for a `socket/3` websocket transport: the same
-  # config, loaded the same way, handed to the same plug. Built once per pair of
+  # config, loaded the same way, handed to the same plug. Built once per set of
   # values, as `socket/3` builds it once per compile.
+  #
+  # Its origins are its own (`GamendWeb.HostRuntime`): it signs in by token,
+  # not cookie, so with no allowlist a web build served from anywhere may
+  # connect, where the pages' socket keeps to the server's own names. Unset
+  # outside a release, where the endpoint's `check_origin` applies.
   defp game_socket(%Plug.Conn{path_info: ["socket", "websocket"]} = conn, _opts) do
     conn
     |> WebSocket.call({__MODULE__, GamendWeb.UserSocket, game_socket_opts()})
@@ -141,15 +146,14 @@ defmodule GamendWeb.Endpoint do
   defp game_socket_opts do
     timeout = max(Gamend.Settings.get(GamendWeb.Realtime, :socket_timeout_ms), 1_000)
     max_frame = max(Gamend.Settings.get(GamendWeb.Realtime, :socket_max_frame_bytes), 1_024)
-    key = {__MODULE__, :game_socket, timeout, max_frame}
+    check_origin = Application.get_env(:gamend_web, :game_socket_check_origin)
+    key = {__MODULE__, :game_socket, timeout, max_frame, check_origin}
 
     case :persistent_term.get(key, nil) do
       nil ->
-        opts =
-          Transport.load_config(
-            [log: false, compress: true, max_frame_size: max_frame, timeout: timeout],
-            WebSocket
-          )
+        base = [log: false, compress: true, max_frame_size: max_frame, timeout: timeout]
+        given = if is_nil(check_origin), do: base, else: [{:check_origin, check_origin} | base]
+        opts = Transport.load_config(given, WebSocket)
 
         :persistent_term.put(key, opts)
         opts
