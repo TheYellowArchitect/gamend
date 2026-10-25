@@ -965,7 +965,7 @@ defmodule Gamend.Payments do
     The subject a purchase's or a checkout's `metadata` names, or nil.
   """
   @spec subject(map() | nil) :: String.t() | nil
-  def subject(_(%{})) do
+  def subject(_arg1) do
     case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
       :placeholder ->
         nil

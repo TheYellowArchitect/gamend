@@ -1145,7 +1145,8 @@ defmodule Mix.Tasks.Gen.Sdk do
     end
   end
 
-  defp arg_name_from_pattern({:=, _meta, [_left, {var, _m, _c}]}, _idx) when is_atom(var) do
+  defp arg_name_from_pattern({:=, _meta, [_left, {var, _m, ctx}]}, _idx)
+       when is_atom(var) and is_atom(ctx) do
     var
     |> Atom.to_string()
     |> String.trim_leading("_")
@@ -1176,7 +1177,11 @@ defmodule Mix.Tasks.Gen.Sdk do
     end
   end
 
-  defp arg_name_from_pattern({var, _m, _c}, idx) when is_atom(var) and var != :% do
+  # A variable's third element is its context, an atom. A map, tuple or binary
+  # pattern (`%{"key" => value}`, `{a, b}`, `<<x>>`) has its contents there
+  # instead, and its "name" (`%{}`, `{}`, `<<>>`) is no variable: a stub
+  # headed `def f(_%{})` does not compile.
+  defp arg_name_from_pattern({var, _m, ctx}, idx) when is_atom(var) and is_atom(ctx) do
     case Atom.to_string(var) do
       "_" -> "arg#{idx}"
       other -> other |> String.trim_leading("_") |> blank_to("arg#{idx}")
