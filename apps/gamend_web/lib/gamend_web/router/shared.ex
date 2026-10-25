@@ -979,6 +979,7 @@ defmodule GamendWeb.Router.Shared do
           live "/admin/results", AdminLive.Results, :index
           live "/admin/results/:id", AdminLive.Results, :show
           live "/admin/geo", AdminLive.Geo, :index
+          live "/admin/github", AdminLive.GitHub, :index
           live "/admin/system", AdminLive.System, :index
           live "/admin/retention", AdminLive.Retention, :index
           live "/admin/runtime", AdminLive.Runtime, :index
@@ -1142,6 +1143,25 @@ defmodule GamendWeb.Router.Shared do
         # A preference the page sets (the theme, the host's own), saved to
         # the account (`Gamend.Accounts.Preferences.put_client/3`).
         put "/preferences", PreferenceController, :update
+      end
+    end
+  end
+
+  @doc """
+  Connecting the server's GitHub App (`GamendWeb.GitHubController`): which
+  installations a signed-in person may use. Not a login, so it wants a
+  signed-in user, on a plain controller scope; `/auth/github` stays
+  `gamend_oauth_routes/0`'s. For a host that works on its customers'
+  repositories (`Gamend.GitHub`); leave it out otherwise.
+  """
+  defmacro gamend_github_routes do
+    quote do
+      scope "/github", GamendWeb do
+        pipe_through [:browser, :require_authenticated_user]
+
+        get "/connect", GitHubController, :connect
+        get "/callback", GitHubController, :callback
+        get "/setup", GitHubController, :setup
       end
     end
   end
