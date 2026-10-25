@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-332 settings across 29 groups.
+336 settings across 30 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -184,6 +184,16 @@ Live values, and where each one came from, are on the
 | `GAMEND_MAIL_SMTP_USERNAME` | string | - | Warns if unset once `GAMEND_MAIL_SMTP_PASSWORD` or `GAMEND_MAIL_SMTP_RELAY` is set. |
 
 
+## GitHub App
+
+| Variable | Type | Default | Notes |
+|---|---|---|---|
+| `GAMEND_GITHUB_APP_ID` | string | - | The GitHub App's numeric id, from its settings page. Warns if unset once `GAMEND_GITHUB_APP_SLUG` or `GAMEND_GITHUB_PRIVATE_KEY` is set. |
+| `GAMEND_GITHUB_APP_SLUG` | string | - | The App's URL name, `github.com/apps/<slug>`. Where a customer is sent to install it. Warns if unset once `GAMEND_GITHUB_APP_ID` or `GAMEND_GITHUB_PRIVATE_KEY` is set. |
+| `GAMEND_GITHUB_PRIVATE_KEY` | string | - | The App's private key, PEM. Signs the JWT that mints installation tokens. Warns if unset once `GAMEND_GITHUB_APP_ID` or `GAMEND_GITHUB_APP_SLUG` is set. Secret - never log or commit it. |
+| `GAMEND_GITHUB_WEBHOOK_SECRET` | string | - | The secret the App signs its webhook deliveries with. Unset refuses every delivery, which is the safe default for an endpoint anyone can POST to. Secret - never log or commit it. |
+
+
 ## Hooks
 
 | Variable | Type | Default | Notes |
@@ -295,7 +305,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_OAUTH_GOOGLE_CLIENT_ID` | string | - | Warns if unset once `GAMEND_OAUTH_GOOGLE_CLIENT_SECRET` is set. |
 | `GAMEND_OAUTH_GOOGLE_CLIENT_SECRET` | string | - | Warns if unset once `GAMEND_OAUTH_GOOGLE_CLIENT_ID` is set. Secret - never log or commit it. |
 | `GAMEND_OAUTH_GOOGLE_ENABLED` | boolean | `true` | Offer google sign-in. Only takes effect once its credentials are set. |
-| `GAMEND_OAUTH_GOOGLE_WEB_CLIENT_ID` | string | - | Native-app client id used to verify Google ID tokens from SDK sign-in. |
+| `GAMEND_OAUTH_GOOGLE_WEB_CLIENT_ID` | string | - | Web client id (not an Android or iOS one) the native Google sign-in plugin is set up with. ID tokens are accepted when their audience is this or `GAMEND_OAUTH_GOOGLE_CLIENT_ID`; leave it unset when both are the same client. |
 | `GAMEND_OAUTH_STEAM_API_KEY` | string | - | Steam Web API key, used for OpenID sign-in. Secret - never log or commit it. |
 | `GAMEND_OAUTH_STEAM_APP_ID` | string | - |  |
 | `GAMEND_OAUTH_STEAM_ENABLED` | boolean | `true` | Offer steam sign-in. Only takes effect once its credentials are set. |

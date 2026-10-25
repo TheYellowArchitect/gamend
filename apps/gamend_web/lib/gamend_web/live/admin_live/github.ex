@@ -50,8 +50,8 @@ defmodule GamendWeb.AdminLive.GitHub do
 
             <div :if={not @configured?} class="alert alert-warning">
               <span>
-                The GitHub App is not configured on this server, so nobody can connect one. An operator sets
-                <code class="text-xs">GAMEND_GITHUB_APP_ID</code>, <code class="text-xs">GAMEND_GITHUB_APP_SLUG</code>, <code class="text-xs">GAMEND_GITHUB_PRIVATE_KEY</code>
+                The GitHub App is not configured on this server, so nobody can connect one. An operator sets <code class="text-xs">GAMEND_GITHUB_APP_ID</code>, <code class="text-xs">GAMEND_GITHUB_APP_SLUG</code>,
+                <code class="text-xs">GAMEND_GITHUB_PRIVATE_KEY</code>
                 and the <code class="text-xs">GAMEND_OAUTH_GITHUB_*</code>
                 client pair (<code class="text-xs">mix gamend.github.app</code>
                 makes the App and prints them).

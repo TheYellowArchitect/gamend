@@ -127,7 +127,10 @@ defmodule Mix.Tasks.Gamend.Github.App do
 
     File.write!(
       path,
-      Enum.join(["", "# GitHub App #{app.slug}, registered by mix gamend.github.app" | lines], "\n") <>
+      Enum.join(
+        ["", "# GitHub App #{app.slug}, registered by mix gamend.github.app" | lines],
+        "\n"
+      ) <>
         "\n",
       [:append]
     )

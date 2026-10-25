@@ -54,6 +54,12 @@ GAMEND_OAUTH_GOOGLE_CLIENT_ID="your_client_id.apps.googleusercontent.com"
 GAMEND_OAUTH_GOOGLE_CLIENT_SECRET="your_client_secret"
 ```
 
+Native sign-in (`POST /api/v1/auth/google/id_token`) accepts an ID token
+whose audience is `GAMEND_OAUTH_GOOGLE_CLIENT_ID`, or
+`GAMEND_OAUTH_GOOGLE_WEB_CLIENT_ID` when the Godot or Android plugin is set up
+with a different Web client id; the plugin takes a Web client id, never an
+Android or iOS one.
+
 ## Test Google login
 
 After deploying with the secrets:

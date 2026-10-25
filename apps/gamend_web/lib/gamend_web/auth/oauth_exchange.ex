@@ -270,7 +270,7 @@ defmodule GamendWeb.Auth.OAuthExchange do
       conn,
       :service_unavailable,
       "google_not_configured",
-      "Missing GOOGLE_WEB_CLIENT_ID/GOOGLE_CLIENT_ID"
+      "Missing GAMEND_OAUTH_GOOGLE_WEB_CLIENT_ID or GAMEND_OAUTH_GOOGLE_CLIENT_ID"
     )
   end
 
