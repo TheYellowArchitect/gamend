@@ -93,6 +93,15 @@ Counts `list_user_entitlements/2`'s entitlements; takes `:include_inactive`.
 Whether the user has EVER held `key`, active or not. What a once-per-account
 grant (a trial) checks, since the row outlives its end.
 
+# `entitlement_key`
+
+```elixir
+@spec entitlement_key(Gamend.Payments.Product.t(), String.t() | nil) :: String.t()
+```
+
+The entitlement key a purchase of `product` for `subject` grants: the
+product's own, or `"<key>:<subject>"` for a per-subject product.
+
 # `finalize_steam_purchase`
 
 ```elixir
@@ -259,6 +268,18 @@ The user's entitlements, by key: active ones only unless
 Stamp a provider event as fully handled. Only then does a retry of the same
 event id count as a duplicate.
 
+# `per_subject?`
+
+```elixir
+@spec per_subject?(Gamend.Payments.Product.t()) :: boolean()
+```
+
+Whether a product is sold once per subject rather than once per user
+(`grant_config["per_subject"]`): a subscription per hosted server, a pass
+per character. Its entitlement is `"<key>:<subject>"`, the subject being
+the purchase's `metadata["subject"]`, so one user may hold it for several
+subjects. Plan upgrades (`Upgrades`) never apply to one.
+
 # `product_entitlement_key`
 
 ```elixir
@@ -276,6 +297,14 @@ event id count as a duplicate.
 A short code for a failure, for a counter's dimension: Stripe's own error
 code when it sent one (`card_declined`, `resource_missing`), the atom for
 ours, never the message.
+
+# `purchase_entitlement_key`
+
+```elixir
+@spec purchase_entitlement_key(Gamend.Payments.Purchase.t()) :: String.t()
+```
+
+The entitlement key a purchase grants (`entitlement_key/2`).
 
 # `reconcile_stripe_purchase`
 
@@ -318,6 +347,14 @@ other.
 # `stripe_customer_id`
 
 # `stripe_refundable?`
+
+# `subject`
+
+```elixir
+@spec subject(map() | nil) :: String.t() | nil
+```
+
+The subject a purchase's or a checkout's `metadata` names, or nil.
 
 # `update_product`
 

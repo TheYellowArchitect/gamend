@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1352">
+    <meta name="project" content="gamend_core v1.1.1355">
 
 
-    <title>Gamend.Presence — gamend_core v1.1.1352</title>
+    <title>Gamend.Presence — gamend_core v1.1.1355</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-83389E80.js"></script>
+    <script defer src="dist/sidebar_items-8D7884EC.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1352
+          v1.1.1355
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Presence</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1352)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1355)</small>
 
     </h1>
 
@@ -119,7 +119,15 @@ replicated between nodes by CRDT: a node that dies takes its entries with it,
 with no sweeper to notice. That is the property node-local ETS and database
 flags both lack.</p><p>Used for signaling room membership and lobby spectators. Not for anything
 queried in SQL — presence lives in memory and cannot be joined against a
-table — and not for anything durable, since a full cluster restart empties it.</p><p>During a netsplit each side sees only its own members until they heal.</p>
+table — and not for anything durable, since a full cluster restart empties it.</p><p>During a netsplit each side sees only its own members until they heal.</p><h2 id="module-reads" class="section-heading"><a href="#module-reads" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Reads</span></h2><p>Read through <a href="#keys/1"><code class="inline">keys/1</code></a> and <a href="#last_socket?/1"><code class="inline">last_socket?/1</code></a>, never <a href="#list/1"><code class="inline">list/1</code></a> or
+<a href="#get_by_key/2"><code class="inline">get_by_key/2</code></a>. phoenix_pubsub 2.4 answers those two with a call to the
+topic's shard whose reply is its whole state, a tag for every presence on
+it, which the caller then filters: at 2,000 players each call copied ~1 MB
+and queued behind every other on the one shard process, and a thousand
+disconnects at once ran a 1 GB server out of memory. These read the shard's
+protected table instead, only the topic asked for. Unlike the two they
+replace they keep the entries of a replica that just went down, until the
+tracker removes them.</p>
     </section>
 
 </div>
@@ -169,6 +177,17 @@ table — and not for anything durable, since a full cluster restart empties it.
       </div>
 
         <div class="summary-synopsis"><p>Callback implementation for <a href="https://phoenix.hexdocs.pm/1.8.16/Phoenix.Presence.html#c:get_by_key/2"><code class="inline">Phoenix.Presence.get_by_key/2</code></a>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#keys/1" data-no-tooltip="" translate="no">keys(topic)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The distinct keys tracked on <code class="inline">topic</code>, as strings and sorted: the keys of
+<a href="#list/1"><code class="inline">list/1</code></a>, without its copy (<em>Reads</em>). Cluster-wide.</p></div>
 
     </div>
 
@@ -296,7 +315,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">child_spec(opts)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -318,7 +337,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">fetch(topic, presences)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -340,7 +359,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">fetchers_pids()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -362,7 +381,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">get_by_key(topic, key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -372,6 +391,35 @@ table — and not for anything durable, since a full cluster restart empties it.
   <section class="docstring">
 
 <p>Callback implementation for <a href="https://phoenix.hexdocs.pm/1.8.16/Phoenix.Presence.html#c:get_by_key/2"><code class="inline">Phoenix.Presence.get_by_key/2</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="keys/1">
+
+  <div class="detail-header">
+    <a href="#keys/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">keys(topic)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L62" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> keys(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
+
+      </div>
+
+<p>The distinct keys tracked on <code class="inline">topic</code>, as strings and sorted: the keys of
+<a href="#list/1"><code class="inline">list/1</code></a>, without its copy (<em>Reads</em>). Cluster-wide.</p>
   </section>
 </section>
 <section class="detail" id="last_socket?/1">
@@ -384,7 +432,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">last_socket?(user_id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L48" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L77" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -412,7 +460,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">list(topic)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -434,7 +482,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">track(socket, key, meta)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -456,7 +504,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">track(pid, topic, key, meta)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -478,7 +526,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">untrack(socket, key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -500,7 +548,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">untrack(pid, topic, key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -522,7 +570,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">update(socket, key, meta)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -544,7 +592,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">update(pid, topic, key, meta)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L16" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L28" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -566,7 +614,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">users_buckets()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L40" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L55" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -594,7 +642,7 @@ table — and not for anything durable, since a full cluster restart empties it.
       <h1 class="signature" translate="no">users_topic(user_id)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L36" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/presence.ex#L51" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -621,9 +669,9 @@ table — and not for anything durable, since a full cluster restart empties it.
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1352">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1355">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1352">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1355">Hex Preview</a>
 
             </span>
 

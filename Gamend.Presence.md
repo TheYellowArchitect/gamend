@@ -14,6 +14,18 @@ table — and not for anything durable, since a full cluster restart empties it.
 
 During a netsplit each side sees only its own members until they heal.
 
+## Reads
+
+Read through `keys/1` and `last_socket?/1`, never `list/1` or
+`get_by_key/2`. phoenix_pubsub 2.4 answers those two with a call to the
+topic's shard whose reply is its whole state, a tag for every presence on
+it, which the caller then filters: at 2,000 players each call copied ~1 MB
+and queued behind every other on the one shard process, and a thousand
+disconnects at once ran a 1 GB server out of memory. These read the shard's
+protected table instead, only the topic asked for. Unlike the two they
+replace they keep the entries of a replica that just went down, until the
+tracker removes them.
+
 # `child_spec`
 
 # `fetch`
@@ -21,6 +33,15 @@ During a netsplit each side sees only its own members until they heal.
 # `fetchers_pids`
 
 # `get_by_key`
+
+# `keys`
+
+```elixir
+@spec keys(String.t()) :: [String.t()]
+```
+
+The distinct keys tracked on `topic`, as strings and sorted: the keys of
+`list/1`, without its copy (*Reads*). Cluster-wide.
 
 # `last_socket?`
 

@@ -1,4 +1,4 @@
-# gamend_core v1.1.1352 - API Reference
+# gamend_core v1.1.1355 - API Reference
 
 ## Modules
 
@@ -61,6 +61,7 @@ database and the other app instances.
 - [Gamend.Cluster](Gamend.Cluster.md): Erlang distribution, needed for multi-node deployments and the partitioned
 L2 cache.
 - [Gamend.Codegen](Gamend.Codegen.md): Support for the `mix` tasks that write generated files into the repo.
+- [Gamend.Containers](Gamend.Containers.md): Long-lived OCI containers, and the images they run, through the `podman` CLI.
 - [Gamend.Database](Gamend.Database.md): Connection and tuning settings for `Gamend.Repo`.
 - [Gamend.DemoSeed](Gamend.DemoSeed.md): Fills the database with enough demo data to exercise pagination and the
 list/detail pages at realistic sizes.
@@ -291,6 +292,8 @@ hand-copying a checklist
   - [Gamend.Payments.StripeSweeper](Gamend.Payments.StripeSweeper.md): The safety net for a Stripe webhook that never arrived.
   - [Gamend.Payments.Upgrades](Gamend.Payments.Upgrades.md): Moving to a longer plan: a monthly subscription to a yearly one, or any
 subscription to a one-off purchase (lifetime) of the same entitlement.
+Never for a per-subject product (`Payments.per_subject?/1`): each subject's
+purchase stands alone.
 
 - Storage &amp; content
   - [Gamend.Content](Gamend.Content.md): Reads and renders Markdown content from project files and directories.

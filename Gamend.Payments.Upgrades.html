@@ -5,14 +5,14 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="ExDoc v0.40.4">
-    <meta name="project" content="gamend_core v1.1.1352">
+    <meta name="project" content="gamend_core v1.1.1355">
 
 
-    <title>Gamend.Payments.Upgrades — gamend_core v1.1.1352</title>
+    <title>Gamend.Payments.Upgrades — gamend_core v1.1.1355</title>
 
     <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
 
-    <script defer src="dist/sidebar_items-83389E80.js"></script>
+    <script defer src="dist/sidebar_items-8D7884EC.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-MI33G4N7.js"></script>
 
@@ -37,7 +37,7 @@
 gamend_core
         </a>
         <div class="sidebar-projectVersion" translate="no">
-          v1.1.1352
+          v1.1.1355
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ gamend_core
   <div class="heading-with-actions top-heading">
     <h1>
       <span translate="no">Gamend.<wbr />Payments.<wbr />Upgrades</span> 
-      <small class="app-vsn" translate="no">(gamend_core v1.1.1352)</small>
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1355)</small>
 
     </h1>
 
@@ -115,7 +115,9 @@ gamend_core
 
     <section id="moduledoc">
 <p>Moving to a longer plan: a monthly subscription to a yearly one, or any
-subscription to a one-off purchase (lifetime) of the same entitlement.</p><p>An entitlement is one row per user and key, so a second purchase of a key
+subscription to a one-off purchase (lifetime) of the same entitlement.
+Never for a per-subject product (<code class="inline">Payments.per_subject?/1</code>): each subject's
+purchase stands alone.</p><p>An entitlement is one row per user and key, so a second purchase of a key
 the user holds is refused (<code class="inline">:already_owned</code>). An upgrade is the exception
 (<a href="#replaced_purchase/2"><code class="inline">replaced_purchase/2</code></a>): the row comes from a Stripe subscription still
 running, and the new product lasts longer (<a href="#longer?/2"><code class="inline">longer?/2</code></a>: a one-off
@@ -309,7 +311,7 @@ rounded down to the minor unit. 0 when nothing is left or nothing is known.</p><
       <h1 class="signature" translate="no">mode()</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L63" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L65" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -352,7 +354,7 @@ rounded down to the minor unit. 0 when nothing is left or nothing is known.</p><
       <h1 class="signature" translate="no">first_charge_at(user_id, product, now \\ DateTime.utc_now(:second))</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L134" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L137" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -385,7 +387,7 @@ refunded pro rata instead).</p>
       <h1 class="signature" translate="no">holding_purchase(user_id, key)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L70" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L72" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -415,7 +417,7 @@ what the user holds that plan by. A grant with no purchase answers nil.</p>
       <h1 class="signature" translate="no">longer?(new, old)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L110" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L113" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -446,7 +448,7 @@ from, by length).</p>
       <h1 class="signature" translate="no">mode(new, old)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L323" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L328" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -476,7 +478,7 @@ end), else now.</p>
       <h1 class="signature" translate="no">replaced_purchase(user_id, product)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L85" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L87" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -507,7 +509,7 @@ when it is a running Stripe subscription and <code class="inline">product</code>
       <h1 class="signature" translate="no">supersede(purchase)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L169" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L172" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -541,7 +543,7 @@ ended subscription's purchase id with how it ended, or why it did not.</p>
       <h1 class="signature" translate="no">sweep(batch \\ 50)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L195" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L199" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -571,7 +573,7 @@ run. Answers how many subscriptions ended each way.</p>
       <h1 class="signature" translate="no">trial_end(user_id, product, given)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L154" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L157" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -601,7 +603,7 @@ run. Answers how many subscriptions ended each way.</p>
       <h1 class="signature" translate="no">unused_amount(amount_paid, starts_at, ends_at, from)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L426" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L431" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -631,7 +633,7 @@ rounded down to the minor unit. 0 when nothing is left or nothing is known.</p>
       <h1 class="signature" translate="no">upgrade?(user_id, product)</h1>
 
 
-        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L101" class="icon-action" rel="help nofollow" aria-label="View Source">
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/payments/upgrades.ex#L104" class="icon-action" rel="help nofollow" aria-label="View Source">
           <i class="ri-code-s-slash-line" aria-hidden="true"></i>
         </a>
 
@@ -658,9 +660,9 @@ rounded down to the minor unit. 0 when nothing is left or nothing is known.</p>
         <p>
 
             <span class="line">
-              <a href="https://hex.pm/packages/gamend_core/1.1.1352">Hex Package</a>
+              <a href="https://hex.pm/packages/gamend_core/1.1.1355">Hex Package</a>
 
-              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1352">Hex Preview</a>
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1355">Hex Preview</a>
 
             </span>
 

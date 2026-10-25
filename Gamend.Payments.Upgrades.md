@@ -3,6 +3,8 @@
 
 Moving to a longer plan: a monthly subscription to a yearly one, or any
 subscription to a one-off purchase (lifetime) of the same entitlement.
+Never for a per-subject product (`Payments.per_subject?/1`): each subject's
+purchase stands alone.
 
 An entitlement is one row per user and key, so a second purchase of a key
 the user holds is refused (`:already_owned`). An upgrade is the exception

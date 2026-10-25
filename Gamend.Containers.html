@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="gamend_core v1.1.1355">
+
+
+    <title>Gamend.Containers — gamend_core v1.1.1355</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-8D7884EC.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+gamend_core
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.1.1355
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of gamend_core</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">Gamend.<wbr />Containers</span> 
+      <small class="app-vsn" translate="no">(gamend_core v1.1.1355)</small>
+
+    </h1>
+
+<a href="Gamend.Containers.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+
+      <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p>Long-lived OCI containers, and the images they run, through the <code class="inline">podman</code> CLI.</p><p>For a host that runs other programs beside itself on the machine it is on:
+a hosted Gamend per customer, a build sandbox. It is the CLI's verbs and
+nothing about what runs in them, so a host decides the limits, the mounts
+and the network, and this module only spells them as flags.</p><p>Podman rather than Docker because it is rootless and has no root daemon to
+talk to. <code class="inline">:runtime</code> in a spec (<code class="inline">&quot;runsc&quot;</code>, <code class="inline">&quot;kata-runtime&quot;</code>) is how a host
+raises isolation without another driver: the same flags, a different OCI
+runtime.</p><h2 id="module-errors" class="section-heading"><a href="#module-errors" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Errors</span></h2><p>Every call answers <code class="inline">{:error, reason}</code> on an expected failure:</p><ul><li><code class="inline">:podman_not_found</code> — no <code class="inline">podman</code> on the PATH.</li><li><code class="inline">:not_found</code> — no such container, volume, network, image or build
+context.</li><li><code class="inline">{:podman_failed, verb, status, line}</code> — the CLI exited non-zero; <code class="inline">line</code>
+is its last line of output, which is where podman puts the reason.</li></ul><p>A build answers its own, since its reason is a compiler's output, not
+podman's last line (<a href="#build/2"><code class="inline">build/2</code></a>).</p><h2 id="module-secrets" class="section-heading"><a href="#module-secrets" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Secrets</span></h2><p>Environment goes through a mode-0600 <code class="inline">--env-file</code>, never <code class="inline">-e</code>: arguments
+are world-readable in <code class="inline">ps</code>. The file is created empty at 0600 before the
+values are written, so they are never readable by another user, and it is
+removed as soon as <code class="inline">podman create</code> has read it.</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h2>
+<div class="summary-types summary">
+  <h3>
+    <a href="#types">Types</a>
+  </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:mount/0" data-no-tooltip="" translate="no">mount()</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:port_map/0" data-no-tooltip="" translate="no">port_map()</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:spec/0" data-no-tooltip="" translate="no">spec()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>One container.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:state/0" data-no-tooltip="" translate="no">state()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>What podman says a container is doing.</p></div>
+
+    </div>
+
+</div>
+<div class="summary-functions summary">
+  <h3>
+    <a href="#functions">Functions</a>
+  </h3>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#build/2" data-no-tooltip="" translate="no">build(context, opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Build an image from the directory <code class="inline">context</code> with its Dockerfile, and name
+it <code class="inline">tag:</code>. Answers the image's id and the end of the build's output:
+<code class="inline">{:ok, %{id: &quot;sha256:…&quot;, log: &quot;…&quot;}}</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#copy_from/3" data-no-tooltip="" translate="no">copy_from(name, path, dest)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Copy <code class="inline">path</code> out of a container, running or stopped, to <code class="inline">dest</code> on this machine.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#create/1" data-no-tooltip="" translate="no">create(spec)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a container from <code class="inline">spec</code>, not started. Answers its id.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#create_network/2" data-no-tooltip="" translate="no">create_network(name, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a network; one that exists already is fine, as it is.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#create_volume/2" data-no-tooltip="" translate="no">create_volume(name, labels \\ %{})</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Create a named volume; one that exists already is fine.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#exec/2" data-no-tooltip="" translate="no">exec(name, argv)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Run <code class="inline">argv</code> inside a running container and answer what it printed, stdout
+and stderr together. A non-zero exit is <code class="inline">{:podman_failed, :exec, status, line}</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#executable/0" data-no-tooltip="" translate="no">executable()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>The <code class="inline">podman</code> executable, for a host that runs it itself: a job whose output
+it streams through a port as it comes.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#image_exists?/1" data-no-tooltip="" translate="no">image_exists?(image)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Whether the image store has <code class="inline">image</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#info/0" data-no-tooltip="" translate="no">info()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>This machine's memory and CPUs, as podman sees them.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#inspect_image/2" data-no-tooltip="" translate="no">inspect_image(image, format)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>One field of an image, through a Go template: <code class="inline">&quot;{{.Digest}}&quot;</code>, or
+<code class="inline">&quot;{{range .Config.Env}}{{println .}}{{end}}&quot;</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#kill/1" data-no-tooltip="" translate="no">kill(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Kill a container at once (SIGKILL). One started with <code class="inline">--rm</code> is removed with
+it, which is how a host stops a job past its time.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list/1" data-no-tooltip="" translate="no">list(label)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Every container carrying <code class="inline">label</code> (<code class="inline">key=value</code>), any state, by name: one
+call for a whole machine, where <a href="#state/1"><code class="inline">state/1</code></a> per container would be one each.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#logs/2" data-no-tooltip="" translate="no">logs(name, tail \\ 200)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A container's last <code class="inline">tail</code> lines of output, stdout and stderr together.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#output/3" data-no-tooltip="" translate="no">output(image, argv, opts \\ [])</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>What <code class="inline">argv</code> prints, run once in <code class="inline">image</code> and removed: no network, a
+read-only root, no capabilities, and no pull. For asking an image what it
+holds (a version string), or a short chore on a volume, never for running
+a job.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#pause/1" data-no-tooltip="" translate="no">pause(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Freeze a running container (the cgroup freezer): it keeps its memory and
+uses no CPU. <a href="#unpause/1"><code class="inline">unpause/1</code></a> thaws it in milliseconds.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#pull/1" data-no-tooltip="" translate="no">pull(image)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Pull <code class="inline">image</code> into the image store.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#remove/1" data-no-tooltip="" translate="no">remove(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Remove a container, running or not. Its named volumes stay.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#remove_network/1" data-no-tooltip="" translate="no">remove_network(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Remove a network no container is on. One that is not there is fine; one
+a container is still on is a <code class="inline">:podman_failed</code> error.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#remove_volume/1" data-no-tooltip="" translate="no">remove_volume(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Remove a named volume and everything in it.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start/1" data-no-tooltip="" translate="no">start(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Start a created or stopped container.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#state/1" data-no-tooltip="" translate="no">state(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>What a container is doing, or <code class="inline">{:error, :not_found}</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stats/0" data-no-tooltip="" translate="no">stats()</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Memory in use and CPU of every running container, by name, in one call:
+<code class="inline">%{&quot;name&quot; =&gt; %{memory_bytes: n, cpu_percent: f}}</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#stop/2" data-no-tooltip="" translate="no">stop(name, timeout_s \\ 10)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Stop a container, killing it after <code class="inline">timeout_s</code> seconds.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#tag/2" data-no-tooltip="" translate="no">tag(image, ref)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Give the image <code class="inline">image</code> names a second name, <code class="inline">ref</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#tags/1" data-no-tooltip="" translate="no">tags(repo)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Every <code class="inline">repo:tag</code> name of <code class="inline">repo</code> in the image store.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#unpause/1" data-no-tooltip="" translate="no">unpause(name)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Thaw a paused container.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#untag/1" data-no-tooltip="" translate="no">untag(ref)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Drop the name <code class="inline">ref</code>. An image goes with its last name, unless a container
+holds it.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#update/2" data-no-tooltip="" translate="no">update(name, limits)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Change a container's limits while it runs: <code class="inline">cpus:</code>, <code class="inline">memory_mb:</code> and
+<code class="inline">pids:</code>, all three required.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#write_env_file/2" data-no-tooltip="" translate="no">write_env_file(path, env)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Write <code class="inline">env</code> to <code class="inline">path</code> as a podman <code class="inline">--env-file</code>, readable by its owner only.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="types" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h2>
+
+    <div class="types-list">
+<section class="detail" id="t:mount/0">
+
+  <div class="detail-header">
+    <a href="#t:mount/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">mount()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L39" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> mount() :: {source :: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), target :: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), :rw | :ro}</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:port_map/0">
+
+  <div class="detail-header">
+    <a href="#t:port_map/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">port_map()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L38" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> port_map() ::
+  {host_ip :: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), host_port :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(), port :: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>()}</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:spec/0">
+
+  <div class="detail-header">
+    <a href="#t:spec/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">spec()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L54" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> spec() :: %{
+  :name =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(),
+  :image =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(),
+  optional(:env) =&gt; %{required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()},
+  optional(:networks) =&gt; [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()],
+  optional(:network_alias) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(),
+  optional(:ports) =&gt; [<a href="#t:port_map/0">port_map</a>()],
+  optional(:volumes) =&gt; [<a href="#t:mount/0">mount</a>()],
+  optional(:tmpfs) =&gt; [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()],
+  optional(:labels) =&gt; %{required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()},
+  optional(:memory_mb) =&gt; <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(),
+  optional(:cpus) =&gt; <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">number</a>(),
+  optional(:pids) =&gt; <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>(),
+  optional(:runtime) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>() | nil,
+  optional(:read_only) =&gt; <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>(),
+  optional(:command) =&gt; [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]
+}</pre>
+
+      </div>
+
+<p>One container.</p><p><code class="inline">:volumes</code> sources are podman volume names or absolute host paths. <code class="inline">:tmpfs</code>
+entries are <code class="inline">&quot;/path:options&quot;</code>, as podman's <code class="inline">--tmpfs</code> takes them.</p><p><code class="inline">:networks</code> are the networks it joins (<a href="#create_network/2"><code class="inline">create_network/2</code></a>), in place of
+podman's default. A container that must still reach the internet joins a
+network the host made beside an internal one, never <code class="inline">&quot;podman&quot;</code>: the
+default has no DNS, so beside an internal network the container would
+resolve only that network's names (podman 5.3). <code class="inline">:network_alias</code> is a
+name the others on those networks reach it by, besides its own.</p>
+  </section>
+</section>
+<section class="detail" id="t:state/0">
+
+  <div class="detail-header">
+    <a href="#t:state/0" class="detail-link" data-no-tooltip="" aria-label="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">state()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L73" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@type</span> state() ::
+  :created | :running | :paused | :exited | :stopping | :removing | :unknown</pre>
+
+      </div>
+
+<p>What podman says a container is doing.</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+  <section id="functions" class="details-list">
+    <h2 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h2>
+
+    <div class="functions-list">
+<section class="detail" id="build/2">
+
+  <div class="detail-header">
+    <a href="#build/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">build(context, opts)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L372" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> build(<a href="https://elixir.hexdocs.pm/Path.html#t:t/0">Path.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) ::
+  {:ok, %{id: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), log: <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()}} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Build an image from the directory <code class="inline">context</code> with its Dockerfile, and name
+it <code class="inline">tag:</code>. Answers the image's id and the end of the build's output:
+<code class="inline">{:ok, %{id: &quot;sha256:…&quot;, log: &quot;…&quot;}}</code>.</p><p><code class="inline">opts</code>:</p><ul><li><code class="inline">tag:</code> — the name, required.</li><li><code class="inline">dockerfile:</code> — the file, relative to <code class="inline">context</code> and inside it
+(podman's own <code class="inline">Containerfile</code>, then <code class="inline">Dockerfile</code>, when not given). A
+file outside it, or a symlink, is refused with <code class="inline">{:unsafe_dockerfile, path}</code>: the CLI reads it from this machine, so it could be anything
+here.</li><li><code class="inline">target:</code> — the stage to build; the last one when not given.</li><li><code class="inline">args:</code> — <code class="inline">%{&quot;NAME&quot; =&gt; &quot;value&quot;}</code> for the Dockerfile's <code class="inline">ARG</code>s. Never a
+secret: they are in the image's history and on the command line.</li><li><code class="inline">labels:</code> — set on the image.</li><li><code class="inline">memory_mb:</code>, <code class="inline">cpus:</code> — what the build's <code class="inline">RUN</code> steps may use.</li><li><code class="inline">runtime:</code> — the OCI runtime its <code class="inline">RUN</code> steps run under (<code class="inline">runsc</code>).
+A podman CLI talking to a remote service (<code class="inline">CONTAINER_HOST</code>) does not
+take one, and the build fails on it.</li><li><code class="inline">network: false</code> — no network for <code class="inline">RUN</code> steps. On by default, since
+a build fetches its dependencies.</li><li><code class="inline">timeout_ms:</code> — the build is stopped past it, SIGTERM then SIGKILL
+10 s later, and answers <code class="inline">{:build_timeout, log}</code>. Through a remote service (podman 5.3), the build stopped there
+too, with no image and no working container left. No limit by
+default.</li><li><code class="inline">on_output:</code> — a function given each piece of output as it comes,
+for a host showing the build live.</li></ul><p>No hardening floor, unlike <a href="#create/1"><code class="inline">create/1</code></a>: a Dockerfile's <code class="inline">RUN</code> expects the
+root a build normally has (apt drops to its own user with <code class="inline">setgroups</code>,
+which a container without capabilities refuses). Rootless podman, and
+<code class="inline">runtime:</code> for someone else's Dockerfile, are what keep a build in.</p><p>Errors besides the module's: <code class="inline">{:build_failed, status, log}</code>, the build's
+exit status and the end of its output, and <code class="inline">{:build_timeout, log}</code>.</p>
+  </section>
+</section>
+<section class="detail" id="copy_from/3">
+
+  <div class="detail-header">
+    <a href="#copy_from/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">copy_from(name, path, dest)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L649" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> copy_from(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/Path.html#t:t/0">Path.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Copy <code class="inline">path</code> out of a container, running or stopped, to <code class="inline">dest</code> on this machine.</p>
+  </section>
+</section>
+<section class="detail" id="create/1">
+
+  <div class="detail-header">
+    <a href="#create/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">create(spec)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L79" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> create(<a href="#t:spec/0">spec</a>()) :: {:ok, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Create a container from <code class="inline">spec</code>, not started. Answers its id.</p>
+  </section>
+</section>
+<section class="detail" id="create_network/2">
+
+    <span id="create_network/1"></span>
+
+  <div class="detail-header">
+    <a href="#create_network/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">create_network(name, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L294" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> create_network(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Create a network; one that exists already is fine, as it is.</p><p><code class="inline">opts</code>: <code class="inline">internal: true</code> for a network with no way out, which only its
+containers reach each other on (a server and its database); <code class="inline">labels:</code>.
+Containers on a network a host made reach each other by name.</p>
+  </section>
+</section>
+<section class="detail" id="create_volume/2">
+
+    <span id="create_volume/1"></span>
+
+  <div class="detail-header">
+    <a href="#create_volume/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">create_volume(name, labels \\ %{})</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L268" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> create_volume(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), %{required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()}) ::
+  :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Create a named volume; one that exists already is fine.</p>
+  </section>
+</section>
+<section class="detail" id="exec/2">
+
+  <div class="detail-header">
+    <a href="#exec/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">exec(name, argv)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L234" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> exec(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]) :: {:ok, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Run <code class="inline">argv</code> inside a running container and answer what it printed, stdout
+and stderr together. A non-zero exit is <code class="inline">{:podman_failed, :exec, status, line}</code>.</p>
+  </section>
+</section>
+<section class="detail" id="executable/0">
+
+  <div class="detail-header">
+    <a href="#executable/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">executable()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L735" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> executable() :: {:ok, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()} | {:error, :podman_not_found}</pre>
+
+      </div>
+
+<p>The <code class="inline">podman</code> executable, for a host that runs it itself: a job whose output
+it streams through a port as it comes.</p>
+  </section>
+</section>
+<section class="detail" id="image_exists?/1">
+
+  <div class="detail-header">
+    <a href="#image_exists?/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">image_exists?(image)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L552" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> image_exists?(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">boolean</a>()</pre>
+
+      </div>
+
+<p>Whether the image store has <code class="inline">image</code>.</p>
+  </section>
+</section>
+<section class="detail" id="info/0">
+
+  <div class="detail-header">
+    <a href="#info/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">info()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L163" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> info() ::
+  {:ok, %{memory_mb: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>(), cpus: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>()}} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>This machine's memory and CPUs, as podman sees them.</p>
+  </section>
+</section>
+<section class="detail" id="inspect_image/2">
+
+  <div class="detail-header">
+    <a href="#inspect_image/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">inspect_image(image, format)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L656" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> inspect_image(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: {:ok, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>One field of an image, through a Go template: <code class="inline">&quot;{{.Digest}}&quot;</code>, or
+<code class="inline">&quot;{{range .Config.Env}}{{println .}}{{end}}&quot;</code>.</p>
+  </section>
+</section>
+<section class="detail" id="kill/1">
+
+  <div class="detail-header">
+    <a href="#kill/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">kill(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L128" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> kill(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Kill a container at once (SIGKILL). One started with <code class="inline">--rm</code> is removed with
+it, which is how a host stops a job past its time.</p>
+  </section>
+</section>
+<section class="detail" id="list/1">
+
+  <div class="detail-header">
+    <a href="#list/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">list(label)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L246" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> list(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: {:ok, %{required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; <a href="#t:state/0">state</a>()}} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Every container carrying <code class="inline">label</code> (<code class="inline">key=value</code>), any state, by name: one
+call for a whole machine, where <a href="#state/1"><code class="inline">state/1</code></a> per container would be one each.</p>
+  </section>
+</section>
+<section class="detail" id="logs/2">
+
+    <span id="logs/1"></span>
+
+  <div class="detail-header">
+    <a href="#logs/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">logs(name, tail \\ 200)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L222" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> logs(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">pos_integer</a>()) :: {:ok, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>A container's last <code class="inline">tail</code> lines of output, stdout and stderr together.</p>
+  </section>
+</section>
+<section class="detail" id="output/3">
+
+    <span id="output/2"></span>
+
+  <div class="detail-header">
+    <a href="#output/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">output(image, argv, opts \\ [])</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L601" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> output(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()], <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) ::
+  {:ok, <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>What <code class="inline">argv</code> prints, run once in <code class="inline">image</code> and removed: no network, a
+read-only root, no capabilities, and no pull. For asking an image what it
+holds (a version string), or a short chore on a volume, never for running
+a job.</p><p><code class="inline">opts</code>: <code class="inline">volumes:</code> (<code class="inline">{source, target, :ro | :rw}</code>), <code class="inline">tmpfs:</code>,
+<code class="inline">entrypoint:</code> to run something other than the image's own, <code class="inline">env:</code> (through
+a 0600 env file, as <a href="#create/1"><code class="inline">create/1</code></a>), and <code class="inline">network: true</code> for a chore that must
+reach the network (a restore from a bucket). A chore running someone
+else's code (a build of a tenant's plugin) takes the limits <a href="#create/1"><code class="inline">create/1</code></a>
+does: <code class="inline">memory_mb:</code>, <code class="inline">cpus:</code>, <code class="inline">pids:</code> and <code class="inline">runtime:</code> (<code class="inline">runsc</code>).</p>
+  </section>
+</section>
+<section class="detail" id="pause/1">
+
+  <div class="detail-header">
+    <a href="#pause/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">pause(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L108" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> pause(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Freeze a running container (the cgroup freezer): it keeps its memory and
+uses no CPU. <a href="#unpause/1"><code class="inline">unpause/1</code></a> thaws it in milliseconds.</p>
+  </section>
+</section>
+<section class="detail" id="pull/1">
+
+  <div class="detail-header">
+    <a href="#pull/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">pull(image)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L557" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> pull(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Pull <code class="inline">image</code> into the image store.</p>
+  </section>
+</section>
+<section class="detail" id="remove/1">
+
+  <div class="detail-header">
+    <a href="#remove/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">remove(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L116" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> remove(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Remove a container, running or not. Its named volumes stay.</p>
+  </section>
+</section>
+<section class="detail" id="remove_network/1">
+
+  <div class="detail-header">
+    <a href="#remove_network/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">remove_network(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L303" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> remove_network(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Remove a network no container is on. One that is not there is fine; one
+a container is still on is a <code class="inline">:podman_failed</code> error.</p>
+  </section>
+</section>
+<section class="detail" id="remove_volume/1">
+
+  <div class="detail-header">
+    <a href="#remove_volume/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">remove_volume(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L277" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> remove_volume(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Remove a named volume and everything in it.</p>
+  </section>
+</section>
+<section class="detail" id="start/1">
+
+  <div class="detail-header">
+    <a href="#start/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L96" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> start(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Start a created or stopped container.</p>
+  </section>
+</section>
+<section class="detail" id="state/1">
+
+  <div class="detail-header">
+    <a href="#state/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">state(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L213" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> state(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: {:ok, <a href="#t:state/0">state</a>()} | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>What a container is doing, or <code class="inline">{:error, :not_found}</code>.</p>
+  </section>
+</section>
+<section class="detail" id="stats/0">
+
+  <div class="detail-header">
+    <a href="#stats/0" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stats()</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L183" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> stats() ::
+  {:ok,
+   %{
+     required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; %{
+       memory_bytes: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>(),
+       cpu_percent: <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">float</a>()
+     }
+   }}
+  | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Memory in use and CPU of every running container, by name, in one call:
+<code class="inline">%{&quot;name&quot; =&gt; %{memory_bytes: n, cpu_percent: f}}</code>.</p>
+  </section>
+</section>
+<section class="detail" id="stop/2">
+
+    <span id="stop/1"></span>
+
+  <div class="detail-header">
+    <a href="#stop/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">stop(name, timeout_s \\ 10)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L100" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> stop(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#basic-types">non_neg_integer</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Stop a container, killing it after <code class="inline">timeout_s</code> seconds.</p>
+  </section>
+</section>
+<section class="detail" id="tag/2">
+
+  <div class="detail-header">
+    <a href="#tag/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">tag(image, ref)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L561" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> tag(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Give the image <code class="inline">image</code> names a second name, <code class="inline">ref</code>.</p>
+  </section>
+</section>
+<section class="detail" id="tags/1">
+
+  <div class="detail-header">
+    <a href="#tags/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">tags(repo)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L573" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> tags(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: [<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()]</pre>
+
+      </div>
+
+<p>Every <code class="inline">repo:tag</code> name of <code class="inline">repo</code> in the image store.</p>
+  </section>
+</section>
+<section class="detail" id="unpause/1">
+
+  <div class="detail-header">
+    <a href="#unpause/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">unpause(name)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L112" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> unpause(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Thaw a paused container.</p>
+  </section>
+</section>
+<section class="detail" id="untag/1">
+
+  <div class="detail-header">
+    <a href="#untag/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">untag(ref)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L569" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> untag(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Drop the name <code class="inline">ref</code>. An image goes with its last name, unless a container
+holds it.</p>
+  </section>
+</section>
+<section class="detail" id="update/2">
+
+  <div class="detail-header">
+    <a href="#update/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">update(name, limits)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L142" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> update(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>(), <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">keyword</a>()) :: :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Change a container's limits while it runs: <code class="inline">cpus:</code>, <code class="inline">memory_mb:</code> and
+<code class="inline">pids:</code>, all three required.</p><p>A host gives a booting container more CPU than its size and takes it back
+once it answers, since a boot is the one time a small server is CPU-bound.</p><p>All three because podman 5 writes the whole resource set on an update: a
+call with only <code class="inline">--cpus</code> left the container with no memory and no pids
+limit (<code class="inline">memory.max</code> read <code class="inline">max</code> afterwards, podman 5.3.1).</p>
+  </section>
+</section>
+<section class="detail" id="write_env_file/2">
+
+  <div class="detail-header">
+    <a href="#write_env_file/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">write_env_file(path, env)</h1>
+
+
+        <a href="https://github.com/appsinacup/gamend/blob/v1.0.7/lib/gamend/containers.ex#L803" class="icon-action" rel="help nofollow" aria-label="View Source">
+          <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        </a>
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">@spec</span> write_env_file(<a href="https://elixir.hexdocs.pm/Path.html#t:t/0">Path.t</a>(), %{required(<a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()) =&gt; <a href="https://elixir.hexdocs.pm/String.html#t:t/0">String.t</a>()}) ::
+  :ok | {:error, <a href="https://elixir.hexdocs.pm/typespecs.html#built-in-types">term</a>()}</pre>
+
+      </div>
+
+<p>Write <code class="inline">env</code> to <code class="inline">path</code> as a podman <code class="inline">--env-file</code>, readable by its owner only.</p><p>The file is created empty at 0600 before the values go in, so they are
+never readable by another user, even for the moment between the two. A key
+or value holding a newline, a carriage return or a NUL is refused with
+<code class="inline">{:unsafe_env, key}</code>: the file is read a line at a time, so a newline in a
+value is a second <code class="inline">KEY=value</code> line the caller never set. The caller removes
+the file once podman has read it.</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/gamend_core/1.1.1355">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/gamend_core/1.1.1355">Hex Preview</a>
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="gamend_core.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>
