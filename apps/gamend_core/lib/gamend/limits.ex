@@ -75,6 +75,18 @@ defmodule Gamend.Limits do
     doc: "Concurrent sockets per user. 0 disables; counted per app instance."
   )
 
+  setting(:max_sockets, :integer,
+    default: 0,
+    doc:
+      "Concurrent sockets on this app instance, every user's together: a server's player cap. 0 disables."
+  )
+
+  setting(:max_logins_in_flight, :integer,
+    default: 0,
+    doc:
+      "Sign-in requests (login, device login, register, refresh) served at once on this app instance; past it they are answered 503 with Retry-After, so a reconnect storm queues at the clients and not in memory. 0 disables."
+  )
+
   setting(:max_email, :integer, default: 160)
 
   # Also caps `icon_url` on groups, leaderboards, tournaments and notifications.

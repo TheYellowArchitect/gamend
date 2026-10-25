@@ -113,7 +113,11 @@ defmodule Gamend.Payments.StripeEvents do
   defp ensure_stripe_checkout_allowed(%User{} = user, provider_product, attrs) do
     case Payments.ensure_checkout_allowed(user, provider_product, attrs) do
       {:error, :purchase_already_in_progress} ->
-        key = Payments.product_entitlement_key(provider_product.product)
+        key =
+          Payments.entitlement_key(
+            provider_product.product,
+            Payments.subject(attrs["metadata"])
+          )
 
         user.id
         |> Payments.purchases_in_progress(key)

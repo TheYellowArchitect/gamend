@@ -12,10 +12,25 @@ defmodule Gamend.Presence do
   table — and not for anything durable, since a full cluster restart empties it.
 
   During a netsplit each side sees only its own members until they heal.
+
+  ## Reads
+
+  Read through `keys/1` and `last_socket?/1`, never `list/1` or
+  `get_by_key/2`. phoenix_pubsub 2.4 answers those two with a call to the
+  topic's shard whose reply is its whole state, a tag for every presence on
+  it, which the caller then filters: at 2,000 players each call copied ~1 MB
+  and queued behind every other on the one shard process, and a thousand
+  disconnects at once ran a 1 GB server out of memory. These read the shard's
+  protected table instead, only the topic asked for. Unlike the two they
+  replace they keep the entries of a replica that just went down, until the
+  tracker removes them.
   """
   use Phoenix.Presence,
     otp_app: :gamend_core,
     pubsub_server: Gamend.PubSub
+
+  alias Phoenix.Tracker.Shard
+  alias Phoenix.Tracker.State
 
   # Connected users are spread over this many topics rather than tracked on one.
   #
@@ -40,21 +55,42 @@ defmodule Gamend.Presence do
   def users_buckets, do: @users_buckets
 
   @doc """
+  The distinct keys tracked on `topic`, as strings and sorted: the keys of
+  `list/1`, without its copy (*Reads*). Cluster-wide.
+  """
+  @spec keys(String.t()) :: [String.t()]
+  def keys(topic) when is_binary(topic) do
+    topic
+    |> shard()
+    |> State.tracked_values(topic, [])
+    |> Enum.map(fn {key, _meta} -> to_string(key) end)
+    |> Enum.sort()
+    |> Enum.dedup()
+  end
+
+  @doc """
   Whether the calling process holds this user's only tracked socket.
 
   Cluster-wide, unlike the per-node registry count it replaces.
   """
   @spec last_socket?(Ecto.UUID.t()) :: boolean()
   def last_socket?(user_id) do
-    # `get_by_key/2`, not `list/1`: listing the topic built a map of every user
-    # tracked in it just to read one key, on every disconnect.
-    user_id |> users_topic() |> get_by_key(user_id) |> meta_count() <= 1
+    topic = users_topic(user_id)
+
+    # Every disconnect asks this (*Reads*). An entry of a replica that just
+    # went down reads as another socket, so that user stays online until the
+    # stale sweeper marks them offline.
+    length(State.tracked_key(shard(topic), topic, user_id, [])) <= 1
   end
 
-  defp meta_count(nil), do: 0
-  defp meta_count(%{metas: metas}), do: length(metas)
-  defp meta_count(metas) when is_list(metas), do: length(metas)
-  defp meta_count(_), do: 0
+  # The shard's table is named for the shard, found as `Phoenix.Tracker` finds it.
+  defp shard(topic), do: Shard.name_for_topic(__MODULE__, topic, pool_size())
+
+  # The tracker's own record of its shard count, as `Phoenix.Tracker` reads it.
+  defp pool_size do
+    [{:pool_size, size}] = :ets.lookup(__MODULE__, :pool_size)
+    size
+  end
 
   # Deliberately no `handle_metas/4` here. Writing `users.is_online` from the
   # tracker process means a database hiccup exits the tracker and takes every

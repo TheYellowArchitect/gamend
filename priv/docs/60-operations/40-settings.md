@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-329 settings across 29 groups.
+331 settings across 29 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -231,6 +231,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_LIMITS_MAX_LOBBY_PASSWORD` | integer | `128` |  |
 | `GAMEND_LIMITS_MAX_LOBBY_TITLE` | integer | `80` |  |
 | `GAMEND_LIMITS_MAX_LOBBY_USERS` | integer | `128` |  |
+| `GAMEND_LIMITS_MAX_LOGINS_IN_FLIGHT` | integer | `0` | Sign-in requests (login, device login, register, refresh) served at once on this app instance; past it they are answered 503 with Retry-After, so a reconnect storm queues at the clients and not in memory. 0 disables. |
 | `GAMEND_LIMITS_MAX_MATCHMAKING_PARAMS_SIZE` | integer | `2048` | Serialized byte size of a ticket's match_params map. |
 | `GAMEND_LIMITS_MAX_MATCHMAKING_PLAYERS` | integer | `64` | Hard cap on a ticket's own max_players setting. |
 | `GAMEND_LIMITS_MAX_METADATA_SIZE` | integer | `16384` |  |
@@ -257,6 +258,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_LIMITS_MAX_READY_CHECK_PARTICIPANTS` | integer | `64` | Hard cap on participants in one check. |
 | `GAMEND_LIMITS_MAX_REPORT_REASON` | integer | `500` |  |
 | `GAMEND_LIMITS_MAX_RESULT_EVENTS` | integer | `10000` |  |
+| `GAMEND_LIMITS_MAX_SOCKETS` | integer | `0` | Concurrent sockets on this app instance, every user's together: a server's player cap. 0 disables. |
 | `GAMEND_LIMITS_MAX_SOCKETS_PER_USER` | integer | `20` | Concurrent sockets per user. 0 disables; counted per app instance. |
 | `GAMEND_LIMITS_MAX_TOURNAMENT_BRACKET_SIZE` | integer | `256` |  |
 | `GAMEND_LIMITS_MAX_TOURNAMENT_DESCRIPTION` | integer | `1000` |  |

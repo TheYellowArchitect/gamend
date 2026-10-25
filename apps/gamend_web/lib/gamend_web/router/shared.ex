@@ -107,6 +107,11 @@ defmodule GamendWeb.Router.Shared do
         plug OpenApiSpex.Plug.PutApiSpec, module: GamendWeb.ApiSpec
       end
 
+      # Sign-ins only: a cap on how many are served at once (`LoginGate`).
+      pipeline :api_login_gate do
+        plug GamendWeb.Plugs.LoginGate
+      end
+
       pipeline :oauth_callback do
         plug :accepts, ["html", "json"]
         plug :fetch_session
@@ -346,16 +351,21 @@ defmodule GamendWeb.Router.Shared do
 
         get "/health", HealthController, :index
         get "/time", TimeController, :show
-        post "/login", SessionController, :create
-        post "/register", SessionController, :register
-        post "/register/confirm", SessionController, :confirm_registration
         post "/register/resend", SessionController, :resend_confirmation
-        post "/login/device", SessionController, :create_device
-        post "/refresh", SessionController, :refresh
         delete "/logout", SessionController, :delete
         post "/payments/webhooks/stripe", PaymentWebhookController, :stripe
         post "/payments/webhooks/google", PaymentWebhookController, :google
         post "/payments/webhooks/apple", PaymentWebhookController, :apple
+      end
+
+      scope "/api/v1", GamendWeb.Api.V1, as: :api_v1 do
+        pipe_through [:api, :api_login_gate]
+
+        post "/login", SessionController, :create
+        post "/register", SessionController, :register
+        post "/register/confirm", SessionController, :confirm_registration
+        post "/login/device", SessionController, :create_device
+        post "/refresh", SessionController, :refresh
       end
 
       scope "/api/v1", GamendWeb.Api.V1, as: :api_v1 do

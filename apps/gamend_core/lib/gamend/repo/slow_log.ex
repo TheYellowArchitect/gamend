@@ -138,9 +138,25 @@ defmodule Gamend.Repo.SlowLog do
     |> Enum.take(@frames)
     |> case do
       [] -> "(unknown)"
-      frames -> Enum.map_join(frames, " < ", &Exception.format_stacktrace_entry/1)
+      frames -> Enum.map_join(frames, " < ", &format_frame/1)
     end
   end
+
+  # Not `Exception.format_stacktrace_entry/1`: it names each frame's
+  # application, found by `:application.get_application/1`, which copies every
+  # loaded application's module list into this process, ~360 KB a line. When
+  # the pool is the slow part every waiting query logs at once, and each
+  # process kept that heap while it waited for its next connection: a
+  # thousand players reconnecting ran a 1 GB server out of memory.
+  defp format_frame({module, fun, arity, location}) do
+    case {location[:file], location[:line]} do
+      {nil, _line} -> Exception.format_mfa(module, fun, arity)
+      {file, nil} -> "#{file}: #{Exception.format_mfa(module, fun, arity)}"
+      {file, line} -> "#{file}:#{line}: #{Exception.format_mfa(module, fun, arity)}"
+    end
+  end
+
+  defp format_frame(frame), do: Exception.format_stacktrace_entry(frame)
 
   @internal_prefixes ~w(Elixir.Ecto. Elixir.DBConnection Elixir.Process telemetry erl)
   @internal_modules [Gamend.Repo, __MODULE__]

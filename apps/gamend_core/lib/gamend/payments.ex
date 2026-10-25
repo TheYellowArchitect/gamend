@@ -811,6 +811,40 @@ defmodule Gamend.Payments do
     config["entitlement_key"] || config[:entitlement_key] || sku
   end
 
+  @doc """
+  Whether a product is sold once per subject rather than once per user
+  (`grant_config["per_subject"]`): a subscription per hosted server, a pass
+  per character. Its entitlement is `"<key>:<subject>"`, the subject being
+  the purchase's `metadata["subject"]`, so one user may hold it for several
+  subjects. Plan upgrades (`Upgrades`) never apply to one.
+  """
+  @spec per_subject?(Product.t()) :: boolean()
+  def per_subject?(%Product{grant_config: config}) do
+    config = config || %{}
+    (config["per_subject"] || config[:per_subject]) == true
+  end
+
+  @doc "The subject a purchase's or a checkout's `metadata` names, or nil."
+  @spec subject(map() | nil) :: String.t() | nil
+  def subject(%{"subject" => subject}) when is_binary(subject) and subject != "", do: subject
+  def subject(_metadata), do: nil
+
+  @doc """
+  The entitlement key a purchase of `product` for `subject` grants: the
+  product's own, or `"<key>:<subject>"` for a per-subject product.
+  """
+  @spec entitlement_key(Product.t(), String.t() | nil) :: String.t()
+  def entitlement_key(%Product{} = product, subject) do
+    if per_subject?(product) and is_binary(subject),
+      do: product_entitlement_key(product) <> ":" <> subject,
+      else: product_entitlement_key(product)
+  end
+
+  @doc "The entitlement key a purchase grants (`entitlement_key/2`)."
+  @spec purchase_entitlement_key(Purchase.t()) :: String.t()
+  def purchase_entitlement_key(%Purchase{product: %Product{} = product, metadata: metadata}),
+    do: entitlement_key(product, subject(metadata))
+
   # ---------------------------------------------------------------------------
   # Admin
   # ---------------------------------------------------------------------------
@@ -1003,8 +1037,9 @@ defmodule Gamend.Payments do
         %ProviderProduct{product: %Product{} = product},
         attrs
       ) do
-    with :ok <- ensure_single_ownership_quantity(product, attrs),
-         :ok <- ensure_single_ownership_available(user, product) do
+    with :ok <- ensure_subject(product, attrs),
+         :ok <- ensure_single_ownership_quantity(product, attrs),
+         :ok <- ensure_single_ownership_available(user, product, subject(attrs["metadata"])) do
       ensure_game_allows_purchase(user, product)
     end
   end
@@ -1023,6 +1058,14 @@ defmodule Gamend.Payments do
     end
   end
 
+  # A per-subject product bought for no subject would grant the bare key,
+  # which no host reads.
+  defp ensure_subject(%Product{} = product, attrs) do
+    if per_subject?(product) and subject(attrs["metadata"]) == nil,
+      do: {:error, :subject_required},
+      else: :ok
+  end
+
   defp ensure_single_ownership_quantity(%Product{kind: kind}, attrs)
        when kind in ["entitlement", "subscription"] do
     if Params.parse_positive_int(attrs["quantity"], 1) == 1 do
@@ -1034,9 +1077,9 @@ defmodule Gamend.Payments do
 
   defp ensure_single_ownership_quantity(_product, _attrs), do: :ok
 
-  defp ensure_single_ownership_available(%User{} = user, %Product{kind: kind} = product)
+  defp ensure_single_ownership_available(%User{} = user, %Product{kind: kind} = product, subject)
        when kind in ["entitlement", "subscription"] do
-    key = product_entitlement_key(product)
+    key = entitlement_key(product, subject)
 
     cond do
       # Held already, unless it is a longer plan than the subscription the
@@ -1052,7 +1095,7 @@ defmodule Gamend.Payments do
     end
   end
 
-  defp ensure_single_ownership_available(_user, _product), do: :ok
+  defp ensure_single_ownership_available(_user, _product, _subject), do: :ok
 
   defp purchase_in_progress?(user_id, entitlement_key),
     do: purchases_in_progress(user_id, entitlement_key) != []
@@ -1064,8 +1107,8 @@ defmodule Gamend.Payments do
       preload: [:product]
     )
     |> Repo.all()
-    |> Enum.filter(fn %Purchase{product: product} ->
-      product_entitlement_key(product) == entitlement_key
+    |> Enum.filter(fn %Purchase{} = purchase ->
+      purchase_entitlement_key(purchase) == entitlement_key
     end)
   end
 
@@ -1227,7 +1270,7 @@ defmodule Gamend.Payments do
   defp grant_purchase(%Purchase{product: %Product{kind: "consumable"}}), do: :ok
 
   defp grant_purchase(%Purchase{product: %Product{} = product} = purchase) do
-    key = product_entitlement_key(product)
+    key = purchase_entitlement_key(purchase)
     expires_at = purchase.expires_at || entitlement_expiry(product)
     now = DateTime.utc_now(:second)
 

@@ -126,6 +126,35 @@ defmodule Gamend.PresenceWriterTest do
       assert Gamend.Presence.last_socket?(Ecto.UUID.generate())
     end
 
+    test "reads one user without copying every presence on the shard" do
+      parent = self()
+
+      for _ <- 1..2_000 do
+        spawn_link(fn ->
+          id = Ecto.UUID.generate()
+          {:ok, _} = Gamend.Presence.track(self(), Gamend.Presence.users_topic(id), id, %{})
+          send(parent, :tracked)
+          Process.sleep(:infinity)
+        end)
+      end
+
+      for _ <- 1..2_000, do: assert_receive(:tracked, 5_000)
+
+      # A fresh process, so what it holds after the call is what the call cost:
+      # through the shard's reply this was ~1 MB at 2,000 presences.
+      user_id = Ecto.UUID.generate()
+
+      task =
+        Task.async(fn ->
+          {:memory, before} = Process.info(self(), :memory)
+          true = Gamend.Presence.last_socket?(user_id)
+          {:memory, after_call} = Process.info(self(), :memory)
+          after_call - before
+        end)
+
+      assert Task.await(task) < 100_000
+    end
+
     test "buckets users across topics rather than one global topic" do
       topics =
         for _ <- 1..200, do: Gamend.Presence.users_topic(Ecto.UUID.generate())

@@ -297,6 +297,22 @@ defmodule Gamend.Payments do
     end
   end
 
+  @doc ~S"""
+    The entitlement key a purchase of `product` for `subject` grants: the
+    product's own, or `"<key>:<subject>"` for a per-subject product.
+    
+  """
+  @spec entitlement_key(Gamend.Payments.Product.t(), String.t() | nil) :: String.t()
+  def entitlement_key(_product, _subject) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        ""
+
+      _ ->
+        raise "Gamend.Payments.entitlement_key/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
   @doc false
   @spec finalize_steam_purchase(Gamend.Accounts.User.t(), map()) ::
           {:ok, %{purchase: Gamend.Payments.Purchase.t()}} | {:error, term()}
@@ -705,6 +721,25 @@ defmodule Gamend.Payments do
     end
   end
 
+  @doc ~S"""
+    Whether a product is sold once per subject rather than once per user
+    (`grant_config["per_subject"]`): a subscription per hosted server, a pass
+    per character. Its entitlement is `"<key>:<subject>"`, the subject being
+    the purchase's `metadata["subject"]`, so one user may hold it for several
+    subjects. Plan upgrades (`Upgrades`) never apply to one.
+    
+  """
+  @spec per_subject?(Gamend.Payments.Product.t()) :: boolean()
+  def per_subject?(_product) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        :erlang.phash2(make_ref(), 2) == 0
+
+      _ ->
+        raise "Gamend.Payments.per_subject?/1 is a stub - only available at runtime on Gamend"
+    end
+  end
+
   @doc false
   @spec product_entitlement_key(Gamend.Payments.Product.t()) :: String.t()
   def product_entitlement_key(_product) do
@@ -743,6 +778,20 @@ defmodule Gamend.Payments do
 
       _ ->
         raise "Gamend.Payments.provider_error_code/1 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    The entitlement key a purchase grants (`entitlement_key/2`).
+  """
+  @spec purchase_entitlement_key(Gamend.Payments.Purchase.t()) :: String.t()
+  def purchase_entitlement_key(_purchase) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        ""
+
+      _ ->
+        raise "Gamend.Payments.purchase_entitlement_key/1 is a stub - only available at runtime on Gamend"
     end
   end
 
@@ -909,6 +958,20 @@ defmodule Gamend.Payments do
 
       _ ->
         raise "Gamend.Payments.stripe_refundable?/2 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
+    The subject a purchase's or a checkout's `metadata` names, or nil.
+  """
+  @spec subject(map() | nil) :: String.t() | nil
+  def subject(_(%{})) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        nil
+
+      _ ->
+        raise "Gamend.Payments.subject/1 is a stub - only available at runtime on Gamend"
     end
   end
 

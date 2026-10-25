@@ -30,6 +30,21 @@ defmodule Gamend.Repo.SlowLogTest do
     assert log =~ "SlowLogTest"
   end
 
+  test "naming where a query came from costs the caller little" do
+    # A fresh process, so what it holds after the line is what the line cost:
+    # naming each frame's application copied every loaded app's module list,
+    # ~360 KB a line.
+    task =
+      Task.async(fn ->
+        {:memory, before} = Process.info(self(), :memory)
+        query("SELECT 1", 1, 300)
+        {:memory, after_line} = Process.info(self(), :memory)
+        after_line - before
+      end)
+
+    capture_log(fn -> assert Task.await(task) < 100_000 end)
+  end
+
   test "waiting for a connection counts too; a quick query says nothing" do
     assert capture_log(fn -> query("SELECT 1", 1, 300) end) =~ "waited 300ms"
     assert capture_log(fn -> query("SELECT 1", 20) end) == ""

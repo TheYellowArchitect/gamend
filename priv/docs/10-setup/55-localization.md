@@ -25,7 +25,7 @@ config :gamend_web, host_gettext_backend: GamendHost.Gettext
 
 Content pages worth indexing per language (about, blog index, privacy, ...) are served *at* prefixed URLs: `/es/about` renders with a 200, which is what makes the Spanish page separately indexable. App pages (the LiveViews) instead store the locale in the session and redirect to the clean path, since a LiveView reconnecting at a prefixed URL would hit an unmatched route. The default locale, `en`, is never served under a prefix, the language switcher works through a `?setlang=` parameter, URLs use the BCP-47 form (`pt-BR`) while catalogs use `pt_BR`, and right-to-left locales (`ar`, `he`, `fa`, `ur`) get `dir="rtl"`.
 
-Two knobs tune this per host: `config :gamend_web, :localized_paths, [...]` sets which paths get indexable per-locale URLs, and `config :gamend_web, :hreflang_locales, [...]` narrows the alternates advertised to search engines when some translations are too thin to be worth pointing crawlers at.
+Two knobs tune this per host: `config :gamend_web, :localized_paths, [...]` sets which paths get indexable per-locale URLs, and `config :gamend_web, :hreflang_locales, [...]` narrows the alternates advertised to search engines when some translations are too thin to be worth pointing crawlers at. A host served in fewer languages than core's catalogue holds sets `config :gamend_web, :locales, ["en"]` (compile-time): only those are served, a reader who chose another falls back to `en`, and with one no language switcher is drawn.
 
 ## Adding a locale
 

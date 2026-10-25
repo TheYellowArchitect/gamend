@@ -55,14 +55,16 @@ defmodule GamendWeb.UserSocket do
   # param shapes (plain map, nested under "params" or :params, etc.).
   # Unauthenticated connections are rejected (connection-exhaustion DoS
   # guard) — all channel functionality requires a valid JWT token — and
-  # each user may hold at most :max_sockets_per_user concurrent sockets.
+  # each user may hold at most :max_sockets_per_user concurrent sockets, and
+  # the server at most :max_sockets in all.
   def connect(params, socket, _connect_info) do
     with token when is_binary(token) <- extract_token(params),
          # Access tokens only: a refresh token is a 30-day credential and must
          # not open a socket. Matches the two HTTP pipelines.
          {:ok, claims} <- Guardian.decode_and_verify(token, %{"typ" => "access"}),
          {:ok, user} <- Guardian.resource_from_claims(claims),
-         false <- socket_limit_reached?(user.id) do
+         false <- socket_limit_reached?(user.id),
+         false <- server_full?() do
       format = extract_format(params, socket)
       _ = warn_on_format_downgrade(params, format, user.id)
 
@@ -167,6 +169,15 @@ defmodule GamendWeb.UserSocket do
 
     is_integer(limit) and limit > 0 and
       GamendWeb.ConnectionTracker.count_ws_sockets(user_id) >= limit
+  end
+
+  # Every user's sockets together, against `:max_sockets`: what a host
+  # sells a server by. 0 disables; counted per app instance.
+  defp server_full? do
+    limit = Gamend.Limits.get(:max_sockets)
+
+    is_integer(limit) and limit > 0 and
+      GamendWeb.ConnectionTracker.count_all_ws_sockets() >= limit
   end
 
   # Extract token from various parameter shapes:

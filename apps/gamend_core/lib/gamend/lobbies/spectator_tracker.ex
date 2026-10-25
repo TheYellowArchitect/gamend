@@ -33,7 +33,7 @@ defmodule Gamend.Lobbies.SpectatorTracker do
   def untrack(lobby_id, user_id), do: Presence.untrack(self(), topic(lobby_id), user_id)
 
   @spec count(Ecto.UUID.t()) :: non_neg_integer()
-  def count(lobby_id), do: lobby_id |> topic() |> Presence.list() |> map_size()
+  def count(lobby_id), do: lobby_id |> topic() |> Presence.keys() |> length()
 
   @doc "Spectator counts for several lobbies, as `%{lobby_id => count}`."
   @spec counts(list(Ecto.UUID.t())) :: %{Ecto.UUID.t() => non_neg_integer()}
@@ -42,5 +42,5 @@ defmodule Gamend.Lobbies.SpectatorTracker do
   end
 
   @spec list(Ecto.UUID.t()) :: list(Ecto.UUID.t())
-  def list(lobby_id), do: lobby_id |> topic() |> Presence.list() |> Map.keys()
+  def list(lobby_id), do: lobby_id |> topic() |> Presence.keys()
 end

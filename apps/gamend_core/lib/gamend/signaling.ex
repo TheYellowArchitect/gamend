@@ -209,10 +209,8 @@ defmodule Gamend.Signaling do
   defp peers_with_host(room_id, host) do
     room_id
     |> topic()
-    |> Presence.list()
-    |> Map.new(fn {user_id, _metas} ->
-      {user_id, if(user_id == host, do: :host, else: :user)}
-    end)
+    |> Presence.keys()
+    |> Map.new(fn user_id -> {user_id, if(user_id == host, do: :host, else: :user)} end)
   end
 
   @doc "The role `user_id` is connected with, or `nil`."
@@ -235,7 +233,7 @@ defmodule Gamend.Signaling do
     Gamend.Cache.cached({:signaling, :stats}, [ttl: Gamend.Cache.ttl()], fn ->
       peer_counts =
         Lobbies.webrtc_enabled_lobby_ids()
-        |> Enum.map(fn room_id -> room_id |> topic() |> Presence.list() |> map_size() end)
+        |> Enum.map(fn room_id -> room_id |> topic() |> Presence.keys() |> length() end)
 
       %{
         rooms_enabled: length(peer_counts),

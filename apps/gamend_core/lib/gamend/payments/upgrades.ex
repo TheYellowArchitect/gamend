@@ -2,6 +2,8 @@ defmodule Gamend.Payments.Upgrades do
   @moduledoc """
   Moving to a longer plan: a monthly subscription to a yearly one, or any
   subscription to a one-off purchase (lifetime) of the same entitlement.
+  Never for a per-subject product (`Payments.per_subject?/1`): each subject's
+  purchase stands alone.
 
   An entitlement is one row per user and key, so a second purchase of a key
   the user holds is refused (`:already_owned`). An upgrade is the exception
@@ -84,7 +86,8 @@ defmodule Gamend.Payments.Upgrades do
   @spec replaced_purchase(Ecto.UUID.t() | nil, Product.t()) :: Purchase.t() | nil
   def replaced_purchase(user_id, %Product{kind: kind} = product)
       when is_binary(user_id) and kind in ~w(entitlement subscription) do
-    with %Purchase{} = purchase <-
+    with false <- Payments.per_subject?(product),
+         %Purchase{} = purchase <-
            holding_purchase(user_id, Payments.product_entitlement_key(product)),
          true <- running_stripe_subscription?(purchase),
          true <- longer?(product, purchase.product) do
@@ -173,6 +176,7 @@ defmodule Gamend.Payments.Upgrades do
 
     with %Product{kind: kind} = product when kind in ~w(entitlement subscription) <-
            purchase.product,
+         false <- Payments.per_subject?(product),
          key = Payments.product_entitlement_key(product),
          %Purchase{id: ^purchase_id} <- holding_purchase(purchase.user_id, key) do
       results =
@@ -204,7 +208,8 @@ defmodule Gamend.Payments.Upgrades do
     )
     |> Repo.all()
     |> Enum.filter(fn {_holder_id, key, purchase} ->
-      running_stripe_subscription?(purchase) and not done?(purchase) and
+      not Payments.per_subject?(purchase.product) and
+        running_stripe_subscription?(purchase) and not done?(purchase) and
         Payments.product_entitlement_key(purchase.product) == key
     end)
     |> Enum.map(fn {holder_id, _key, _purchase} -> holder_id end)

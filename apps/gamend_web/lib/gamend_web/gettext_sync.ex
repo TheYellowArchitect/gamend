@@ -1,9 +1,18 @@
 defmodule GamendWeb.GettextSync do
   @moduledoc false
 
+  # A host serving fewer languages than the catalogue holds, e.g. `["en"]`:
+  # with one, there is nothing to switch and no switcher is drawn.
+  # Chosen at compile time, so the function holds no branch the build can
+  # never take (dialyzer's pattern_match_cov on a `case` of the constant).
+  @site_locales Application.compile_env(:gamend_web, :locales)
+
   @spec known_locales() :: [String.t()]
-  def known_locales do
-    Gettext.known_locales(GamendWeb.Gettext)
+  if @site_locales do
+    def known_locales,
+      do: Enum.filter(Gettext.known_locales(GamendWeb.Gettext), &(&1 in @site_locales))
+  else
+    def known_locales, do: Gettext.known_locales(GamendWeb.Gettext)
   end
 
   @spec normalize_locale(term()) :: String.t() | nil

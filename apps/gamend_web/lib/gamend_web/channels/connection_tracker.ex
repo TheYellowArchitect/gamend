@@ -21,13 +21,29 @@ defmodule GamendWeb.ConnectionTracker do
   """
 
   @registry __MODULE__.Registry
+  # One key per process, so a count is the table's size: what the
+  # server-wide caps read on every new socket and sign-in, without walking
+  # every connection on the node.
+  @sockets __MODULE__.Sockets
+  @logins __MODULE__.Logins
 
   @doc """
-  Returns the child spec to start the underlying Registry.
+  Returns the child spec of the registries: the typed one, and the two
+  counted ones behind `count_all_ws_sockets/0` and `count_logins/0`.
   Add this to your supervision tree before the Endpoint.
   """
   def child_spec(_opts) do
-    Registry.child_spec(keys: :duplicate, name: @registry)
+    children = [
+      Registry.child_spec(keys: :duplicate, name: @registry),
+      Supervisor.child_spec(Registry.child_spec(keys: :unique, name: @sockets), id: @sockets),
+      Supervisor.child_spec(Registry.child_spec(keys: :unique, name: @logins), id: @logins)
+    ]
+
+    %{
+      id: __MODULE__,
+      type: :supervisor,
+      start: {Supervisor, :start_link, [children, [strategy: :one_for_one]]}
+    }
   end
 
   @doc """
@@ -54,6 +70,13 @@ defmodule GamendWeb.ConnectionTracker do
   def register_ws_socket(user_id, metadata) do
     _ = register(:ws_socket, metadata)
     _ = register({:ws_socket, user_id}, %{})
+
+    try do
+      _ = Registry.register(@sockets, self(), nil)
+    rescue
+      ArgumentError -> :ok
+    end
+
     :ok
   end
 
@@ -62,6 +85,38 @@ defmodule GamendWeb.ConnectionTracker do
   """
   def count_ws_sockets(user_id) do
     @registry |> Registry.lookup({:ws_socket, user_id}) |> length()
+  rescue
+    ArgumentError -> 0
+  end
+
+  @doc "Counts every live WebSocket connection on this node, whoever's."
+  def count_all_ws_sockets do
+    Registry.count(@sockets)
+  rescue
+    ArgumentError -> 0
+  end
+
+  @doc """
+  Marks the calling request process as a sign-in in flight, until
+  `finish_login/0` or the process ends. `GamendWeb.Plugs.LoginGate`.
+  """
+  def start_login do
+    _ = Registry.register(@logins, self(), nil)
+    :ok
+  rescue
+    ArgumentError -> :ok
+  end
+
+  @doc "The calling process's sign-in is answered."
+  def finish_login do
+    Registry.unregister(@logins, self())
+  rescue
+    ArgumentError -> :ok
+  end
+
+  @doc "Sign-ins being served on this node now."
+  def count_logins do
+    Registry.count(@logins)
   rescue
     ArgumentError -> 0
   end
