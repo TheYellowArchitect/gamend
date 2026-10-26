@@ -84,7 +84,7 @@ defmodule GamendWeb.HostLayoutShell do
       [
         "flex flex-col",
         if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh"),
-        @side? && "max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
+        @side? && "max-md:pb-[calc(3.75rem+env(safe-area-inset-bottom))]",
         # The sidebar's room: the rail's on a full-screen page, else the open
         # sidebar's, or the rail's where the reader collapsed it.
         @side? && @flush && "md:ms-24 md:[--bleed-w:calc(100vw-6rem)]",
@@ -93,7 +93,7 @@ defmodule GamendWeb.HostLayoutShell do
         @side? && !@flush &&
           "md:ms-56 md:[--bleed-w:calc(100vw-14rem)] md:[[data-side=rail]_&]:ms-24 md:[[data-side=rail]_&]:[--bleed-w:calc(100vw-6rem)]",
         # The same room, only while the sidebar shows (`"layout": "auto"`).
-        @auto? && "max-md:[[data-nav~=side]_&]:pb-[calc(4.5rem+env(safe-area-inset-bottom))]",
+        @auto? && "max-md:[[data-nav~=side]_&]:pb-[calc(3.75rem+env(safe-area-inset-bottom))]",
         @auto? && @flush &&
           "md:[[data-nav~=side]_&]:ms-24 md:[[data-nav~=side]_&]:[--bleed-w:calc(100vw-6rem)]",
         @auto? && !@flush &&

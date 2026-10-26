@@ -19,7 +19,8 @@ runnable host app at the repository root.
 
 ## Project guidelines
 
-- Run `mix precommit` when done and fix what it reports. It compiles with `--warnings-as-errors`, formats, regenerates the SDK and settings docs, extracts theme strings, runs `test`, regenerates the Balaur SDK from a fresh OpenAPI document (CI fails a stale one), runs `credo --strict` and `gamend.api.lint`, and repeats the compile/format/credo steps in `apps/gamend_core` and `apps/gamend_web` (plus `format` in plugins, `sdk` and `sdk_tools`). CI also runs dialyzer and `deps.audit`.
+- Run `mix precommit` when done and fix what it reports. It compiles with `--warnings-as-errors`, formats, regenerates the SDK, the settings docs and the `Dockerfile`, extracts theme strings, runs `test`, regenerates the Balaur SDK from a fresh OpenAPI document (CI fails a stale one), runs `credo --strict` and `gamend.api.lint`, and repeats the compile/format/credo steps in `apps/gamend_core` and `apps/gamend_web` (plus `format` in plugins, `sdk` and `sdk_tools`). CI also runs dialyzer and `deps.audit`.
+- `Dockerfile` is generated (`mix gamend.gen.dockerfile`, from the project and `gamend_dockerfile:` in `mix.exs`), the same file every app built on Gamend uses ([docker/README.md](docker/README.md)). Never edit it by hand.
 - Use `:req` (`Req`) for HTTP. **Avoid** `:httpoison`, `:tesla` and `:httpc`.
 - Declare settings with `Gamend.Settings.Provider`; never read `System.get_env/1`. The env var name derives from the declaration: `GAMEND_<GROUP>_<NAME>` (`GAMEND_DB_URL`, `GAMEND_LIMITS_MAX_PAGE_SIZE`, `GAMEND_FEATURES_LIST_QUESTS`). `.env.example` and the Settings guide are generated (`mix gamend.settings.env_example`, `mix gamend.settings.guide`).
 - Update `CHANGELOG.md` for new features and for changes to config or public APIs. Format: [CONTRIBUTING.md](CONTRIBUTING.md#finish).

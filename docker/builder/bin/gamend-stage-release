@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# Put beside an assembled release what it reads from the directory it starts
+# in but does not carry: the theme, markdown content, docs and plugins, and a
+# VERSION file. The runtime stage then copies the one directory.
+#
+#   RUN mix release --overwrite && gamend-stage-release my_app
+#
+# Each path is copied when the app has it, so one list serves every app:
+# theme/, content/, blog/, priv/docs/, CHANGELOG.md, ROADMAP.md, modules/ (a
+# host's theme config is modules/<app>_config.json) and
+# $GAMEND_CONTENT_PLUGINS_DIR, less each plugin's own _build (a plugin loads
+# from its bundle: ebin/, priv/, deps/*/ebin).
+set -e
+
+release=${1:?usage: gamend-stage-release <release name>}
+dest="_build/${MIX_ENV:-prod}/rel/${release}"
+plugins=${GAMEND_CONTENT_PLUGINS_DIR:-modules/plugins}
+
+if [ ! -d "${dest}/bin" ]; then
+  echo "No release at ${dest}: run mix release first, or pass the name it built" >&2
+  exit 1
+fi
+
+case "$plugins" in
+  modules/*) extra="" ;;
+  *) extra=$plugins ;;
+esac
+
+for path in theme content blog priv/docs CHANGELOG.md ROADMAP.md modules $extra; do
+  [ -e "$path" ] || continue
+  mkdir -p "${dest}/$(dirname "$path")"
+  rm -rf "${dest:?}/${path}"
+  cp -a "$path" "${dest}/$(dirname "$path")/"
+done
+
+for dir in "${dest}/modules" "${dest}/${plugins}"; do
+  [ -d "$dir" ] && find "$dir" -type d -name _build -prune -exec rm -rf {} +
+done
+
+if [ -n "${GAMEND_CONTENT_APP_VERSION:-}" ]; then
+  printf %s "$GAMEND_CONTENT_APP_VERSION" > "${dest}/VERSION"
+elif [ -f VERSION ]; then
+  cp VERSION "${dest}/VERSION"
+else
+  git rev-parse --short HEAD > "${dest}/VERSION" 2>/dev/null || echo unknown > "${dest}/VERSION"
+fi

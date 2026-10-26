@@ -525,12 +525,13 @@ defmodule GamendWeb.HostLayoutNavigation do
       id="tab-nav"
       class={
         [
-          "fixed inset-x-0 bottom-0 z-40 grid-flow-col",
-          if(@auto, do: "hidden max-md:[[data-nav~=side]_&]:grid", else: "grid md:hidden"),
-          # Each tab at least its longest word, so a word is never broken
-          # ("Leaderboards"); the room left is shared out evenly.
-          "auto-cols-[minmax(min-content,1fr)]",
-          "border-t border-base-300 bg-base-200 px-0.5 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+          "fixed inset-x-0 bottom-0 z-40",
+          if(@auto, do: "hidden max-md:[[data-nav~=side]_&]:flex", else: "flex md:hidden"),
+          # Each tab its label on one line, so the bar is one row (user,
+          # 2026-10-26: "Word games" on two lines made the bar a line
+          # taller); the room left is shared out evenly, and a label is cut
+          # short only where the tabs cannot all fit (`side_nav_item/1`).
+          "border-t border-base-300 bg-base-200 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
         ]
       }
     >
@@ -548,11 +549,13 @@ defmodule GamendWeb.HostLayoutNavigation do
   attr :active?, :boolean, default: false
   attr :compact, :boolean, default: false, doc: "the tab bar's cell: smaller words, less room"
 
-  # One sidebar link, and one tab of the tab bar: in the rail and the tab bar
-  # the label under the icon, small, wrapping; open, beside it, cut where it
-  # does not fit. The count sits on the icon's corner under it, at the row's
-  # end beside it. The layout follows the sidebar's width (`@container/side`);
-  # the tab bar is no such container, so its tabs are the rail's.
+  # One sidebar link, and one tab of the tab bar: in the rail the label under
+  # the icon, small, wrapping; in the tab bar under it on one line, the tab
+  # as wide as its label and the room left shared out; open, beside it, cut
+  # where it does not fit. The count sits on the icon's corner under it, at
+  # the row's end beside it. The layout follows the sidebar's width
+  # (`@container/side`); the tab bar is no such container, so its tabs are
+  # the rail's.
   defp side_nav_item(assigns) do
     ~H"""
     <a
@@ -562,27 +565,33 @@ defmodule GamendWeb.HostLayoutNavigation do
       aria-current={if(@active?, do: "page")}
       aria-disabled={if(disabled?(@link), do: "true")}
       data-tone={tone(@link)}
-      class={[
-        "relative flex flex-col items-center rounded-field border",
-        "text-center font-semibold leading-tight transition-colors",
-        if(@compact,
-          do: "gap-0.5 px-0 py-1.5 text-[10px] tracking-tight",
-          else: "gap-1 px-0.5 py-2 text-[11px]"
-        ),
-        "@min-[8rem]/side:flex-row @min-[8rem]/side:gap-3 @min-[8rem]/side:px-3",
-        "@min-[8rem]/side:text-start @min-[8rem]/side:text-sm",
-        cond do
-          disabled?(@link) -> "border-transparent pointer-events-none opacity-70"
-          @active? and tone(@link) != nil -> tone_active()
-          @active? -> "border-transparent bg-primary text-primary-content"
-          true -> "border-transparent hover:bg-base-100"
-        end
-      ]}
+      class={
+        [
+          "relative flex flex-col items-center rounded-field",
+          # A tab's edge is drawn inside it: a border's 2 px a tab cut every
+          # Spanish label short on a 360 px phone (2026-10-26).
+          if(@compact, do: "ring-inset", else: "border"),
+          "text-center font-semibold leading-tight transition-colors",
+          if(@compact,
+            do: "min-w-0 flex-auto gap-0.5 px-0 py-1.5 text-[10px] tracking-tight",
+            else: "gap-1 px-0.5 py-2 text-[11px]"
+          ),
+          "@min-[8rem]/side:flex-row @min-[8rem]/side:gap-3 @min-[8rem]/side:px-3",
+          "@min-[8rem]/side:text-start @min-[8rem]/side:text-sm",
+          cond do
+            disabled?(@link) -> "border-transparent pointer-events-none opacity-70"
+            @active? and tone(@link) != nil and @compact -> [tone_active(), tone_ring()]
+            @active? and tone(@link) != nil -> tone_active()
+            @active? -> "border-transparent bg-primary text-primary-content"
+            true -> "border-transparent hover:bg-base-100"
+          end
+        ]
+      }
     >
       <.icon :if={@link["icon"]} name={@link["icon"]} class={icon_class(@link, "size-6 shrink-0")} />
       <span class={[
-        "line-clamp-2 min-w-0 max-w-full @min-[8rem]/side:flex-1 @min-[8rem]/side:truncate",
-        !@compact && "break-words hyphens-auto"
+        "min-w-0 max-w-full @min-[8rem]/side:flex-1 @min-[8rem]/side:truncate",
+        if(@compact, do: "truncate", else: "line-clamp-2 break-words hyphens-auto")
       ]}>
         {translate_label(@link["label"])}
       </span>
@@ -1894,6 +1903,9 @@ defmodule GamendWeb.HostLayoutNavigation do
   # `oklch` mix turns the tone's hue towards it (a blue tint came out pink).
   @tone_active "bg-[color-mix(in_oklab,var(--nav-tone)_16%,var(--color-base-100))] border-[color-mix(in_oklab,var(--nav-tone)_45%,transparent)]"
 
+  # The same edge drawn inside, for a tab of the tab bar (`side_nav_item/1`).
+  @tone_ring "ring-1 ring-[color-mix(in_oklab,var(--nav-tone)_45%,transparent)]"
+
   # A link button's colour: the page's own (`active?`) filled with the
   # primary, or tinted with its tone; any other `inactive`.
   defp state_class(entry, true, _inactive) do
@@ -1903,6 +1915,7 @@ defmodule GamendWeb.HostLayoutNavigation do
   defp state_class(_entry, false, inactive), do: inactive
 
   defp tone_active, do: @tone_active
+  defp tone_ring, do: @tone_ring
 
   attr :current_path, :string, default: nil
 

@@ -681,6 +681,40 @@ defmodule Gamend.Containers do
   def copy_from(name, path, dest), do: run_verb(:copy_from, ["cp", "#{name}:#{path}", dest])
 
   @doc """
+  The tree at `path` in a container, running or stopped, as a tar archive in
+  the file `dest` on this machine (`podman cp … -`), written as podman
+  produces it and never held in memory: a volume's files handed over whole,
+  however large. `{:error, :not_found}` for a container or a path that is
+  not there.
+  """
+  @spec copy_tar(String.t(), String.t(), Path.t()) :: :ok | {:error, term()}
+  def copy_tar(name, path, dest) do
+    errors = temp_path("gamend-cp-")
+
+    # The archive is stdout, so podman's own messages go to a file of their
+    # own: mixed in, they would corrupt it.
+    script = ~s|"$0" cp "$1" - > "$2" 2> "$3"|
+
+    with {:ok, podman} <- executable() do
+      try do
+        case System.cmd("sh", ["-c", script, podman, "#{name}:#{path}", dest, errors]) do
+          {_out, 0} ->
+            :ok
+
+          {_out, status} ->
+            line = errors |> File.read() |> elem(1) |> to_string() |> last_line()
+
+            if missing?(line) or String.contains?(String.downcase(line), "no such file"),
+              do: {:error, :not_found},
+              else: {:error, {:podman_failed, :copy_tar, status, line}}
+        end
+      after
+        File.rm(errors)
+      end
+    end
+  end
+
+  @doc """
   One field of an image, through a Go template: `"{{.Digest}}"`, or
   `"{{range .Config.Env}}{{println .}}{{end}}"`.
   """
