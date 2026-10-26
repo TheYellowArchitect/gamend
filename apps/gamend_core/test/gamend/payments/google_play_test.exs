@@ -30,7 +30,6 @@ defmodule Gamend.Payments.GooglePlayTest do
     GAMEND_PAYMENTS_GOOGLE_PLAY_AUTO_ACKNOWLEDGE
     GAMEND_PAYMENTS_GOOGLE_PLAY_RTDN_TOKEN
     GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
-    GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH
     GAMEND_PAYMENTS_GOOGLE_PLAY_PUBLISHER_BASE_URL
   )
 
@@ -255,22 +254,14 @@ defmodule Gamend.Payments.GooglePlayTest do
       claims
     end
 
-    test "signs an assertion for a token, inline", %{jwk: jwk, account: account} do
+    test "signs an assertion for a token", %{jwk: jwk, account: account} do
       put_setting(:google_play_service_account_json, Jason.encode!(account))
+      assert Google.config_status().service_account_configured
       claims = signs_in(jwk)
       assert claims["iss"] == account["client_email"]
       assert claims["aud"] == "https://oauth.test/token"
       assert claims["scope"] =~ "androidpublisher"
       assert claims["exp"] - claims["iat"] == 3600
-    end
-
-    test "or read from a file", %{jwk: jwk, account: account} do
-      path = Path.join(System.tmp_dir!(), "svc_#{System.unique_integer([:positive])}.json")
-      File.write!(path, Jason.encode!(account))
-      on_exit(fn -> File.rm(path) end)
-      put_setting(:google_play_service_account_json_path, path)
-      assert signs_in(jwk)["iss"] == account["client_email"]
-      assert Google.config_status().service_account_configured
     end
 
     test "a token answer with no token, or a bad key, is refused", %{account: account} do
@@ -301,13 +292,6 @@ defmodule Gamend.Payments.GooglePlayTest do
       )
 
       assert {:error, _} = Google.validate_purchase(nil, %{"product_id" => "c", "token" => "t"})
-    end
-
-    test "a file that is not there is an error", _ do
-      put_setting(:google_play_service_account_json_path, "/nonexistent/svc.json")
-
-      assert Google.validate_purchase(nil, %{"product_id" => "c", "token" => "t"}) ==
-               {:error, :enoent}
     end
   end
 

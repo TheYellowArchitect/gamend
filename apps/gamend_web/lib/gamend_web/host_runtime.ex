@@ -161,13 +161,15 @@ defmodule GamendWeb.HostRuntime do
     fcm_entries(setting) ++ apns_entries(setting)
   end
 
-  # Secret env vars accept inline contents or a path to a file holding them.
-  defp read_push_secret(nil), do: nil
-  defp read_push_secret(""), do: nil
-  defp read_push_secret(value), do: if(File.regular?(value), do: File.read!(value), else: value)
+  defp push_secret(setting, key) do
+    case setting.(Gamend.Push, key) do
+      "" -> nil
+      value -> value
+    end
+  end
 
   defp fcm_entries(setting) do
-    case read_push_secret(setting.(Gamend.Push, :fcm_credentials)) do
+    case push_secret(setting, :fcm_credentials) do
       nil ->
         []
 
@@ -195,8 +197,8 @@ defmodule GamendWeb.HostRuntime do
           {:error, _} ->
             IO.puts(
               :stderr,
-              "[push] GAMEND_PUSH_FCM_CREDENTIALS is neither valid service-account JSON nor a readable " <>
-                "file — FCM disabled, deliveries fall back to the Log provider"
+              "[push] GAMEND_PUSH_FCM_CREDENTIALS is not valid service-account JSON — " <>
+                "FCM disabled, deliveries fall back to the Log provider"
             )
 
             []
@@ -205,7 +207,7 @@ defmodule GamendWeb.HostRuntime do
   end
 
   defp apns_entries(setting) do
-    apns_key = read_push_secret(setting.(Gamend.Push, :apns_private_key))
+    apns_key = push_secret(setting, :apns_private_key)
     apns_key_id = setting.(Gamend.Push, :apns_key_id)
     apns_team_id = setting.(Gamend.Push, :apns_team_id)
     apns_topic = setting.(Gamend.Push, :apns_topic)
@@ -227,7 +229,7 @@ defmodule GamendWeb.HostRuntime do
       not String.contains?(apns_key, "PRIVATE KEY") ->
         IO.puts(
           :stderr,
-          "[push] APNS_PRIVATE_KEY does not look like .p8 key contents (or a path to them) — " <>
+          "[push] APNS_PRIVATE_KEY does not look like .p8 key contents —" <>
             "APNs disabled, deliveries fall back to the Log provider"
         )
 

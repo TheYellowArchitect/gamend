@@ -31,18 +31,40 @@ defmodule Gamend.Containers do
   are world-readable in `ps`. The file is created empty at 0600 before the
   values are written, so they are never readable by another user, and it is
   removed as soon as `podman create` has read it.
+
+  ## Users
+
+  Rootless podman runs uid 0 of a container as the host user that runs
+  podman, which owns every container, image and volume here, and any other
+  uid as one of that user's subordinate uids. A container running someone
+  else's code therefore runs as a numeric `:user` of its own, one per owner
+  and never given to another while that owner's volumes exist, its volumes
+  made for it (`create_volume/3`'s `owner:`) or re-owned as they are mounted
+  (`:chown`). A way out of it lands on a uid that owns that owner's files
+  and nothing else.
+
+  There is no `--userns=auto`. Rootless, each new mapping copies the image's
+  layers chowned to it (6 s and 170 MB for a Gamend image, kept after the
+  container is gone), a freed range goes to the next container while files
+  written under it keep their owner, and an `idmap` volume is refused
+  (podman 5.3).
   """
 
   require Logger
 
   @type port_map :: {host_ip :: String.t(), host_port :: pos_integer(), port :: pos_integer()}
-  @type mount :: {source :: String.t(), target :: String.t(), :rw | :ro}
+  @type mount :: {source :: String.t(), target :: String.t(), :rw | :ro | :chown}
 
   @typedoc """
   One container.
 
-  `:volumes` sources are podman volume names or absolute host paths. `:tmpfs`
-  entries are `"/path:options"`, as podman's `--tmpfs` takes them.
+  `:volumes` sources are podman volume names or absolute host paths, mounted
+  `:rw`, `:ro` or `:chown`: read-write once podman has chowned the source,
+  recursively and on every start, to the user the container runs as. That
+  is how a volume another user wrote passes to the container's own (a
+  server's from before it had a uid); never on one another owner's
+  container mounts too, which would belong to whichever started last.
+  `:tmpfs` entries are `"/path:options"`, as podman's `--tmpfs` takes them.
 
   `:networks` are the networks it joins (`create_network/2`), in place of
   podman's default. A container that must still reach the internet joins a
@@ -50,6 +72,14 @@ defmodule Gamend.Containers do
   default has no DNS, so beside an internal network the container would
   resolve only that network's names (podman 5.3). `:network_alias` is a
   name the others on those networks reach it by, besides its own.
+
+  `:user` runs it as that user instead of the image's own: a name, `"uid"`
+  or `"uid:gid"`. An image that starts as root to drop to its user (a
+  database's entrypoint) runs under the floor's dropped capabilities only
+  when it starts as that user. A name is looked up in the image's own
+  `/etc/passwd`, which can map it to 0, so an image someone else built gets
+  `"uid:gid"` (a uid alone that its passwd lacks runs in group 0). It is the
+  host's to choose, never an owner's (see Users above).
   """
   @type spec :: %{
           required(:name) => String.t(),
@@ -57,6 +87,7 @@ defmodule Gamend.Containers do
           optional(:env) => %{String.t() => String.t()},
           optional(:networks) => [String.t()],
           optional(:network_alias) => String.t(),
+          optional(:user) => String.t(),
           optional(:ports) => [port_map()],
           optional(:volumes) => [mount()],
           optional(:tmpfs) => [String.t()],
@@ -263,13 +294,34 @@ defmodule Gamend.Containers do
 
   # ── Volumes ─────────────────────────────────────────────────────────────
 
-  @doc "Create a named volume; one that exists already is fine."
-  @spec create_volume(String.t(), %{String.t() => String.t()}) :: :ok | {:error, term()}
-  def create_volume(name, labels \\ %{}) do
-    run_verb(
-      :create_volume,
-      Enum.concat([["volume", "create", "--ignore"], label_args(labels), [name]])
-    )
+  @doc """
+  Create a named volume; one that exists already is fine, as it is.
+
+  `opts`: `owner: {uid, gid}` gives a new volume's root to that user, for a
+  container that runs as `user: "uid:gid"`. One that exists keeps its owner;
+  a `:chown` mount re-owns it.
+  """
+  @spec create_volume(String.t(), %{String.t() => String.t()}, keyword()) ::
+          :ok | {:error, term()}
+  def create_volume(name, labels \\ %{}, opts \\ []),
+    do: run_verb(:create_volume, create_volume_args(name, labels, opts))
+
+  @doc false
+  # Public so a test can read the flags without podman.
+  @spec create_volume_args(String.t(), %{String.t() => String.t()}, keyword()) :: [String.t()]
+  def create_volume_args(name, labels, opts) do
+    Enum.concat([
+      ["volume", "create", "--ignore"],
+      label_args(labels),
+      case Keyword.get(opts, :owner) do
+        {uid, gid} when is_integer(uid) and is_integer(gid) ->
+          ["--opt", "o=uid=#{uid},gid=#{gid}"]
+
+        nil ->
+          []
+      end,
+      [name]
+    ])
   end
 
   @doc "Remove a named volume and everything in it."
@@ -590,8 +642,9 @@ defmodule Gamend.Containers do
   holds (a version string), or a short chore on a volume, never for running
   a job.
 
-  `opts`: `volumes:` (`{source, target, :ro | :rw}`), `tmpfs:`,
-  `entrypoint:` to run something other than the image's own, `env:` (through
+  `opts`: `volumes:` (`{source, target, :ro | :rw | :chown}`), `tmpfs:`,
+  `entrypoint:` to run something other than the image's own, `user:` (as
+  `create/1` takes them both), `env:` (through
   a 0600 env file, as `create/1`), and `network: true` for a chore that must
   reach the network (a restore from a bucket). A chore running someone
   else's code (a build of a tenant's plugin) takes the limits `create/1`
@@ -617,28 +670,7 @@ defmodule Gamend.Containers do
   end
 
   defp run_output(image, argv, env_args, opts) do
-    network = if Keyword.get(opts, :network, false), do: [], else: ["--network=none"]
-
-    args =
-      Enum.concat([
-        ["run", "--rm", "--pull=never"],
-        network,
-        ["--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges"],
-        runtime_args(Keyword.get(opts, :runtime)),
-        memory_args(Keyword.get(opts, :memory_mb)),
-        cpu_args(Keyword.get(opts, :cpus)),
-        if(pids = Keyword.get(opts, :pids), do: ["--pids-limit=#{pids}"], else: []),
-        env_args,
-        Enum.flat_map(Keyword.get(opts, :volumes, []), fn {source, target, mode} ->
-          ["--volume", "#{source}:#{target}:#{mode}"]
-        end),
-        Enum.flat_map(Keyword.get(opts, :tmpfs, []), &["--tmpfs", &1]),
-        entrypoint_args(Keyword.get(opts, :entrypoint)),
-        [image],
-        argv
-      ])
-
-    case podman(args) do
+    case podman(output_args(image, argv, env_args, opts)) do
       {:ok, {out, 0}} -> {:ok, out}
       other -> failed(:output, other)
     end
@@ -663,12 +695,37 @@ defmodule Gamend.Containers do
   # ── Flags ───────────────────────────────────────────────────────────────
 
   @doc false
+  # Public so a test can read the flags `output/3` runs with without podman.
+  @spec output_args(String.t(), [String.t()], [String.t()], keyword()) :: [String.t()]
+  def output_args(image, argv, env_args, opts) do
+    network = if Keyword.get(opts, :network, false), do: [], else: ["--network=none"]
+
+    Enum.concat([
+      ["run", "--rm", "--pull=never"],
+      network,
+      ["--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges"],
+      if(user = Keyword.get(opts, :user), do: ["--user", user], else: []),
+      runtime_args(Keyword.get(opts, :runtime)),
+      memory_args(Keyword.get(opts, :memory_mb)),
+      cpu_args(Keyword.get(opts, :cpus)),
+      if(pids = Keyword.get(opts, :pids), do: ["--pids-limit=#{pids}"], else: []),
+      env_args,
+      volume_args(Keyword.get(opts, :volumes, [])),
+      Enum.flat_map(Keyword.get(opts, :tmpfs, []), &["--tmpfs", &1]),
+      entrypoint_args(Keyword.get(opts, :entrypoint)),
+      [image],
+      argv
+    ])
+  end
+
+  @doc false
   # Public so a test can read the flags a spec becomes without podman.
   @spec create_args(spec(), String.t()) :: [String.t()]
   def create_args(spec, env_file) do
     Enum.concat([
       ["create", "--name", spec.name, "--env-file", env_file],
       runtime_args(Map.get(spec, :runtime)),
+      if(user = Map.get(spec, :user), do: ["--user", user], else: []),
       [
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
@@ -686,14 +743,23 @@ defmodule Gamend.Containers do
       Enum.flat_map(Map.get(spec, :ports, []), fn {ip, host, port} ->
         ["--publish", "#{ip}:#{host}:#{port}"]
       end),
-      Enum.flat_map(Map.get(spec, :volumes, []), fn {source, target, mode} ->
-        ["--volume", "#{source}:#{target}:#{mode}"]
-      end),
+      volume_args(Map.get(spec, :volumes, [])),
       label_args(Map.get(spec, :labels, %{})),
       [spec.image],
       Map.get(spec, :command, [])
     ])
   end
+
+  defp volume_args(volumes) do
+    Enum.flat_map(volumes, fn {source, target, mode} ->
+      ["--volume", "#{source}:#{target}:#{mount_mode(mode)}"]
+    end)
+  end
+
+  # `U`: podman chowns the source to the container's user before it starts.
+  defp mount_mode(:rw), do: "rw"
+  defp mount_mode(:ro), do: "ro"
+  defp mount_mode(:chown), do: "rw,U"
 
   defp label_args(labels), do: Enum.flat_map(labels, fn {k, v} -> ["--label", "#{k}=#{v}"] end)
 

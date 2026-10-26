@@ -24,18 +24,20 @@ DELETE /api/v1/me/push_tokens/:id    # unregister (e.g. on logout)
 
 ### FCM setup (Android / Web)
 
-Create a Firebase project, open Project settings → Service accounts, and generate a service-account key (JSON). Point GAMEND_PUSH_FCM_CREDENTIALS at the file (or paste the JSON inline); the project id is read from the credentials. The server obtains and refreshes the OAuth token itself.
+Create a Firebase project, open Project settings → Service accounts, and generate a service-account key (JSON). Put the whole JSON in GAMEND_PUSH_FCM_CREDENTIALS; the project id is read from the credentials. The server obtains and refreshes the OAuth token itself.
 
 ```bash
-GAMEND_PUSH_FCM_CREDENTIALS=/etc/gamend/fcm-service-account.json
+GAMEND_PUSH_FCM_CREDENTIALS='{"type": "service_account", "project_id": "my-game", "private_key": "...", ...}'
 ```
 
 ### APNs setup (iOS, no Firebase)
 
-In the Apple Developer portal, create an APNs auth key (Certificates, Identifiers & Profiles → Keys → enable Apple Push Notifications service) and download the .p8 file. One key serves all your apps and never expires. Configure all four variables; GAMEND_PUSH_APNS_ENV=sandbox targets Apple's sandbox gateway for development builds.
+In the Apple Developer portal, create an APNs auth key (Certificates, Identifiers & Profiles → Keys → enable Apple Push Notifications service) and download the .p8 file. One key serves all your apps and never expires. Configure all four variables, with the whole .p8 file in GAMEND_PUSH_APNS_PRIVATE_KEY; GAMEND_PUSH_APNS_ENV=sandbox targets Apple's sandbox gateway for development builds.
 
 ```bash
-GAMEND_PUSH_APNS_PRIVATE_KEY=/etc/gamend/AuthKey_AB12CD34EF.p8
+GAMEND_PUSH_APNS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByq...your key content...
+-----END PRIVATE KEY-----"
 GAMEND_PUSH_APNS_KEY_ID=AB12CD34EF        # the key's 10-char id
 GAMEND_PUSH_APNS_TEAM_ID=TEAM123456       # your developer team id
 GAMEND_PUSH_APNS_TOPIC=com.example.game   # the app's bundle id

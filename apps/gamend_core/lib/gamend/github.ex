@@ -240,7 +240,7 @@ defmodule Gamend.GitHub do
 
     ids = Enum.map(entries, & &1.installation_id)
 
-    Repo.transaction(fn ->
+    Gamend.AfterCommit.transaction(fn ->
       Installation
       |> where([i], i.user_id == ^user_id and i.installation_id not in ^ids)
       |> Repo.delete_all()

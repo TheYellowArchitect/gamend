@@ -199,27 +199,13 @@ defmodule Gamend.Payments.Providers.Apple do
   end
 
   defp private_key do
-    cond do
-      present?(config_value("APPLE_PRIVATE_KEY", :apple_private_key)) ->
-        {:ok,
-         config_value("APPLE_PRIVATE_KEY", :apple_private_key) |> Params.normalize_private_key()}
-
-      present?(config_value("APPLE_PRIVATE_KEY_PATH", :apple_private_key_path)) ->
-        config_value("APPLE_PRIVATE_KEY_PATH", :apple_private_key_path)
-        |> File.read()
-        |> case do
-          {:ok, key} -> {:ok, Params.normalize_private_key(key)}
-          {:error, _reason} -> {:error, :apple_private_key_not_readable}
-        end
-
-      true ->
-        {:error, :apple_private_key_not_configured}
+    with {:ok, key} <- required_config("APPLE_PRIVATE_KEY", :apple_private_key) do
+      {:ok, Params.normalize_private_key(key)}
     end
   end
 
   defp private_key_configured? do
-    present?(config_value("APPLE_PRIVATE_KEY", :apple_private_key)) or
-      present?(config_value("APPLE_PRIVATE_KEY_PATH", :apple_private_key_path))
+    present?(config_value("APPLE_PRIVATE_KEY", :apple_private_key))
   end
 
   defp required_config(env_key, app_key) do

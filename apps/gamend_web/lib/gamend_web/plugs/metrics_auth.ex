@@ -18,13 +18,8 @@ defmodule GamendWeb.Plugs.MetricsAuth do
 
   ## Configuration
 
-  Like push credentials, the setting accepts inline contents or a path to a
-  file holding them (e.g. a docker secret):
-
       # In production — set this to restrict external access
       GAMEND_OBSERVABILITY_METRICS_TOKEN=my-secret-prometheus-token
-      # or, sharing a docker secret with Prometheus's credentials_file:
-      GAMEND_OBSERVABILITY_METRICS_TOKEN=/run/secrets/metrics_token
 
   Prometheus scrape config with token:
 
@@ -94,29 +89,8 @@ defmodule GamendWeb.Plugs.MetricsAuth do
 
   defp required_token do
     case GamendWeb.Observability.get(:metrics_token) do
-      token when is_binary(token) and token != "" -> resolve_token(token)
+      token when is_binary(token) and token != "" -> token
       _ -> nil
-    end
-  end
-
-  # The setting accepts inline contents or a path to a file holding them
-  # (docker secret / mounted credential), same as the push-credential
-  # settings. Trimmed because secret files routinely end in a newline the
-  # scraper's bearer token does not carry.
-  defp resolve_token(token) do
-    if File.regular?(token) do
-      case File.read(token) do
-        {:ok, contents} ->
-          case String.trim(contents) do
-            "" -> nil
-            trimmed -> trimmed
-          end
-
-        {:error, _} ->
-          nil
-      end
-    else
-      token
     end
   end
 end

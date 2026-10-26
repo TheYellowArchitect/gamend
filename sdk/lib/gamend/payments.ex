@@ -71,6 +71,41 @@ defmodule Gamend.Payments do
   end
 
   @doc ~S"""
+    Move the user's subscription behind `entitlement_id` to `target`, an active
+    Stripe price of another subscription product with the same period, the
+    same currency and the same `per_subject`. Options: `end_trial: true`.
+    
+    Refuses with core's `get_user_subscription_entitlement/2` errors,
+    `:not_for_sale` (an inactive or non-Stripe price), `:same_product`,
+    `:incompatible_product`, `:already_owned`, `:subscription_not_active`
+    (only `active` and `trialing` change) and `:several_items`; Stripe's
+    refusal, a card declined among them, as `{:stripe_error, error}`.
+    
+  """
+  @spec change_stripe_subscription(
+          Gamend.Accounts.User.t(),
+          Ecto.UUID.t(),
+          Gamend.Payments.ProviderProduct.t(),
+          keyword()
+        ) ::
+          {:ok,
+           %{
+             purchase: Gamend.Payments.Purchase.t(),
+             entitlement: Gamend.Payments.Entitlement.t(),
+             stripe_subscription: map()
+           }}
+          | {:error, term()}
+  def change_stripe_subscription(_user, _entitlement_id, _target, _opts \\ []) do
+    case Application.get_env(:gamend_sdk, :stub_mode, :raise) do
+      :placeholder ->
+        nil
+
+      _ ->
+        raise "Gamend.Payments.change_stripe_subscription/4 is a stub - only available at runtime on Gamend"
+    end
+  end
+
+  @doc ~S"""
     Counts `list_catalog/2`'s entries.
   """
   @spec count_catalog(String.t() | nil) :: non_neg_integer()

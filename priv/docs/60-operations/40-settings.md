@@ -7,7 +7,7 @@ generated: by `mix gamend.settings.guide` - do not edit by hand; edit the
 # Settings
 
 Every setting the server has, with the environment variable that sets it.
-336 settings across 30 groups.
+334 settings across 30 groups.
 
 A setting is declared in the module that owns it, so this page and
 `.env.example` are generated from the same source the server reads. The
@@ -322,7 +322,7 @@ Live values, and where each one came from, are on the
 | `GAMEND_OBSERVABILITY_LOG_FILE_MAX_FILES` | integer | `5` | How many rotated files to keep. With the default size, ~50MB of disk. |
 | `GAMEND_OBSERVABILITY_LOG_FILE_PATH` | string | - | Write a rotating log file alongside stdout. Unset disables the file handler. |
 | `GAMEND_OBSERVABILITY_LOG_LEVEL` | log_level | `:info` | Application log level: debug \| info \| warning \| error. |
-| `GAMEND_OBSERVABILITY_METRICS_TOKEN` | string | - | When set, every non-loopback /metrics scrape must send `Authorization: Bearer <token>`. Accepts the token inline or a path to a file holding it (e.g. a docker secret). Secret - never log or commit it. |
+| `GAMEND_OBSERVABILITY_METRICS_TOKEN` | string | - | When set, every non-loopback /metrics scrape must send `Authorization: Bearer <token>`. Secret - never log or commit it. |
 
 
 ## Payments
@@ -333,16 +333,14 @@ Live values, and where each one came from, are on the
 | `GAMEND_PAYMENTS_APPLE_BUNDLE_ID` | string | - | Warns if unset once `GAMEND_PAYMENTS_APPLE_ISSUER_ID` or `GAMEND_PAYMENTS_APPLE_KEY_ID` is set. |
 | `GAMEND_PAYMENTS_APPLE_ISSUER_ID` | string | - | Issuer id from App Store Connect -> Users and Access -> Integrations. Warns if unset once `GAMEND_PAYMENTS_APPLE_BUNDLE_ID` or `GAMEND_PAYMENTS_APPLE_KEY_ID` is set. Secret - never log or commit it. |
 | `GAMEND_PAYMENTS_APPLE_KEY_ID` | string | - | Key id of the App Store Connect API key — not the Sign in with Apple key. Warns if unset once `GAMEND_PAYMENTS_APPLE_BUNDLE_ID` or `GAMEND_PAYMENTS_APPLE_ISSUER_ID` is set. |
-| `GAMEND_PAYMENTS_APPLE_PRIVATE_KEY` | string | - | Inline .p8 contents for the App Store Connect API key. Secret - never log or commit it. |
-| `GAMEND_PAYMENTS_APPLE_PRIVATE_KEY_PATH` | string | - |  |
+| `GAMEND_PAYMENTS_APPLE_PRIVATE_KEY` | string | - | Contents of the App Store Connect API key's .p8. Secret - never log or commit it. |
 | `GAMEND_PAYMENTS_ENVIRONMENT` | atom | `:production` | sandbox while validating, production for real transactions. |
 | `GAMEND_PAYMENTS_GOOGLE_PLAY_ACCESS_TOKEN` | string | - | Secret - never log or commit it. |
 | `GAMEND_PAYMENTS_GOOGLE_PLAY_AUTO_ACKNOWLEDGE` | boolean | `false` |  |
 | `GAMEND_PAYMENTS_GOOGLE_PLAY_PACKAGE_NAME` | string | - | Warns if unset once `GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` is set. |
 | `GAMEND_PAYMENTS_GOOGLE_PLAY_PUBLISHER_BASE_URL` | string | - |  |
 | `GAMEND_PAYMENTS_GOOGLE_PLAY_RTDN_TOKEN` | string | - | Shared bearer token on the Pub/Sub push webhook. Without it the RTDN endpoint fails closed in production. Secret - never log or commit it. |
-| `GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | string | - | Inline service-account JSON. Use the _PATH variant to read it from a file instead. Warns if unset once `GAMEND_PAYMENTS_GOOGLE_PLAY_PACKAGE_NAME` is set. Secret - never log or commit it. |
-| `GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH` | string | - |  |
+| `GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | string | - | The service-account JSON. Warns if unset once `GAMEND_PAYMENTS_GOOGLE_PLAY_PACKAGE_NAME` is set. Secret - never log or commit it. |
 | `GAMEND_PAYMENTS_REFUND_WINDOW_DAYS` | integer | `14` | Days after paying in which a buyer can refund a Stripe purchase themselves (account settings, Payments): a one-off payment, or a subscription's last payment with the subscription cancelled now. 0 turns it off. Admins can refund any Stripe purchase at any time. |
 | `GAMEND_PAYMENTS_SELF_REFUNDS_PER_ACCOUNT` | integer | `1` | How many refunds a buyer can make themselves (account settings, Payments) over the account's life, so buy, use and refund cannot repeat. 0 for no limit. Admins are not limited. |
 | `GAMEND_PAYMENTS_STEAM_APP_ID` | string | - |  |
@@ -398,10 +396,10 @@ Live values, and where each one came from, are on the
 | `GAMEND_PUSH_ADAPTER` | atom | `:auto` | Set to `log` to route every delivery to the Log provider, credentials or not. |
 | `GAMEND_PUSH_APNS_ENV` | atom | `:production` | `production`, or `sandbox` for dev builds. |
 | `GAMEND_PUSH_APNS_KEY_ID` | string | - | 10-character key id of the APNs auth key. Warns if unset once `GAMEND_PUSH_APNS_PRIVATE_KEY`, `GAMEND_PUSH_APNS_TEAM_ID` or `GAMEND_PUSH_APNS_TOPIC` is set. |
-| `GAMEND_PUSH_APNS_PRIVATE_KEY` | string | - | APNs .p8 key contents, or a path to the file. Warns if unset once `GAMEND_PUSH_APNS_KEY_ID`, `GAMEND_PUSH_APNS_TEAM_ID` or `GAMEND_PUSH_APNS_TOPIC` is set. Secret - never log or commit it. |
+| `GAMEND_PUSH_APNS_PRIVATE_KEY` | string | - | Contents of the APNs .p8 key. Warns if unset once `GAMEND_PUSH_APNS_KEY_ID`, `GAMEND_PUSH_APNS_TEAM_ID` or `GAMEND_PUSH_APNS_TOPIC` is set. Secret - never log or commit it. |
 | `GAMEND_PUSH_APNS_TEAM_ID` | string | - | Apple developer team id. Warns if unset once `GAMEND_PUSH_APNS_PRIVATE_KEY`, `GAMEND_PUSH_APNS_KEY_ID` or `GAMEND_PUSH_APNS_TOPIC` is set. |
 | `GAMEND_PUSH_APNS_TOPIC` | string | - | App bundle id, sent as apns-topic. Warns if unset once `GAMEND_PUSH_APNS_PRIVATE_KEY`, `GAMEND_PUSH_APNS_KEY_ID` or `GAMEND_PUSH_APNS_TEAM_ID` is set. |
-| `GAMEND_PUSH_FCM_CREDENTIALS` | string | - | FCM service-account JSON, inline or a path to the file. Secret - never log or commit it. |
+| `GAMEND_PUSH_FCM_CREDENTIALS` | string | - | FCM service-account JSON. Secret - never log or commit it. |
 | `GAMEND_PUSH_FCM_PROJECT_ID` | string | - | Defaults to the project id inside the FCM credentials. |
 | `GAMEND_PUSH_QUEUE_CONCURRENCY` | integer | `10` | Per-node concurrent deliveries on the push queue. |
 

@@ -25,6 +25,7 @@ defmodule Gamend.Payments do
   alias Gamend.Payments.Purchase
   alias Gamend.Payments.StoreEvents
   alias Gamend.Payments.StripeEvents
+  alias Gamend.Payments.StripePlanChange
   alias Gamend.Payments.StripeRefunds
   alias Gamend.Payments.Upgrades
   alias Gamend.Repo
@@ -523,6 +524,10 @@ defmodule Gamend.Payments do
 
   @doc delegate_to: {StripeEvents, :resume_stripe_subscription, 2}
   defdelegate resume_stripe_subscription(user, entitlement_id), to: StripeEvents
+
+  @doc delegate_to: {StripePlanChange, :change_stripe_subscription, 4}
+  defdelegate change_stripe_subscription(user, entitlement_id, provider_product, opts \\ []),
+    to: StripePlanChange
 
   @doc delegate_to: {StripeEvents, :stripe_customer_id, 1}
   defdelegate stripe_customer_id(user), to: StripeEvents

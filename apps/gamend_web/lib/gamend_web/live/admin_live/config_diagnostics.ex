@@ -546,13 +546,6 @@ defmodule GamendWeb.AdminLive.ConfigDiagnostics do
             secret: true
           ),
           env_line(
-            "GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH",
-            Gamend.Settings.get(
-              Gamend.Payments.Settings,
-              :google_play_service_account_json_path
-            )
-          ),
-          env_line(
             "GAMEND_PAYMENTS_GOOGLE_PLAY_ACCESS_TOKEN",
             Gamend.Settings.get(Gamend.Payments.Settings, :google_play_access_token),
             secret: true
@@ -589,10 +582,6 @@ defmodule GamendWeb.AdminLive.ConfigDiagnostics do
             "GAMEND_PAYMENTS_APPLE_PRIVATE_KEY",
             Gamend.Settings.get(Gamend.Payments.Settings, :apple_private_key),
             secret: true
-          ),
-          env_line(
-            "GAMEND_PAYMENTS_APPLE_PRIVATE_KEY_PATH",
-            Gamend.Settings.get(Gamend.Payments.Settings, :apple_private_key_path)
           ),
           env_line("GAMEND_PAYMENTS_ENVIRONMENT", payments_environment())
         ]

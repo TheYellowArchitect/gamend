@@ -573,6 +573,7 @@ defmodule Gamend.GDScript.API do
       "admin_stats" => [0],
       "admin_stripe_refundable?" => [1],
       "cancel_stripe_subscription_at_period_end" => [2],
+      "change_stripe_subscription" => [3, 4],
       "count_catalog" => [0, 1],
       "count_entitlements" => [0, 1],
       "count_products" => [0, 1],

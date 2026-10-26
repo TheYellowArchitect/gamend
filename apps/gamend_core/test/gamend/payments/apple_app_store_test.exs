@@ -116,20 +116,6 @@ defmodule Gamend.Payments.AppleAppStoreTest do
       assert_received {:apple_get, "https://apple.test/v1/transactions/tx_1", _}
     end
 
-    test "with the key in a file, or a file not there", %{pem: pem} do
-      path = Path.join(System.tmp_dir!(), "apple_#{System.unique_integer([:positive])}.p8")
-      File.write!(path, pem)
-      on_exit(fn -> File.rm(path) end)
-      put_setting(:apple_private_key, nil)
-      put_setting(:apple_private_key_path, path)
-      assert {:ok, _} = Apple.validate_purchase(nil, %{"transaction_id" => "tx_1"})
-
-      put_setting(:apple_private_key_path, "/nonexistent/key.p8")
-
-      assert Apple.validate_purchase(nil, %{"transaction_id" => "tx_1"}) ==
-               {:error, :apple_private_key_not_readable}
-    end
-
     test "needs every credential, and a key that is a key" do
       put_setting(:apple_private_key, "not a pem")
 

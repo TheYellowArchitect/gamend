@@ -101,6 +101,8 @@ The one exception is an upgrade (`Gamend.Payments.Upgrades`). A user who holds t
 
 A Stripe error there is logged and retried by the hourly sweeper. A shorter or equal plan, a grant with no purchase, and another provider's subscription still answer `already_owned`.
 
+Changing to another product of the same period (a bigger hosted server, a higher tier of a monthly plan) is not a checkout: `Gamend.Payments.change_stripe_subscription/4` moves the running subscription to the new product's Stripe price. Stripe prorates and invoices at once, so a dearer product is charged its difference for the rest of the period now and a cheaper one leaves a credit for the next invoices; a card that is declined changes nothing. `end_trial: true` ends a trial and charges the new product in full from today. The purchase and its entitlement then belong to the new product: the row keeps its id and period and moves to the new key (with the subject, for a `per_subject` product). Both products must be Stripe subscriptions with the same `duration_seconds`, currency and `per_subject`, and the subscription `active` or `trialing`. A price changed in the Stripe Dashboard or portal is followed the same way from `customer.subscription.updated`.
+
 A Stripe checkout the player left open (Back from the payment page, a closed tab, a switch from the yearly plan to lifetime) does not hold the next one: a new Stripe checkout for the same entitlement expires the open session at Stripe, cancels its purchase and goes ahead. A session paid meanwhile is never cancelled; it is fulfilled and the new checkout answers `already_owned`, and one whose payment is still clearing answers `purchase_already_in_progress`. An open purchase from another provider (Steam) still refuses. Every Checkout Session expires 31 minutes after it is created, not Stripe's default 24 hours.
 
 Checkout answers `{"data": {"purchase": ..., "checkout_url": ..., "provider_session_id": ...}}`. A refusal is a code: `quantity_not_allowed` (400); `already_owned` or `purchase_already_in_progress` (409); a `*_not_found` product (404); `stripe_not_configured` and every other `*_not_configured` (503), because the server is missing something, not the request. The catalog (`GET /api/v1/payments/catalog`) and the player's entitlements (`GET /api/v1/payments/entitlements`) are pages.
@@ -194,7 +196,7 @@ Google, Apple, and Steam adapters are built in. They store normalized validation
 ```bash
 GAMEND_PAYMENTS_ENVIRONMENT=sandbox
 GAMEND_PAYMENTS_GOOGLE_PLAY_PACKAGE_NAME=com.example.game
-GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH=/run/secrets/google-play-service-account.json
+GAMEND_PAYMENTS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON='{"type": "service_account", "client_email": "...", "private_key": "...", ...}'
 GAMEND_PAYMENTS_GOOGLE_PLAY_RTDN_TOKEN=shared_push_token
 GAMEND_PAYMENTS_GOOGLE_PLAY_AUTO_ACKNOWLEDGE=true
 ```
@@ -216,8 +218,12 @@ GAMEND_PAYMENTS_ENVIRONMENT=sandbox
 GAMEND_PAYMENTS_APPLE_BUNDLE_ID=com.example.game
 GAMEND_PAYMENTS_APPLE_ISSUER_ID=app_store_server_api_issuer_id
 GAMEND_PAYMENTS_APPLE_KEY_ID=app_store_server_api_key_id
-GAMEND_PAYMENTS_APPLE_PRIVATE_KEY_PATH=/run/secrets/AuthKey_ABC123DEFG.p8
+GAMEND_PAYMENTS_APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByq...your key content...
+-----END PRIVATE KEY-----"
 ```
+
+The service-account JSON and the `.p8` key go in the settings themselves, the whole file in one quoted value.
 
 1. Create provider SKUs with provider `apple` and external ID equal to the App Store product ID.
 2. Client validates StoreKit 2 purchases with `POST /api/v1/payments/validate/apple` using `signed_transaction_info`.

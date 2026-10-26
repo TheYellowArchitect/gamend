@@ -18,6 +18,7 @@ defmodule Gamend.Payments.StripeEvents do
   alias Gamend.Payments.Product
   alias Gamend.Payments.ProviderConfig
   alias Gamend.Payments.Purchase
+  alias Gamend.Payments.StripePlanChange
   alias Gamend.Payments.Upgrades
   alias Gamend.Repo
 
@@ -458,9 +459,8 @@ defmodule Gamend.Payments.StripeEvents do
        })
        when is_map(object) do
     with {:ok, purchase} <- Payments.purchase_from_provider_object(object),
-         {:ok, updated} <-
-           update_purchase_from_stripe_subscription(purchase, object, "subscription_updated"),
-         {:ok, _entitlements} <- update_entitlements_from_stripe_subscription(updated, object) do
+         {:ok, _purchase, _entitlements} <-
+           sync_stripe_subscription(purchase, object, "subscription_updated") do
       {:ok, :processed}
     else
       {:error, :purchase_not_found} -> {:ok, :ignored}
@@ -791,6 +791,23 @@ defmodule Gamend.Payments.StripeEvents do
     })
     |> Repo.update()
     |> Payments.tap_bump({:payments, :purchase_version})
+  end
+
+  @doc false
+  # A subscription as Stripe now has it, written to its purchase: the price
+  # it bills (`StripePlanChange.follow/2`, which moves the purchase and its
+  # row to another product), then its state and period, then its rows' end.
+  @spec sync_stripe_subscription(Purchase.t(), map(), String.t()) ::
+          {:ok, Purchase.t(), [Entitlement.t()]} | {:error, term()}
+  def sync_stripe_subscription(%Purchase{} = purchase, subscription, result)
+      when is_map(subscription) do
+    with {:ok, purchase} <- StripePlanChange.follow(purchase, subscription),
+         {:ok, updated} <-
+           update_purchase_from_stripe_subscription(purchase, subscription, result),
+         {:ok, entitlements} <-
+           update_entitlements_from_stripe_subscription(updated, subscription) do
+      {:ok, updated, entitlements}
+    end
   end
 
   defp update_purchase_from_stripe_subscription(
