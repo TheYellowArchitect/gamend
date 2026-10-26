@@ -22,6 +22,11 @@ defmodule GamendWeb.Layouts do
     doc:
       "when true, the content column widens past the reading width — for a page with its own side columns, such as a docs sidebar and table of contents"
 
+  attr :screen, :boolean,
+    default: false,
+    doc:
+      "when true, the page is one thing to do on one screen, such as a game or a test: no footer and no space for one under the content, so the page scrolls only as far as its own content, and it neither bounces at its ends nor pulls to refresh"
+
   attr :background_icons, :any,
     default: nil,
     doc:

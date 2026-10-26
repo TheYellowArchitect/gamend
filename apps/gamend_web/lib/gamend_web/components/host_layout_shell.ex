@@ -11,6 +11,7 @@ defmodule GamendWeb.HostLayoutShell do
   attr :current_query, :string, default: ""
   attr :flush, :boolean, default: false
   attr :wide, :boolean, default: false
+  attr :screen, :boolean, default: false
   attr :theme, :map, required: true
   attr :navigation, :map, default: %{}
   attr :footer, :map, default: %{}
@@ -24,11 +25,13 @@ defmodule GamendWeb.HostLayoutShell do
   slot :inner_block, required: true
 
   def app(assigns) do
-    # `nav_key` is `Layouts.app`'s attr; a shell rendered on its own (a core
-    # template, a test) has none. Put, not assigned: nothing changes.
+    # `nav_key` and `screen` are `Layouts.app`'s attrs; a shell rendered on
+    # its own (a core template, a test) has neither. Put, not assigned:
+    # nothing changes.
     assigns =
       assigns
       |> Map.put_new(:nav_key, nil)
+      |> Map.put_new(:screen, false)
       |> assign(:side?, GamendWeb.HostLayoutNavigation.side_layout?(assigns[:navigation]))
       |> assign(:auto?, GamendWeb.HostLayoutNavigation.auto_layout?(assigns[:navigation]))
 
@@ -84,6 +87,9 @@ defmodule GamendWeb.HostLayoutShell do
       [
         "flex flex-col",
         if(@flush, do: "h-dvh overflow-hidden relative", else: "min-h-dvh"),
+        # A one-screen page (`screen`) does not bounce at its ends, nor pull
+        # to refresh: a tap that drags a little moves nothing.
+        @screen && "[:root:has(&)]:overscroll-y-none",
         @side? && "max-md:pb-[calc(3.75rem+env(safe-area-inset-bottom))]",
         # The sidebar's room: the rail's on a full-screen page, else the open
         # sidebar's, or the rail's where the reader collapsed it.
@@ -291,8 +297,9 @@ defmodule GamendWeb.HostLayoutShell do
                   whichever repo wrote the page. A page that set its own `py-6`
                   used to sit lower than the page beside it in the nav, and
                   `pb-10` was on six pages and off the rest. `page-stack` is the
-                  hook a host restyles; the utilities are the default. --%>
-            <div class="page-stack space-y-6 pb-10">
+                  hook a host restyles; the utilities are the default. A
+                  one-screen page (`screen`) has no footer, so no landing. --%>
+            <div class={["page-stack space-y-6", !@screen && "pb-10"]}>
               <.suspended_notice :if={suspended?(@current_scope)} />
               {render_slot(@inner_block)}
             </div>
@@ -300,7 +307,7 @@ defmodule GamendWeb.HostLayoutShell do
         </main>
 
         <GamendWeb.HostLayouts.flash_group flash={@flash} />
-        <footer class="px-4 py-8 sm:px-6 lg:px-8 text-sm text-muted">
+        <footer :if={!@screen} class="px-4 py-8 sm:px-6 lg:px-8 text-sm text-muted">
           <div class="mx-auto grid max-w-2xl gap-6 md:max-w-3xl md:grid-cols-2 lg:max-w-4xl xl:max-w-6xl xl:grid-cols-4">
             <%!-- The column label is a `<p>`, not an `<h2>`: these name link
                   groups, not document sections, and as headings they were half
