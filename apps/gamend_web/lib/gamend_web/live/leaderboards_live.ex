@@ -391,12 +391,16 @@ defmodule GamendWeb.LeaderboardsLive do
         </div>
 
         <div class="overflow-x-auto">
+          <%!-- The name column takes every spare pixel, the other two their
+                content: an auto table shares the spare width by each column's
+                content, so a board with longer names drew narrower Rank and
+                Score columns than its neighbour tab. --%>
           <table class="table">
             <thead>
               <tr>
-                <th>{gettext("Rank")}</th>
-                <th>{gettext("Name")}</th>
-                <th class="text-end">{score_label(@leaderboard)}</th>
+                <th class="whitespace-nowrap">{gettext("Rank")}</th>
+                <th class="w-full">{gettext("Name")}</th>
+                <th class="text-end whitespace-nowrap">{score_label(@leaderboard)}</th>
               </tr>
             </thead>
             <tbody>
@@ -418,7 +422,7 @@ defmodule GamendWeb.LeaderboardsLive do
                     class="max-w-[28ch]"
                   />
                 </td>
-                <td class="text-end font-mono">
+                <td class="text-end font-mono whitespace-nowrap">
                   {format_score(record.score, @leaderboard)}
                 </td>
               </tr>
