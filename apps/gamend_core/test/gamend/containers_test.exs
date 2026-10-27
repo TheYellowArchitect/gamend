@@ -26,6 +26,17 @@ defmodule Gamend.ContainersTest do
     refute Enum.any?(args, &String.starts_with?(&1, "--runtime"))
   end
 
+  test "a failure's reason is podman's line, not a usage error's closing hint" do
+    assert Containers.failure_line(
+             "Error: unknown flag: --runtime\nSee 'podman create --help'\n"
+           ) == "Error: unknown flag: --runtime"
+
+    assert Containers.failure_line("pulling\nError: no space left on device\n") ==
+             "Error: no space left on device"
+
+    assert Containers.failure_line("") == ""
+  end
+
   test "limits, ports, mounts and labels are spelt as podman reads them" do
     spec =
       Map.merge(@spec_base, %{

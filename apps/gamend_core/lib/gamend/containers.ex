@@ -20,7 +20,8 @@ defmodule Gamend.Containers do
     * `:not_found` — no such container, volume, network, image or build
       context.
     * `{:podman_failed, verb, status, line}` — the CLI exited non-zero; `line`
-      is its last line of output, which is where podman puts the reason.
+      is its last line of output, which is where podman puts the reason
+      (before a usage error's `See 'podman … --help'`, which is skipped).
 
   A build answers its own, since its reason is a compiler's output, not
   podman's last line (`build/2`).
@@ -849,7 +850,7 @@ defmodule Gamend.Containers do
   defp failed(_verb, {:error, reason}), do: {:error, reason}
 
   defp failed(verb, {:ok, {out, status}}) do
-    line = last_line(out)
+    line = failure_line(out)
 
     if missing?(line),
       do: {:error, :not_found},
@@ -876,6 +877,20 @@ defmodule Gamend.Containers do
       [] -> ""
       lines -> lines |> List.last() |> String.slice(0, 500)
     end
+  end
+
+  @doc false
+  # Public so a test can read it without podman. The reason of a failure:
+  # its last line, but for a usage error's closing hint (`See 'podman create
+  # --help'`), which follows the line that says what was wrong (`Error:
+  # unknown flag: --runtime`).
+  @spec failure_line(String.t()) :: String.t()
+  def failure_line(out) do
+    out
+    |> String.split("\n", trim: true)
+    |> Enum.reject(&Regex.match?(~r/^See '.*--help'\.?$/, String.trim(&1)))
+    |> Enum.join("\n")
+    |> last_line()
   end
 
   defp parse_state("created"), do: :created
