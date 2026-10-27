@@ -24,8 +24,7 @@ defmodule GamendWeb.PromEx do
 
   The `/metrics` endpoint is public by design (Prometheus scrapes it).
   In production, restrict access at the network/firewall level or via
-  the `GAMEND_OBSERVABILITY_METRICS_TOKEN` setting (Bearer token check;
-  accepts inline contents or a path to a secret file).
+  the `GAMEND_OBSERVABILITY_METRICS_TOKEN` setting (Bearer token check).
   """
 
   use PromEx, otp_app: :gamend_web

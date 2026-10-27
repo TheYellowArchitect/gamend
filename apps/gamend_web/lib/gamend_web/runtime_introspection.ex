@@ -96,8 +96,10 @@ defmodule GamendWeb.RuntimeIntrospection do
     |> Enum.sort()
     |> Enum.map(fn {name, arity} ->
       key = to_string(name)
-      doc = Map.get(@sdk_docs, key, "")
-      signature = Map.get(@sdk_signatures, key, "#{name}/#{arity}")
+      # Access, not Map.get/3: without the SDK file both maps are empty, and
+      # the type checker warns that Map.get/3 on `%{}` always returns the default.
+      doc = @sdk_docs[key] || ""
+      signature = @sdk_signatures[key] || "#{name}/#{arity}"
       section = hook_group(key)
 
       implementers =

@@ -110,6 +110,45 @@ defmodule Gamend.Payments.Providers.Stripe do
   end
 
   @doc """
+  Moves a subscription's item `item_id` to the price `price_id`: a plan
+  change. Prorated and invoiced at once (`always_invoice`), so a dearer price
+  is charged its difference for the rest of the period now and a cheaper one
+  leaves a credit on the customer's balance for the next invoices.
+  `error_if_incomplete`: when that invoice cannot be paid, Stripe answers an
+  error and the subscription stays as it was.
+
+  `end_trial: true` ends a trial now (`trial_end: "now"`), so the new price
+  is charged in full from today. `idempotency_key:` makes a retry of the
+  same change answer the first one's result.
+  """
+  def change_subscription_price(subscription_id, item_id, price_id, opts \\ [])
+      when is_binary(subscription_id) and is_binary(item_id) and is_binary(price_id) do
+    params = %{
+      items: [%{id: item_id, price: price_id}],
+      proration_behavior: "always_invoice",
+      payment_behavior: "error_if_incomplete"
+    }
+
+    params = if opts[:end_trial] == true, do: Map.put(params, :trial_end, "now"), else: params
+
+    with {:ok, secret_key} <- secret_key() do
+      case update_subscription_with_sdk(
+             subscription_id,
+             params,
+             secret_key
+             |> stripe_request_opts()
+             |> put_idempotency_key(opts[:idempotency_key])
+           ) do
+        {:ok, subscription} ->
+          {:ok, normalize_stripe_payload(subscription)}
+
+        {:error, reason} ->
+          {:error, {:stripe_error, normalize_stripe_payload(reason)}}
+      end
+    end
+  end
+
+  @doc """
   Cancels a subscription now, not at the period end. No proration credit and
   no final invoice (`prorate`/`invoice_now` false, Stripe's defaults, sent so
   a changed default cannot add a credit on top of a refund). Stripe then

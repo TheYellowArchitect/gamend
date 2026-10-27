@@ -78,10 +78,8 @@ defmodule Gamend.Payments.Settings do
     secret: true,
     required: :warn,
     with: @play,
-    doc: "Inline service-account JSON. Use the _PATH variant to read it from a file instead."
+    doc: "The service-account JSON."
   )
-
-  setting(:google_play_service_account_json_path, :string)
 
   setting(:google_play_access_token, :string, secret: true)
 
@@ -116,10 +114,8 @@ defmodule Gamend.Payments.Settings do
 
   setting(:apple_private_key, :string,
     secret: true,
-    doc: "Inline .p8 contents for the App Store Connect API key."
+    doc: "Contents of the App Store Connect API key's .p8."
   )
-
-  setting(:apple_private_key_path, :string)
 
   # ── Steam MicroTxn ──────────────────────────────────────
   setting(:steam_web_api_key, :string,

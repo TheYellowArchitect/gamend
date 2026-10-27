@@ -118,3 +118,8 @@ config :gamend_core, Gamend.Storage.Local,
 # sandbox receipt buying real goods on a production server — so the test suite
 # has to declare that it is not a production payment environment.
 config :gamend_core, Gamend.Payments.Settings, environment: :sandbox
+
+# Every GitHub App call goes to a Req.Test stub a test sets up
+# (`Gamend.GitHubStub`). A test that forgets gets a missing-stub error rather
+# than a request to api.github.com.
+config :gamend_core, :github_req_options, plug: {Req.Test, Gamend.GitHub}

@@ -103,6 +103,11 @@ config :gamend_core, Gamend.Matchmaking.Worker, enabled: false
 # Gamend.Chat.Moderation.Cache.load_persisted/0 directly.
 config :gamend_core, Gamend.Chat.Moderation.Sync, enabled: false
 
+# Every GitHub App call goes to a Req.Test stub a test sets up
+# (`Gamend.GitHubStub`). A test that forgets gets a missing-stub error rather
+# than a request to api.github.com.
+config :gamend_core, :github_req_options, plug: {Req.Test, Gamend.GitHub}
+
 # And for the ban boot load. Tests drive Gamend.Bans.Cache.load_persisted/0
 # directly.
 config :gamend_core, Gamend.Bans.Sync, enabled: false

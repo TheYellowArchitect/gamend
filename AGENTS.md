@@ -19,7 +19,8 @@ runnable host app at the repository root.
 
 ## Project guidelines
 
-- Run `mix precommit` when done and fix what it reports. It compiles with `--warnings-as-errors`, formats, regenerates the SDK and settings docs, extracts theme strings, runs `test`, regenerates the Balaur SDK from a fresh OpenAPI document (CI fails a stale one), runs `credo --strict` and `gamend.api.lint`, and repeats the compile/format/credo steps in `apps/gamend_core` and `apps/gamend_web` (plus `format` in plugins, `sdk` and `sdk_tools`). CI also runs dialyzer and `deps.audit`.
+- Run `mix precommit` when done and fix what it reports. It compiles with `--warnings-as-errors`, formats, regenerates the SDK, the settings docs and the `Dockerfile`, extracts theme strings, runs `test`, regenerates the Balaur SDK from a fresh OpenAPI document (CI fails a stale one), runs `credo --strict` and `gamend.api.lint`, and repeats the compile/format/credo steps in `apps/gamend_core` and `apps/gamend_web` (plus `format` in plugins, `sdk` and `sdk_tools`). CI also runs dialyzer and `deps.audit`.
+- `Dockerfile` is generated (`mix gamend.gen.dockerfile`, from the project and `gamend_dockerfile:` in `mix.exs`), the same file every app built on Gamend uses ([docker/README.md](docker/README.md)). Never edit it by hand.
 - Use `:req` (`Req`) for HTTP. **Avoid** `:httpoison`, `:tesla` and `:httpc`.
 - Declare settings with `Gamend.Settings.Provider`; never read `System.get_env/1`. The env var name derives from the declaration: `GAMEND_<GROUP>_<NAME>` (`GAMEND_DB_URL`, `GAMEND_LIMITS_MAX_PAGE_SIZE`, `GAMEND_FEATURES_LIST_QUESTS`). `.env.example` and the Settings guide are generated (`mix gamend.settings.env_example`, `mix gamend.settings.guide`).
 - Update `CHANGELOG.md` for new features and for changes to config or public APIs. Format: [CONTRIBUTING.md](CONTRIBUTING.md#finish).
@@ -88,6 +89,7 @@ custom classes must fully style the input
 - **Never** use `@apply` when writing raw css
 - daisyUI 5 is loaded as a Tailwind plugin (`assets/vendor/daisyui.js`) and the UI is built on its tokens and component classes. Follow existing pages; radii and colours come from daisyUI tokens ([RULES.md](RULES.md))
 - **Three widths.** A page is the layout's column: the default, or `<Layouts.app wide>` for a page with its own side columns. Anything narrower (a form, an article, a whole login page) is `max-w-narrow` (`--container-narrow`, 48rem, declared in every host stylesheet). Never another `max-w-*` on a page or a centred block; `page_width_test.exs` fails on one, and `/ui` shows it
+- **One-screen pages.** `<Layouts.app screen>` is a page that is one thing to do (a game, a test): no footer and no landing for one under the content, so it scrolls only as far as its own content, and the root is `overscroll-y-none` (no bounce, no pull to refresh)
 - The esbuild bundles are fixed in `config/host_config.exs`: `app.js`, `theme-init.js`, `mermaid.js` from `apps/gamend_web/assets/js`, plus the host's `assets/js/host_hooks.js`
   - You cannot reference an external vendor'd script `src` or link `href` in the layouts
   - You must import the vendor deps into app.js and app.css to use them

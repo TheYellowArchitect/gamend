@@ -50,7 +50,8 @@ defmodule Gamend.OAuth.Providers do
   end
 
   setting(:google_web_client_id, :string,
-    doc: "Native-app client id used to verify Google ID tokens from SDK sign-in."
+    doc:
+      "Web client id (not an Android or iOS one) the native Google sign-in plugin is set up with. ID tokens are accepted when their audience is this or `GAMEND_OAUTH_GOOGLE_CLIENT_ID`; leave it unset when both are the same client."
   )
 
   # Sign in with Apple needs all four together: the client secret is a JWT this

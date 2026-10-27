@@ -550,6 +550,8 @@ defmodule GamendWeb.AdminLive.ConfigSections do
         WebSocket: {@config.rate_limit_ws_limit} msg / {@config.rate_limit_ws_window}ms<br />
         WebRTC DC: {@config.rate_limit_dc_limit} msg / {@config.rate_limit_dc_window}ms<br />
         ICE Candidates: {@config.rate_limit_ice_limit} / {@config.rate_limit_ice_window}ms<br />
+        Signaling: {@config.rate_limit_signaling_ws_limit} msg / {@config.rate_limit_signaling_ws_window}ms<br />
+        Signaling ICE Candidates: {@config.rate_limit_signaling_ice_limit} / {@config.rate_limit_signaling_ice_window}ms<br />
         Max DataChannels per peer: {@config.webrtc_max_channels}<br />
         Max DC message size: {@config.webrtc_max_message_size} bytes<br />
         <span class="text-xs text-muted">

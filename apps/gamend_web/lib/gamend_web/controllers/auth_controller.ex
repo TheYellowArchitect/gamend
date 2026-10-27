@@ -838,7 +838,7 @@ defmodule GamendWeb.AuthController do
           id_token: %OpenApiSpex.Schema{
             type: :string,
             description:
-              "Google OpenID Connect id_token JWT. Audience must match GOOGLE_WEB_CLIENT_ID or GOOGLE_CLIENT_ID."
+              "Google OpenID Connect id_token JWT. Its audience must be GAMEND_OAUTH_GOOGLE_WEB_CLIENT_ID or GAMEND_OAUTH_GOOGLE_CLIENT_ID."
           }
         }
       }

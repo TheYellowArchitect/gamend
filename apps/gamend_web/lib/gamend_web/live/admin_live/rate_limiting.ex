@@ -123,6 +123,20 @@ defmodule GamendWeb.AdminLive.RateLimiting do
                     <td class="text-right font-mono">{div(@config.ice_window, 1000)}s</td>
                   </tr>
                   <tr>
+                    <td>Signaling messages (per-user)</td>
+                    <td class="text-right font-mono">{@config.signaling_ws_limit}</td>
+                    <td class="text-right font-mono">
+                      {div(@config.signaling_ws_window, 1000)}s
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Signaling ICE candidates (per-user)</td>
+                    <td class="text-right font-mono">{@config.signaling_ice_limit}</td>
+                    <td class="text-right font-mono">
+                      {div(@config.signaling_ice_window, 1000)}s
+                    </td>
+                  </tr>
+                  <tr>
                     <td>Max DataChannels per peer</td>
                     <td class="text-right font-mono">{@config.max_channels}</td>
                     <td class="text-right font-mono">—</td>
@@ -364,6 +378,10 @@ defmodule GamendWeb.AdminLive.RateLimiting do
       dc_window: rate_setting(:dc_window_ms),
       ice_limit: rate_setting(:ice_limit),
       ice_window: rate_setting(:ice_window_ms),
+      signaling_ws_limit: rate_setting(:signaling_ws_limit),
+      signaling_ws_window: rate_setting(:signaling_ws_window_ms),
+      signaling_ice_limit: rate_setting(:signaling_ice_limit),
+      signaling_ice_window: rate_setting(:signaling_ice_window_ms),
       max_channels: 1,
       max_message_size: 65_536
     }

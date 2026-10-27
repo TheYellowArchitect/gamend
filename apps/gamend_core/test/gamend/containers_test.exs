@@ -26,6 +26,17 @@ defmodule Gamend.ContainersTest do
     refute Enum.any?(args, &String.starts_with?(&1, "--runtime"))
   end
 
+  test "a failure's reason is podman's line, not a usage error's closing hint" do
+    assert Containers.failure_line(
+             "Error: unknown flag: --runtime\nSee 'podman create --help'\n"
+           ) == "Error: unknown flag: --runtime"
+
+    assert Containers.failure_line("pulling\nError: no space left on device\n") ==
+             "Error: no space left on device"
+
+    assert Containers.failure_line("") == ""
+  end
+
   test "limits, ports, mounts and labels are spelt as podman reads them" do
     spec =
       Map.merge(@spec_base, %{
@@ -65,6 +76,64 @@ defmodule Gamend.ContainersTest do
 
     assert ["--network-alias", "gc-1-app"] == pair(args, "--network-alias")
     refute "--network" in Containers.create_args(@spec_base, "/tmp/env")
+  end
+
+  test "a user replaces the image's own, under the same floor" do
+    args = Containers.create_args(Map.put(@spec_base, :user, "postgres"), "/tmp/env")
+
+    assert ["--user", "postgres"] == pair(args, "--user")
+    assert "--cap-drop=ALL" in args
+    refute "--user" in Containers.create_args(@spec_base, "/tmp/env")
+  end
+
+  test "a volume taken over by the container's user is chowned as it is mounted" do
+    spec =
+      Map.merge(@spec_base, %{user: "20001:20001", volumes: [{"gc-1-data", "/data", :chown}]})
+
+    assert ["--volume", "gc-1-data:/data:rw,U"] ==
+             pair(Containers.create_args(spec, "/tmp/env"), "--volume")
+  end
+
+  test "a one-off run keeps the floor, as a user and on a chowned volume" do
+    args =
+      Containers.output_args("img", ["true"], [],
+        user: "20001:20001",
+        volumes: [{"gc-1-data", "/data", :chown}, {"gc-tools", "/opt/tools", :ro}]
+      )
+
+    for flag <- [
+          "--network=none",
+          "--read-only",
+          "--cap-drop=ALL",
+          "--security-opt=no-new-privileges"
+        ],
+        do: assert(flag in args)
+
+    assert ["--user", "20001:20001"] == pair(args, "--user")
+
+    assert [["--volume", "gc-1-data:/data:rw,U"], ["--volume", "gc-tools:/opt/tools:ro"]] ==
+             args |> Enum.chunk_every(2, 1) |> Enum.filter(&match?(["--volume", _], &1))
+
+    assert Enum.take(args, -2) == ["img", "true"]
+  end
+
+  test "a volume is made once, owned by a user when asked" do
+    assert Containers.create_volume_args("gc-1-data", %{}, []) ==
+             ["volume", "create", "--ignore", "gc-1-data"]
+
+    assert Containers.create_volume_args("gc-1-data", %{"gamend.cloud" => "1"},
+             owner: {20_001, 20_001}
+           ) ==
+             [
+               "volume",
+               "create",
+               "--ignore",
+               "--label",
+               "gamend.cloud=1",
+               "--opt",
+               "o=uid=20001,gid=20001",
+               "gc-1-data"
+             ]
   end
 
   test "a network is made once, internal when asked" do

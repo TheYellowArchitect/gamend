@@ -26,20 +26,9 @@ defmodule Gamend.Payments.Providers.Google do
   def config_status do
     package_name = config_value("GOOGLE_PLAY_PACKAGE_NAME", :google_play_package_name)
     service_json = service_account_json()
-
-    service_path =
-      config_value(
-        "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH",
-        :google_play_service_account_json_path
-      )
-
     access_token = config_value("GOOGLE_PLAY_ACCESS_TOKEN", :google_play_access_token)
     rtdn_token = config_value("GOOGLE_PLAY_RTDN_TOKEN", :google_play_rtdn_token)
-
-    auth_configured =
-      present?(access_token) or
-        match?({:ok, _}, service_json) or
-        present?(service_path)
+    auth_configured = present?(access_token) or match?({:ok, _}, service_json)
 
     %{
       provider: "google",
@@ -281,32 +270,11 @@ defmodule Gamend.Payments.Providers.Google do
   end
 
   defp service_account_json do
-    cond do
-      present?(
-        config_value("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", :google_play_service_account_json)
-      ) ->
-        config_value("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", :google_play_service_account_json)
-        |> Jason.decode()
+    json = config_value("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", :google_play_service_account_json)
 
-      present?(
-        config_value(
-          "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH",
-          :google_play_service_account_json_path
-        )
-      ) ->
-        path =
-          config_value(
-            "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH",
-            :google_play_service_account_json_path
-          )
-
-        with {:ok, contents} <- File.read(path) do
-          Jason.decode(contents)
-        end
-
-      true ->
-        {:error, :google_service_account_not_configured}
-    end
+    if present?(json),
+      do: Jason.decode(json),
+      else: {:error, :google_service_account_not_configured}
   end
 
   defp verify_rtdn_token(nil) do

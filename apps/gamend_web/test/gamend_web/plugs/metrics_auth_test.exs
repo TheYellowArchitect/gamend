@@ -84,27 +84,6 @@ defmodule GamendWeb.Plugs.MetricsAuthTest do
     end
   end
 
-  describe "a token given as a file" do
-    setup do
-      path = Path.join(System.tmp_dir!(), "metrics_token_#{System.unique_integer([:positive])}")
-      File.write!(path, "from-file\n")
-      on_exit(fn -> File.rm(path) end)
-      token(path)
-      %{path: path}
-    end
-
-    test "is read and trimmed" do
-      assert allowed?(call(@public, "Bearer from-file"))
-      assert denied?(call(@public, "Bearer from-file\n"))
-    end
-
-    test "an empty file is no token: only private addresses get in", %{path: path} do
-      File.write!(path, "  \n")
-      assert allowed?(call(hd(@private)))
-      assert denied?(call(@public, "Bearer "))
-    end
-  end
-
   test "an empty setting is no token" do
     token("")
     assert allowed?(call(hd(@private)))

@@ -331,11 +331,12 @@ jobs:
         working-directory: apps/gamend_web
         run: MIX_ENV=dev mix credo --strict
 
-      - name: Settings docs are in sync with the declarations
+      - name: Settings docs and the Dockerfile are in sync with their sources
         run: |
           MIX_ENV=dev mix gamend.settings.env_example --check
           MIX_ENV=dev mix gamend.settings.guide --check
           MIX_ENV=dev mix gamend.theme.extract --check
+          MIX_ENV=dev mix gamend.gen.dockerfile --check
 
       - name: Audit dependencies for known vulnerabilities
         run: MIX_ENV=dev mix deps.audit

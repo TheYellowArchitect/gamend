@@ -21,7 +21,7 @@ The server exposes three windows into itself: Prometheus metrics at `/metrics`, 
 
 ### Gating the endpoint
 
-`/metrics` reveals routes, traffic volumes and error rates, so it is gated: loopback always scrapes freely, and once `GAMEND_OBSERVABILITY_METRICS_TOKEN` is set, every non-loopback request (including private and Docker-internal addresses) must send `Authorization: Bearer <token>`. The setting accepts the token inline or a path to a file holding it (a docker secret). With no token configured, private-range addresses are allowed without auth as a dev/compose convenience.
+`/metrics` reveals routes, traffic volumes and error rates, so it is gated: loopback always scrapes freely, and once `GAMEND_OBSERVABILITY_METRICS_TOKEN` is set, every non-loopback request (including private and Docker-internal addresses) must send `Authorization: Bearer <token>`. With no token configured, private-range addresses are allowed without auth as a dev/compose convenience.
 
 ```yaml
 scrape_configs:

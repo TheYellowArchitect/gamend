@@ -137,6 +137,11 @@ defmodule GamendWeb.HostLayouts do
     default: false,
     doc: "when true, the content column widens for a page with its own side columns"
 
+  attr :screen, :boolean,
+    default: false,
+    doc:
+      "when true, the page is one screen (a game, a test): no footer, no space for one, no bounce"
+
   attr :background_icons, :any,
     default: nil,
     doc:

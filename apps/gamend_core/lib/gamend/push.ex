@@ -463,7 +463,7 @@ defmodule Gamend.Push do
 
   setting(:fcm_credentials, :string,
     secret: true,
-    doc: "FCM service-account JSON, inline or a path to the file."
+    doc: "FCM service-account JSON."
   )
 
   setting(:fcm_project_id, :string, doc: "Defaults to the project id inside the FCM credentials.")
@@ -474,7 +474,7 @@ defmodule Gamend.Push do
     secret: true,
     required: :warn,
     with: @apns_group,
-    doc: "APNs .p8 key contents, or a path to the file."
+    doc: "Contents of the APNs .p8 key."
   )
 
   setting(:apns_key_id, :string,

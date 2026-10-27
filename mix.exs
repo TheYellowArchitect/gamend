@@ -17,6 +17,8 @@ defmodule GamendHost.MixProject do
       dialyzer: [plt_add_apps: [:mix, :gamend_core, :gamend_web]],
       aliases: aliases(),
       releases: releases(),
+      # The image ships the example plugins (`mix gamend.gen.dockerfile`).
+      gamend_dockerfile: [plugins_dir: "modules/plugins_examples"],
       deps: deps()
     ]
   end
@@ -193,6 +195,7 @@ defmodule GamendHost.MixProject do
           # --check form so a bypassed precommit still cannot ship one.
           "gamend.settings.env_example",
           "gamend.settings.guide",
+          "gamend.gen.dockerfile",
           # Theme text lives in data, so `gettext.extract` cannot see it.
           "gamend.theme.extract",
           "test",

@@ -24,6 +24,7 @@ defmodule GamendWeb.Router do
     blog: BlogLive
   )
 
+  gamend_github_routes()
   gamend_oauth_routes()
   gamend_configured_page_fallback_routes()
 end
